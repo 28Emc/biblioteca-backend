@@ -18,12 +18,19 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 
+@CrossOrigin(origins = { "*", "http://localhost:4200" })
 @RestController
+@Api(value = "index", description = "Index de Biblioteca2020")
 public class IndexController {
 
     @Autowired
@@ -39,7 +46,13 @@ public class IndexController {
     private JwtUtil jwtUtil;
 
     // MÉTODO PARA VALIDAR USUARIO AL LOGUEARSE
-    @PostMapping(value = "/login")
+    @ApiOperation(value = "Método de login de usuario mediante email y contraseña", response = ResponseEntity.class)
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Bienvenido usuario"),
+            @ApiResponse(code = 401, message = " "),
+            @ApiResponse(code = 403, message = " "),
+            @ApiResponse(code = 404, message = "El usuario o contraseña es invàlido! Intente de nuevo"),
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de realizar el login. Inténtelo mas tarde") })
+    @PostMapping(value = "/login", produces = "application/json")
     public ResponseEntity<?> crearTokenAutenticacion(@RequestBody AuthenticationRequest authenticationRequest)
             throws Exception {
         // AUTENTICO EL USUARIO QUE INGRESA USUARIO Y CONTRASEÑA ...
@@ -64,7 +77,13 @@ public class IndexController {
         return new ResponseEntity<Map<String, Object>>(response, HttpStatus.OK);
     }
 
-    @GetMapping("/logged-only")
+    @ApiOperation(value = "Acceso a una zona permitida solamente a los usuarios autenticados", response = ResponseEntity.class)
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Bienvenido, se encuentra una zona de acceso reservada a los usuarios autenticados"),
+            @ApiResponse(code = 401, message = ""),
+            @ApiResponse(code = 403, message = "No tiene permiso de acceder a este recurso"),
+            @ApiResponse(code = 404, message = " "),
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de realizar la consulta a la base de datos. Inténtelo mas tarde") })
+    @GetMapping(value = "/logged-only", produces = "application/json")
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO', 'ROLE_USER')")
     public ResponseEntity<?> user(Authentication authentication) {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
