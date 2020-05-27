@@ -1,9 +1,9 @@
 package com.biblioteca.backend.controller;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-
 import com.biblioteca.backend.model.Usuario;
 import com.biblioteca.backend.service.IUsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,15 +41,18 @@ public class UsuarioController {
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
     public ResponseEntity<?> listarUsuarios() {
         Map<String, Object> response = new HashMap<>();
+        List<Usuario> usuarios = null;
         try {
-            response.put("usuario", usuarioService.findAll());
-            response.put("mensaje", "Usuarios encontrados!");
-            return new ResponseEntity<Map<String, Object>>(response, HttpStatus.FOUND);
+            usuarios = usuarioService.findAll();
         } catch (Exception e) {
             response.put("mensaje", "Lo sentimos, hubo un error a la hora de buscar los usuarios!");
             response.put("error", e.getMessage());
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.NOT_FOUND);
         }
+
+        response.put("usuarios", usuarios);
+        response.put("mensaje", "Usuarios encontrados!");
+        return new ResponseEntity<Map<String, Object>>(response, HttpStatus.FOUND);
     }
 
     @ApiOperation(value = "Método de consulta de usuario por su id", response = ResponseEntity.class)
@@ -61,10 +64,14 @@ public class UsuarioController {
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
     public ResponseEntity<?> buscarUsuario(@PathVariable Long id) {
         Map<String, Object> response = new HashMap<>();
+        Usuario usuario = null;
         try {
-            response.put("usuario", usuarioService.findById(id).get());
-            response.put("mensaje", "Usuario encontrado!");
-            return new ResponseEntity<Map<String, Object>>(response, HttpStatus.FOUND);
+            usuario = usuarioService.findById(id).get();
+            if (usuario == null) {
+                response.put("mensaje",
+                        "El usuario con ID: ".concat(id.toString().concat(" no existe en la base de datos!")));
+                return new ResponseEntity<Map<String, Object>>(response, HttpStatus.NOT_FOUND);
+            }
         } catch (NoSuchElementException e) {
             response.put("mensaje", "Lo sentimos, el usuario no existe!");
             response.put("error", e.getMessage());
@@ -74,9 +81,13 @@ public class UsuarioController {
             response.put("error", e.getMessage());
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+
+        response.put("usuario", usuario);
+        response.put("mensaje", "Usuario encontrado!");
+        return new ResponseEntity<Map<String, Object>>(response, HttpStatus.FOUND);
     }
 
-    @ApiOperation(value = "Método de registro de usuarios", response = ResponseEntity.class)
+    @ApiOperation(value = "Método de registro de usuarios (hecho para usuarios nuevos)", response = ResponseEntity.class)
     @ApiResponses(value = { @ApiResponse(code = 200, message = " "),
             @ApiResponse(code = 201, message = "Usuario registrado"), @ApiResponse(code = 401, message = " "),
             @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = " "),
@@ -87,14 +98,15 @@ public class UsuarioController {
         try {
             usuario.setActivo(true);
             usuarioService.save(usuario);
-            response.put("usuario", usuario);
-            response.put("mensaje", "Usuario registrado!");
-            return new ResponseEntity<Map<String, Object>>(response, HttpStatus.CREATED);
         } catch (DataIntegrityViolationException e) {
             response.put("mensaje", "Lo sentimos, hubo un error a la hora de registrar el usuario!");
             response.put("error", e.getMessage());
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+
+        response.put("usuario", usuario);
+        response.put("mensaje", "Usuario registrado!");
+        return new ResponseEntity<Map<String, Object>>(response, HttpStatus.CREATED);
     }
 
     @ApiOperation(value = "Método de actualización de usuarios", response = ResponseEntity.class)
@@ -109,6 +121,11 @@ public class UsuarioController {
         Usuario usuarioEncontrado = null;
         try {
             usuarioEncontrado = usuarioService.findById(id).get();
+            if (usuarioEncontrado == null) {
+                response.put("mensaje",
+                        "El usuario con ID: ".concat(id.toString().concat(" no existe en la base de datos!")));
+                return new ResponseEntity<Map<String, Object>>(response, HttpStatus.NOT_FOUND);
+            }
             usuarioEncontrado.setNombres(usuario.getNombres());
             usuarioEncontrado.setApellidoMaterno(usuario.getApellidoMaterno());
             usuarioEncontrado.setApellidoPaterno(usuario.getApellidoPaterno());
@@ -119,9 +136,6 @@ public class UsuarioController {
             usuarioEncontrado.setUsuario(usuario.getUsuario());
             usuarioEncontrado.setFotoUsuario(usuario.getFotoUsuario());
             usuarioService.save(usuarioEncontrado);
-            response.put("usuario", usuarioEncontrado);
-            response.put("mensaje", "Usuario actualizado!");
-            return new ResponseEntity<Map<String, Object>>(response, HttpStatus.CREATED);
         } catch (NoSuchElementException e) {
             response.put("mensaje", "Lo sentimos, el usuario no existe!");
             response.put("error", e.getMessage());
@@ -131,6 +145,10 @@ public class UsuarioController {
             response.put("error", e.getMessage());
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+
+        response.put("usuario", usuarioEncontrado);
+        response.put("mensaje", "Usuario actualizado!");
+        return new ResponseEntity<Map<String, Object>>(response, HttpStatus.CREATED);
     }
 
     @ApiOperation(value = "Método de deshabilitación del usuario mediante el id", response = ResponseEntity.class)
@@ -145,11 +163,13 @@ public class UsuarioController {
         Usuario usuarioEncontrado = null;
         try {
             usuarioEncontrado = usuarioService.findById(id).get();
+            if (usuarioEncontrado == null) {
+                response.put("mensaje",
+                        "El usuario con ID: ".concat(id.toString().concat(" no existe en la base de datos!")));
+                return new ResponseEntity<Map<String, Object>>(response, HttpStatus.NOT_FOUND);
+            }
             usuarioEncontrado.setActivo(false);
             usuarioService.save(usuarioEncontrado);
-            response.put("usuario", usuarioEncontrado);
-            response.put("mensaje", "Usuario deshabilitado!");
-            return new ResponseEntity<Map<String, Object>>(response, HttpStatus.OK);
         } catch (NoSuchElementException e) {
             response.put("mensaje", "Lo sentimos, el usuario no existe!");
             response.put("error", e.getMessage());
@@ -159,6 +179,10 @@ public class UsuarioController {
             response.put("error", e.getMessage());
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+
+        response.put("usuario", usuarioEncontrado);
+        response.put("mensaje", "Usuario deshabilitado!");
+        return new ResponseEntity<Map<String, Object>>(response, HttpStatus.OK);
     }
 
     @ApiOperation(value = "Método de eliminación del usuario mediante el id", response = ResponseEntity.class)

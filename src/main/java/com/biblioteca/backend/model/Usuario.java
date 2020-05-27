@@ -72,17 +72,17 @@ public class Usuario {
     private String fotoUsuario;
 
     @Column(name = "fecha_registro", nullable = false)
-    @Temporal(TemporalType.DATE)
+    @Temporal(TemporalType.TIMESTAMP)
     @ApiModelProperty(notes = "Fecha de creación del usuario", required = true, example = "2020-05-25")
     private Date fechaRegistro;
 
     @Column(name = "fecha_actualizacion", nullable = true)
-    @Temporal(TemporalType.DATE)
+    @Temporal(TemporalType.TIMESTAMP)
     @ApiModelProperty(notes = "Fecha de actualización del usuario", required = true, example = "2020-06-01")
     private Date fechaActualizacion;
 
     // USER(1):ROLE(1)
-    // CAMBIÈ AQUI DE LAZY A EAGER PARA MANEJAR METODOS EN EL LOGOUTSUCCESSHANDLER
+    // CAMBIÈ AQUI DE LAZY A EAGER PARA MANEJAR ERROR NO SESSION
     @OneToOne(fetch = FetchType.EAGER)
     private Role rol;
 
