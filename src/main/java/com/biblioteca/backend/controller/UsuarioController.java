@@ -5,12 +5,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import com.biblioteca.backend.model.Usuario;
+import com.biblioteca.backend.model.dto.ChangePassword;
 import com.biblioteca.backend.service.IUsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -104,7 +107,7 @@ public class UsuarioController {
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        response.put("usuario", usuario);
+        //response.put("usuario", usuario);
         response.put("mensaje", "Usuario registrado!");
         return new ResponseEntity<Map<String, Object>>(response, HttpStatus.CREATED);
     }
@@ -146,8 +149,49 @@ public class UsuarioController {
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        response.put("usuario", usuarioEncontrado);
+        //response.put("usuario", usuarioEncontrado);
         response.put("mensaje", "Usuario actualizado!");
+        return new ResponseEntity<Map<String, Object>>(response, HttpStatus.CREATED);
+    }
+
+    @ApiOperation(value = "Método de cambio de contraseña del usuario", response = ResponseEntity.class)
+    @ApiResponses(value = { @ApiResponse(code = 200, message = " "),
+            @ApiResponse(code = 201, message = "Contraseña actualizada"), @ApiResponse(code = 401, message = " "),
+            @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = " "),
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de actualizar la contraseña. Inténtelo mas tarde") })
+    @PutMapping(value = "/cambiar-password", produces = "application/json")
+    @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO', 'ROLE_USER')")
+    public ResponseEntity<?> cambiarContraseñaUsuario(@RequestBody ChangePassword dtoPassword,
+            Authentication authentication) {
+        Map<String, Object> response = new HashMap<>();
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        Usuario usuarioAntuguo = usuarioService.findByEmail(userDetails.getUsername()).get();
+        //response.put("usuarioAntuguo", usuarioAntuguo);
+        dtoPassword.setId(usuarioAntuguo.getId());
+        try {
+            if (dtoPassword.getPasswordActual().equals("") || dtoPassword.getNuevaPassword().equals("")
+                    || dtoPassword.getConfirmarPassword().equals("")) {
+                response.put("mensaje", "Rellenar todos los campos!");
+                return new ResponseEntity<Map<String, Object>>(response, HttpStatus.BAD_REQUEST);
+            }
+            usuarioService.cambiarPassword(dtoPassword);
+        } catch (NoSuchElementException e) {
+            response.put("mensaje", "Lo sentimos, el usuario no existe!");
+            response.put("error", e.getMessage());
+            return new ResponseEntity<Map<String, Object>>(response, HttpStatus.NOT_FOUND);
+        } catch (DataIntegrityViolationException e) {
+            response.put("mensaje", "Lo sentimos, hubo un error a la hora de actualizar la contraseña!");
+            response.put("error", e.getMessage());
+            return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Exception e) {
+            response.put("mensaje", "Lo sentimos, hubo un error a la hora de actualizar la contraseña!");
+            response.put("error", e.getMessage());
+            return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        //Usuario usuarioActualizado = usuarioService.findByEmail(userDetails.getUsername()).get();
+        //response.put("usuarioActualizado", usuarioActualizado);
+        response.put("mensaje", "Contraseña actualizada!");
         return new ResponseEntity<Map<String, Object>>(response, HttpStatus.CREATED);
     }
 
@@ -194,10 +238,10 @@ public class UsuarioController {
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<?> eliminarUsuario(@PathVariable Long id) {
         Map<String, Object> response = new HashMap<>();
-        Usuario usuarioEncontrado = null;
+        //Usuario usuarioEncontrado = null;
         try {
-            usuarioEncontrado = usuarioService.findById(id).get();
-            response.put("usuario", usuarioEncontrado);
+            //usuarioEncontrado = usuarioService.findById(id).get();
+            //response.put("usuario", usuarioEncontrado);
             usuarioService.delete(id);
             response.put("mensaje", "Usuario eliminado!");
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.OK);

@@ -3,8 +3,10 @@ package com.biblioteca.backend.service;
 import java.util.List;
 import java.util.Optional;
 import com.biblioteca.backend.model.Usuario;
+import com.biblioteca.backend.model.dto.ChangePassword;
 import com.biblioteca.backend.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,6 +15,9 @@ public class UsuarioServiceImpl implements IUsuarioService {
 
     @Autowired
     private UsuarioRepository repository;
+
+    @Autowired
+    private BCryptPasswordEncoder passwordEncoder;
 
     @Override
     @Transactional(readOnly = true)
@@ -48,6 +53,28 @@ public class UsuarioServiceImpl implements IUsuarioService {
     @Transactional
     public void delete(Long id) {
         repository.deleteById(id);
+    }
+
+    @Override
+    public Usuario cambiarPassword(ChangePassword dtoPassword) throws Exception {
+        Usuario usuario = findById(dtoPassword.getId()).orElseThrow();
+
+        if (!passwordEncoder.matches(dtoPassword.getPasswordActual(), usuario.getPassword())) {
+            throw new Exception("La contraseña actual es incorrecta");
+        }
+
+        if (passwordEncoder.matches(dtoPassword.getNuevaPassword(), usuario.getPassword())) {
+            throw new Exception("La nueva contraseña debe ser diferente a la actual");
+        }
+
+        if (!dtoPassword.getNuevaPassword().equals(dtoPassword.getConfirmarPassword())) {
+            throw new Exception("Las contraseñas no coinciden");
+        }
+
+        String passwordHash = passwordEncoder.encode(dtoPassword.getNuevaPassword());
+		usuario.setPassword(passwordHash);
+
+        return repository.save(usuario);
     }
 
 }

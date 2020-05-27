@@ -3,6 +3,7 @@ package com.biblioteca.backend.service;
 import java.util.List;
 import java.util.Optional;
 import com.biblioteca.backend.model.Usuario;
+import com.biblioteca.backend.model.dto.ChangePassword;
 
 public interface IUsuarioService {
 
@@ -17,4 +18,6 @@ public interface IUsuarioService {
     public Usuario save(Usuario usuario);
 
     public void delete(Long id);
+
+    public Usuario cambiarPassword(ChangePassword dtoPassword) throws Exception;
 }

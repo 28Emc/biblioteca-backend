@@ -13,6 +13,8 @@ import javax.persistence.PreUpdate;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
+import javax.persistence.Transient;
+
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
@@ -62,6 +64,11 @@ public class Usuario {
     @Column(name = "password", length = 255, nullable = false)
     @ApiModelProperty(notes = "Contraseña del usuario", required = true, example = "$2a$10$mpnvIqpwTF6BJNlr4pXwOOCXk7KZiqZftFHt3IxwZ5ODYMfIBtHg6")
     private String password;
+
+    @Transient
+    @Column(name = "confirmar_password", length = 255, nullable = true)
+    @ApiModelProperty(notes = "Confirmar Contraseña del usuario", required = false, example = "$2a$10$mpnvIqpwTF6BJNlr4pXwOOCXk7KZiqZftFHt3IxwZ5ODYMfIBtHg6")
+	private String passwordConfirmacion;
 
     @Column(name = "estado", nullable = false)
     @ApiModelProperty(notes = "Estado del usuario", required = true, example = "true")
