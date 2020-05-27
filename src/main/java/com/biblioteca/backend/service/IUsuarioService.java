@@ -1,12 +1,20 @@
 package com.biblioteca.backend.service;
 
+import java.util.List;
 import java.util.Optional;
 import com.biblioteca.backend.model.Usuario;
 
 public interface IUsuarioService {
-    Optional<Usuario> findByUsuario(String username);
 
-    Optional<Usuario> findByEmail(String email);
+    public List<Usuario> findAll();
+    
+    public Optional<Usuario> findById(Long id);
+    
+    public Optional<Usuario> findByUsuario(String username);
 
-    Usuario save(Usuario usuario);
+    public Optional<Usuario> findByEmail(String email);
+
+    public Usuario save(Usuario usuario);
+
+    public void delete(Long id);
 }

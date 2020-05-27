@@ -83,15 +83,16 @@ public class IndexController {
             @ApiResponse(code = 403, message = "No tiene permiso de acceder a este recurso"),
             @ApiResponse(code = 404, message = " "),
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de realizar la consulta a la base de datos. Inténtelo mas tarde") })
-    @GetMapping(value = "/logged-only", produces = "application/json")
+    @GetMapping(value = "/biblioteca", produces = "application/json")
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO', 'ROLE_USER')")
-    public ResponseEntity<?> user(Authentication authentication) {
+    public ResponseEntity<?> verBiblioteca(Authentication authentication) {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         Map<String, Object> response = new HashMap<>();
         try {
             Optional<Usuario> usuario = usuarioService.findByEmail(userDetails.getUsername());
             response.put("mensaje", "Bienvenido " + usuario.get().getUsuario()
                     + ", se encuentra una zona de acceso reservada a los usuarios autenticados.");
+            response.put("libros", "Esto va a ser un listado de libros");
         } catch (Exception e) {
             response.put("mensaje", e);
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.NOT_FOUND);

@@ -7,6 +7,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
@@ -25,6 +26,8 @@ public class Role {
     @ApiModelProperty(notes = "Nombre del rol", required = true, example = "ROLE_ADMIN")
     private String authority;
 
+    // 
+    @JsonIgnore
     @OneToOne(mappedBy = "rol")
     private Usuario usuario;
 
