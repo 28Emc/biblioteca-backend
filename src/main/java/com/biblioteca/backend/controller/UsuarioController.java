@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -121,19 +122,17 @@ public class UsuarioController {
         return new ResponseEntity<Map<String, Object>>(response, HttpStatus.CREATED);
     }
 
-    @ApiOperation(value = "Método de recuperación de contraseña del usuario con email y DNI", response = ResponseEntity.class)
+    @ApiOperation(value = "Método de recuperación de contraseña del usuario mediante email y DNI", response = ResponseEntity.class)
     @ApiResponses(value = { @ApiResponse(code = 200, message = "Solicitud de recuperación de contraseña enviada"),
             @ApiResponse(code = 201, message = " "),
             @ApiResponse(code = 400, message = "Lo sentimos, su cuenta està deshabilitada. Ir a 'Reactivación de cuenta'"),
             @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
             @ApiResponse(code = 404, message = "Lo sentimos, el DNI y/o correo ingresados son incorrectos"),
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de enviar la solicitud. Inténtelo mas tarde") })
-    @PostMapping(value = "/recuperar-password", produces = "application/json")
-    @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO', 'ROLE_USER')")
-    public ResponseEntity<?> recuperarContraseñaUsuario(@RequestBody AccountRecovery dtoAccountRecovery,
-            Authentication authentication) {
+    @PostMapping(value = "/recuperar-cuenta/recuperar-password", produces = "application/json")
+    public ResponseEntity<?> enviarSolicitudRecuperacionContraseñaUsuario(
+            @RequestBody AccountRecovery dtoAccountRecovery) {
         Map<String, Object> response = new HashMap<>();
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         try {
             Optional<Usuario> usuario = usuarioService.findByNroDocumentoAndEmail(dtoAccountRecovery.getNroDocumento(),
                     dtoAccountRecovery.getEmail());
@@ -160,11 +159,95 @@ public class UsuarioController {
         response.put("mensaje", "Solicitud de recuperación de contraseña enviada!");
 
         /*
-         * TODO : REDIRECCIONAR A PANTALLA DE CONFIRMA DE ENVÍO DE CORREO O SIMPLEMENTE
-         * MANDAR EL MENSAJE DE CONFIRMA
+         * TODO : REDIRECCIONAR A PANTALLA DE CONFIRMA DE ENVÍO DE CORREO (SE PUEDE
+         * REDIRECCIONAR EN ANGULAR) O SIMPLEMENTE MANDAR EL MENSAJE DE CONFIRMA
          */
 
         return new ResponseEntity<Map<String, Object>>(response, HttpStatus.OK);
+    }
+
+    @ApiOperation(value = "Método de validación de token de recuperación de contraseña de usuario", response = ResponseEntity.class)
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Token validado"),
+            @ApiResponse(code = 201, message = " "), @ApiResponse(code = 400, message = " "),
+            @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
+            @ApiResponse(code = 404, message = "Lo sentimos, el enlace es inválido o el token ya caducó"),
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de procesar la solicitud. Inténtelo mas tarde") })
+    @GetMapping(value = "/recuperar-cuenta/recuperar-password/confirmar-token", produces = "application/json")
+    public ResponseEntity<?> validarTokenRecuperacionContraseñaUsuario(@RequestParam("token") String token) {
+        Map<String, Object> response = new HashMap<>();
+        ChangePassword dtoPassword = null;
+        try {
+            TokenConfirma tokenConfirma = tokenConfirmaService.findByTokenConfirma(token).get();
+            if (token != null) {
+                dtoPassword = new ChangePassword();
+                Usuario usuario = usuarioService.findByEmail(tokenConfirma.getUsuario().getEmail()).get();
+                dtoPassword.setId(usuario.getId());
+                response.put("changePassword", dtoPassword);
+            }
+        } catch (NoSuchElementException e) {
+            response.put("mensaje", "Lo sentimos, el enlace es inválido o el token ya caducó!");
+            response.put("error", e.getMessage());
+            return new ResponseEntity<Map<String, Object>>(response, HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            response.put("mensaje", "Lo sentimos, hubo un error a la hora de enviar la solicitud! Inténtelo mas tarde");
+            response.put("error", e.getMessage());
+            return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        response.put("mensaje", "Token validado!");
+
+        /*
+         * TODO : REDIRECCIONAR A PANTALLA DE ACTUALIZACIÓN DE CONTRASEÑA (SE PUEDE
+         * REDIRECCIONAR EN ANGULAR)
+         */
+
+        return new ResponseEntity<Map<String, Object>>(response, HttpStatus.OK);
+    }
+
+    @ApiOperation(value = "Método de cambio de contraseña del usuario (afuera del sistema)", response = ResponseEntity.class)
+    @ApiResponses(value = { @ApiResponse(code = 200, message = " "),
+            @ApiResponse(code = 201, message = "Contraseña recuperada y actualizada"),
+            @ApiResponse(code = 400, message = "Rellenar todos los campos"), @ApiResponse(code = 401, message = " "),
+            @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = " "),
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de actualizar la contraseña. Inténtelo mas tarde") })
+    @PostMapping(value = "/recuperar-cuenta/recuperar-password/confirmar-token", produces = "application/json")
+    public ResponseEntity<?> recuperarContraseñaUsuario(@RequestBody ChangePassword dtoPassword) {
+        Map<String, Object> response = new HashMap<>();
+        //Usuario usuarioNuevo = null;
+        //Usuario usuarioAntiguo = null;
+        dtoPassword.setPasswordActual(null);
+        try {
+            if (dtoPassword.getNuevaPassword().equals("") || dtoPassword.getConfirmarPassword().equals("")) {
+                response.put("mensaje", "Rellenar todos los campos!");
+                return new ResponseEntity<Map<String, Object>>(response, HttpStatus.BAD_REQUEST);
+            }
+            //usuarioNuevo = usuarioService.findById(dtoPassword.getId()).get();
+            //response.put("usuarioAntiguo", usuarioAntiguo);
+            //usuarioAntiguo = usuarioNuevo;
+            usuarioService.recuperarPassword(dtoPassword);
+
+            /*
+             * TODO : ELIMINAR EL TOKEN UTILIZADO DE LA BBDD AL MOMENTO DE RECUPERAR LA CONTRASEÑA
+             */
+            
+            /*
+             * TODO : AQUÍ VA LA LÓGICA DE ENVÍO DEL CORREO DE CONFIRMACIÓN DE RECUPERACIÓN
+             * DE CONTRASEÑA
+             */
+
+        } catch (DataIntegrityViolationException e) {
+            response.put("mensaje", "Lo sentimos, hubo un error a la hora de actualizar la contraseña!");
+            response.put("error", e.getMessage());
+            return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Exception e) {
+            response.put("mensaje", "Lo sentimos, hubo un error a la hora de actualizar la contraseña!");
+            response.put("error", e.getMessage());
+            return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        //response.put("usuarioNuevo", usuarioNuevo);
+        response.put("mensaje", "Contraseña recuperada y actualizada!");
+        return new ResponseEntity<Map<String, Object>>(response, HttpStatus.CREATED);
     }
 
     @ApiOperation(value = "Método de actualización de usuarios", response = ResponseEntity.class)
@@ -209,7 +292,7 @@ public class UsuarioController {
         return new ResponseEntity<Map<String, Object>>(response, HttpStatus.CREATED);
     }
 
-    @ApiOperation(value = "Método de cambio de contraseña del usuario", response = ResponseEntity.class)
+    @ApiOperation(value = "Método de cambio de contraseña del usuario (dentro del sistema)", response = ResponseEntity.class)
     @ApiResponses(value = { @ApiResponse(code = 200, message = " "),
             @ApiResponse(code = 201, message = "Contraseña actualizada"), @ApiResponse(code = 401, message = " "),
             @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = " "),

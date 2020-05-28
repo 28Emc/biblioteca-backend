@@ -22,4 +22,6 @@ public interface IUsuarioService {
     public void delete(Long id);
 
     public Usuario cambiarPassword(ChangePassword dtoPassword) throws Exception;
+
+    public Usuario recuperarPassword(ChangePassword dtoPassword) throws Exception;
 }

@@ -78,6 +78,20 @@ public class UsuarioServiceImpl implements IUsuarioService {
     }
 
     @Override
+    public Usuario recuperarPassword(ChangePassword dtoPassword) throws Exception {
+        Usuario usuario = findById(dtoPassword.getId()).get();
+        if (passwordEncoder.matches(dtoPassword.getNuevaPassword(), usuario.getPassword())) {
+            throw new Exception("La nueva contraseña debe ser diferente a la actual");
+        }
+        if (!dtoPassword.getNuevaPassword().equals(dtoPassword.getConfirmarPassword())) {
+            throw new Exception("Las contraseñas no coinciden");
+        }
+        String passwordHash = passwordEncoder.encode(dtoPassword.getNuevaPassword());
+        usuario.setPassword(passwordHash);
+        return repository.save(usuario);
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public Optional<Usuario> findByNroDocumentoAndEmail(String nroDocumento, String email) {
         return repository.findByNroDocumentoAndEmail(nroDocumento, email);
