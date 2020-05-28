@@ -4,8 +4,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Optional;
+import com.biblioteca.backend.model.TokenConfirma;
 import com.biblioteca.backend.model.Usuario;
+import com.biblioteca.backend.model.dto.AccountRecovery;
 import com.biblioteca.backend.model.dto.ChangePassword;
+import com.biblioteca.backend.service.ITokenConfirmaService;
 import com.biblioteca.backend.service.IUsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -22,6 +26,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -34,6 +40,9 @@ public class UsuarioController {
 
     @Autowired
     private IUsuarioService usuarioService;
+
+    @Autowired
+    private ITokenConfirmaService tokenConfirmaService;
 
     @ApiOperation(value = "Método de listado de usuarios", response = ResponseEntity.class)
     @ApiResponses(value = { @ApiResponse(code = 200, message = " "),
@@ -107,9 +116,55 @@ public class UsuarioController {
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        //response.put("usuario", usuario);
+        // response.put("usuario", usuario);
         response.put("mensaje", "Usuario registrado!");
         return new ResponseEntity<Map<String, Object>>(response, HttpStatus.CREATED);
+    }
+
+    @ApiOperation(value = "Método de recuperación de contraseña del usuario con email y DNI", response = ResponseEntity.class)
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Solicitud de recuperación de contraseña enviada"),
+            @ApiResponse(code = 201, message = " "),
+            @ApiResponse(code = 400, message = "Lo sentimos, su cuenta està deshabilitada. Ir a 'Reactivación de cuenta'"),
+            @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
+            @ApiResponse(code = 404, message = "Lo sentimos, el DNI y/o correo ingresados son incorrectos"),
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de enviar la solicitud. Inténtelo mas tarde") })
+    @PostMapping(value = "/recuperar-password", produces = "application/json")
+    @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO', 'ROLE_USER')")
+    public ResponseEntity<?> recuperarContraseñaUsuario(@RequestBody AccountRecovery dtoAccountRecovery,
+            Authentication authentication) {
+        Map<String, Object> response = new HashMap<>();
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        try {
+            Optional<Usuario> usuario = usuarioService.findByNroDocumentoAndEmail(dtoAccountRecovery.getNroDocumento(),
+                    dtoAccountRecovery.getEmail());
+            if (!usuario.isPresent()) {
+                response.put("mensaje", "Lo sentimos, el DNI y/o correo ingresados son incorrectos!");
+                return new ResponseEntity<Map<String, Object>>(response, HttpStatus.NOT_FOUND);
+            } else if (!usuario.get().isActivo()) {
+                response.put("mensaje", "Lo sentimos, su cuenta està deshabilitada. Ir a 'Reactivación de cuenta'");
+                return new ResponseEntity<Map<String, Object>>(response, HttpStatus.BAD_REQUEST);
+            }
+            TokenConfirma tokenConfirma = new TokenConfirma(usuario.get(), "RECUPERAR CONTRASEÑA");
+            tokenConfirmaService.save(tokenConfirma);
+            response.put("tokenConfirma", tokenConfirma.getTokenConfirma());
+            String baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
+
+            /* TODO : AQUÍ VA LA LÓGICA DE ENVÍO DEL CORREO DE CONFIRMACIÓN */
+
+        } catch (Exception e) {
+            response.put("mensaje", "Lo sentimos, hubo un error a la hora de enviar la solicitud! Inténtelo mas tarde");
+            response.put("error", e.getMessage());
+            return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        response.put("mensaje", "Solicitud de recuperación de contraseña enviada!");
+
+        /*
+         * TODO : REDIRECCIONAR A PANTALLA DE CONFIRMA DE ENVÍO DE CORREO O SIMPLEMENTE
+         * MANDAR EL MENSAJE DE CONFIRMA
+         */
+
+        return new ResponseEntity<Map<String, Object>>(response, HttpStatus.OK);
     }
 
     @ApiOperation(value = "Método de actualización de usuarios", response = ResponseEntity.class)
@@ -149,7 +204,7 @@ public class UsuarioController {
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        //response.put("usuario", usuarioEncontrado);
+        // response.put("usuario", usuarioEncontrado);
         response.put("mensaje", "Usuario actualizado!");
         return new ResponseEntity<Map<String, Object>>(response, HttpStatus.CREATED);
     }
@@ -166,7 +221,7 @@ public class UsuarioController {
         Map<String, Object> response = new HashMap<>();
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         Usuario usuarioAntuguo = usuarioService.findByEmail(userDetails.getUsername()).get();
-        //response.put("usuarioAntuguo", usuarioAntuguo);
+        // response.put("usuarioAntuguo", usuarioAntuguo);
         dtoPassword.setId(usuarioAntuguo.getId());
         try {
             if (dtoPassword.getPasswordActual().equals("") || dtoPassword.getNuevaPassword().equals("")
@@ -189,8 +244,9 @@ public class UsuarioController {
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        //Usuario usuarioActualizado = usuarioService.findByEmail(userDetails.getUsername()).get();
-        //response.put("usuarioActualizado", usuarioActualizado);
+        // Usuario usuarioActualizado =
+        // usuarioService.findByEmail(userDetails.getUsername()).get();
+        // response.put("usuarioActualizado", usuarioActualizado);
         response.put("mensaje", "Contraseña actualizada!");
         return new ResponseEntity<Map<String, Object>>(response, HttpStatus.CREATED);
     }
@@ -238,10 +294,10 @@ public class UsuarioController {
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<?> eliminarUsuario(@PathVariable Long id) {
         Map<String, Object> response = new HashMap<>();
-        //Usuario usuarioEncontrado = null;
+        // Usuario usuarioEncontrado = null;
         try {
-            //usuarioEncontrado = usuarioService.findById(id).get();
-            //response.put("usuario", usuarioEncontrado);
+            // usuarioEncontrado = usuarioService.findById(id).get();
+            // response.put("usuario", usuarioEncontrado);
             usuarioService.delete(id);
             response.put("mensaje", "Usuario eliminado!");
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.OK);
@@ -258,7 +314,7 @@ public class UsuarioController {
 
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO', 'ROLE_USER')")
     @GetMapping(value = "/cancelar")
-    public String cancelarPerfil() {
+    public String cancelar() {
         return "redirect:/biblioteca";
     }
 

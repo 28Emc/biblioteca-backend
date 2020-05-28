@@ -72,9 +72,15 @@ public class UsuarioServiceImpl implements IUsuarioService {
         }
 
         String passwordHash = passwordEncoder.encode(dtoPassword.getNuevaPassword());
-		usuario.setPassword(passwordHash);
+        usuario.setPassword(passwordHash);
 
         return repository.save(usuario);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<Usuario> findByNroDocumentoAndEmail(String nroDocumento, String email) {
+        return repository.findByNroDocumentoAndEmail(nroDocumento, email);
     }
 
 }

@@ -15,6 +15,8 @@ public interface IUsuarioService {
 
     public Optional<Usuario> findByEmail(String email);
 
+    public Optional<Usuario> findByNroDocumentoAndEmail(String nroDocumento, String email); 
+
     public Usuario save(Usuario usuario);
 
     public void delete(Long id);
