@@ -25,10 +25,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -100,26 +100,89 @@ public class UsuarioController {
         return new ResponseEntity<Map<String, Object>>(response, HttpStatus.FOUND);
     }
 
-    @ApiOperation(value = "Método de registro de usuarios (hecho para usuarios nuevos)", response = ResponseEntity.class)
+    @ApiOperation(value = "Método de registro de usuarios (hecho para usuarios nuevos) con cuenta por activar", response = ResponseEntity.class)
     @ApiResponses(value = { @ApiResponse(code = 200, message = " "),
-            @ApiResponse(code = 201, message = "Usuario registrado"), @ApiResponse(code = 401, message = " "),
-            @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = " "),
+            @ApiResponse(code = 201, message = "Usuario registrado"),
+            @ApiResponse(code = 400, message = "Lo sentimos, el correo ya està asociado con otro usuario"),
+            @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
+            @ApiResponse(code = 404, message = " "),
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de registrar el usuario. Inténtelo mas tarde") })
     @PostMapping(value = "/crear-usuario", produces = "application/json")
     public ResponseEntity<?> crearUsuario(@RequestBody Usuario usuario) {
         Map<String, Object> response = new HashMap<>();
+        Optional<Usuario> usuarioEncontrado = null;
         try {
-            usuario.setActivo(true);
-            usuarioService.save(usuario);
+            usuarioEncontrado = usuarioService.findByEmail(usuario.getEmail());
+            if (usuarioEncontrado.isPresent()) {
+                response.put("mensaje", "Lo sentimos, el correo ya està asociado con otro usuario!");
+                return new ResponseEntity<Map<String, Object>>(response, HttpStatus.BAD_REQUEST);
+            } else {
+                usuario.setActivo(false);
+                usuarioService.save(usuario);
+                TokenConfirma tokenConfirma = new TokenConfirma(usuario, "ACTIVAR CUENTA");
+                tokenConfirmaService.save(tokenConfirma);
+                response.put("tokenValidacion", tokenConfirma.getTokenConfirma());
+            }
+            // String baseUrl =
+            // ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
+
+            /* TODO : AQUÍ VA LA LÓGICA DE ENVÍO DEL CORREO DE VALIDACIÓN */
+
         } catch (DataIntegrityViolationException e) {
             response.put("mensaje", "Lo sentimos, hubo un error a la hora de registrar el usuario!");
             response.put("error", e.getMessage());
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        // response.put("usuario", usuario);
-        response.put("mensaje", "Usuario registrado!");
+        response.put("mensaje", "Usuario registrado! Se ha enviado un email de verificación para activar tu cuenta");
+
+        /*
+         * TODO : REDIRECCIONAR A PANTALLA DE CONFIRMA DE REGISTRO DE USUARIO (SE PUEDE
+         * REDIRECCIONAR EN ANGULAR) O SIMPLEMENTE MANDAR EL MENSAJE DE CONFIRMA
+         */
+
         return new ResponseEntity<Map<String, Object>>(response, HttpStatus.CREATED);
+    }
+
+    @ApiOperation(value = "Método de activación de cuenta de usuario mediante token", response = ResponseEntity.class)
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Token validado y usuario activado. Inicia sesión con sus nuevas credenciales"),
+            @ApiResponse(code = 201, message = " "), @ApiResponse(code = 400, message = " "),
+            @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
+            @ApiResponse(code = 404, message = "Lo sentimos, el enlace es inválido o el token ya caducó"),
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de procesar la solicitud. Inténtelo mas tarde") })
+    @RequestMapping(value = "/activar-cuenta", produces = "application/json", method = { RequestMethod.GET,
+            RequestMethod.POST })
+    public ResponseEntity<?> validarTokenAcivacionCuentaUsuario(@RequestParam("token") String token) {
+        Map<String, Object> response = new HashMap<>();
+        TokenConfirma tokenConfirma = null;
+        Usuario usuario = null;
+        try {
+            tokenConfirma = tokenConfirmaService.findByTokenConfirma(token).get();
+            if (tokenConfirma != null) {
+                usuario = usuarioService.findByEmail(tokenConfirma.getUsuario().getEmail()).get();
+                usuario.setActivo(true);
+                usuarioService.save(usuario);
+                tokenConfirmaService.delete(tokenConfirma.getId());
+            }
+        } catch (NoSuchElementException e) {
+            response.put("mensaje", "Lo sentimos, el enlace es inválido o el token ya caducó!");
+            response.put("error", e.getMessage());
+            return new ResponseEntity<Map<String, Object>>(response, HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            response.put("mensaje", "Lo sentimos, hubo un error a la hora de enviar la solicitud! Inténtelo mas tarde");
+            response.put("error", e.getMessage());
+            return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        response.put("mensaje", "Token validado y usuario activado! Inicia sesión con sus nuevas credenciales");
+
+        /*
+         * TODO : REDIRECCIONAR A PANTALLA DE ACTUALIZACIÓN DE CONTRASEÑA (SE PUEDE
+         * REDIRECCIONAR EN ANGULAR)
+         */
+
+        return new ResponseEntity<Map<String, Object>>(response, HttpStatus.OK);
     }
 
     @ApiOperation(value = "Método de recuperación de contraseña del usuario mediante email y DNI", response = ResponseEntity.class)
@@ -146,7 +209,8 @@ public class UsuarioController {
             TokenConfirma tokenConfirma = new TokenConfirma(usuario.get(), "RECUPERAR CONTRASEÑA");
             tokenConfirmaService.save(tokenConfirma);
             response.put("tokenConfirma", tokenConfirma.getTokenConfirma());
-            String baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
+            // String baseUrl =
+            // ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
 
             /* TODO : AQUÍ VA LA LÓGICA DE ENVÍO DEL CORREO DE CONFIRMACIÓN */
 
@@ -176,13 +240,15 @@ public class UsuarioController {
     public ResponseEntity<?> validarTokenRecuperacionContraseñaUsuario(@RequestParam("token") String token) {
         Map<String, Object> response = new HashMap<>();
         ChangePassword dtoPassword = null;
+        TokenConfirma tokenConfirma = null;
         try {
-            TokenConfirma tokenConfirma = tokenConfirmaService.findByTokenConfirma(token).get();
+            tokenConfirma = tokenConfirmaService.findByTokenConfirma(token).get();
             if (token != null) {
                 dtoPassword = new ChangePassword();
                 Usuario usuario = usuarioService.findByEmail(tokenConfirma.getUsuario().getEmail()).get();
                 dtoPassword.setId(usuario.getId());
                 response.put("changePassword", dtoPassword);
+                tokenConfirmaService.delete(tokenConfirma.getId());
             }
         } catch (NoSuchElementException e) {
             response.put("mensaje", "Lo sentimos, el enlace es inválido o el token ya caducó!");
@@ -213,23 +279,19 @@ public class UsuarioController {
     @PostMapping(value = "/recuperar-cuenta/recuperar-password/confirmar-token", produces = "application/json")
     public ResponseEntity<?> recuperarContraseñaUsuario(@RequestBody ChangePassword dtoPassword) {
         Map<String, Object> response = new HashMap<>();
-        //Usuario usuarioNuevo = null;
-        //Usuario usuarioAntiguo = null;
+        // Usuario usuarioNuevo = null;
+        // Usuario usuarioAntiguo = null;
         dtoPassword.setPasswordActual(null);
         try {
             if (dtoPassword.getNuevaPassword().equals("") || dtoPassword.getConfirmarPassword().equals("")) {
                 response.put("mensaje", "Rellenar todos los campos!");
                 return new ResponseEntity<Map<String, Object>>(response, HttpStatus.BAD_REQUEST);
             }
-            //usuarioNuevo = usuarioService.findById(dtoPassword.getId()).get();
-            //response.put("usuarioAntiguo", usuarioAntiguo);
-            //usuarioAntiguo = usuarioNuevo;
+            // usuarioNuevo = usuarioService.findById(dtoPassword.getId()).get();
+            // response.put("usuarioAntiguo", usuarioAntiguo);
+            // usuarioAntiguo = usuarioNuevo;
             usuarioService.recuperarPassword(dtoPassword);
 
-            /*
-             * TODO : ELIMINAR EL TOKEN UTILIZADO DE LA BBDD AL MOMENTO DE RECUPERAR LA CONTRASEÑA
-             */
-            
             /*
              * TODO : AQUÍ VA LA LÓGICA DE ENVÍO DEL CORREO DE CONFIRMACIÓN DE RECUPERACIÓN
              * DE CONTRASEÑA
@@ -245,7 +307,7 @@ public class UsuarioController {
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        //response.put("usuarioNuevo", usuarioNuevo);
+        // response.put("usuarioNuevo", usuarioNuevo);
         response.put("mensaje", "Contraseña recuperada y actualizada!");
         return new ResponseEntity<Map<String, Object>>(response, HttpStatus.CREATED);
     }

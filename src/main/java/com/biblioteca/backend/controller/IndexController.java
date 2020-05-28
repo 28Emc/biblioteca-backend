@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -48,8 +49,8 @@ public class IndexController {
     // MÉTODO PARA VALIDAR USUARIO AL LOGUEARSE
     @ApiOperation(value = "Método de login de usuario mediante email y contraseña", response = ResponseEntity.class)
     @ApiResponses(value = { @ApiResponse(code = 200, message = "Bienvenido usuario"),
-            @ApiResponse(code = 401, message = " "),
-            @ApiResponse(code = 403, message = " "),
+            @ApiResponse(code = 400, message = "Lo sentimos, su cuenta está desactivada. Necesita activar su cuenta primero (revisar su correo)"),
+            @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
             @ApiResponse(code = 404, message = "El usuario o contraseña es invàlido! Intente de nuevo"),
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de realizar el login. Inténtelo mas tarde") })
     @PostMapping(value = "/login", produces = "application/json")
@@ -60,25 +61,31 @@ public class IndexController {
         try {
             authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
                     authenticationRequest.getUsername(), authenticationRequest.getPassword()));
+            // ... SI TIENE ÈXITO, AGREGO LOS DATOS DEL USUARIO AL OBJETO DEL TIPO
+            // USERDETAILS ...
+            final UserDetails userDetails = userDetailsService.loadUserByUsername(authenticationRequest.getUsername());
+            Usuario usuario = usuarioService.findByEmail(userDetails.getUsername()).get();
+            // ... GENERO EL TOKEN A PARTIR DEL USERDETAILS ...
+            final String jwt = jwtUtil.generateToken(userDetails);
+            // .. Y RETORNO EL TOKEN ...
+            response.put("mensaje", "Bienvenido " + usuario.getUsuario());
+            response.put("authenticationResponse", new AuthenticationResponse(jwt));
         } catch (BadCredentialsException e) {
-            // ... SI FALLA, MANDO UN ERROR
+            // ... SI FALLA LA AUTENTICACIÓN POR MALAS CREDENCIALES MANDO UN ERROR ...
             response.put("mensaje", "El usuario o contraseña es invàlido! Intente de nuevo");
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.NOT_FOUND);
+        } catch (DisabledException e) {
+            // ... SI FALLA LA AUTENTICACIÓN POR EL ESTADO INACTIVO MANDO OTRO ERROR.
+            response.put("mensaje", "Lo sentimos, su cuenta está desactivada! Necesita activar su cuenta primero (revisar su correo)");
+            return new ResponseEntity<Map<String, Object>>(response, HttpStatus.BAD_REQUEST);
         }
-        // ... SI TIENE ÈXITO, AGREGO LOS DATOS DEL USUARIO AL OBJETO DEL TIPO
-        // USERDETAILS ...
-        final UserDetails userDetails = userDetailsService.loadUserByUsername(authenticationRequest.getUsername());
-        Usuario usuario = usuarioService.findByEmail(userDetails.getUsername()).get();
-        // ... GENERO EL TOKEN A PARTIR DEL USERDETAILS ...
-        final String jwt = jwtUtil.generateToken(userDetails);
-        // .. Y RETORNO EL TOKEN.
-        response.put("mensaje", "Bienvenido " + usuario.getUsuario());
-        response.put("authenticationResponse", new AuthenticationResponse(jwt));
+
         return new ResponseEntity<Map<String, Object>>(response, HttpStatus.OK);
     }
 
     @ApiOperation(value = "Acceso a una zona permitida solamente a los usuarios autenticados", response = ResponseEntity.class)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = "Bienvenido, se encuentra una zona de acceso reservada a los usuarios autenticados"),
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Bienvenido, se encuentra una zona de acceso reservada a los usuarios autenticados"),
             @ApiResponse(code = 401, message = ""),
             @ApiResponse(code = 403, message = "No tiene permiso de acceder a este recurso"),
             @ApiResponse(code = 404, message = " "),

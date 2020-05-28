@@ -25,4 +25,10 @@ public class TokenConfirmaServiceImpl implements ITokenConfirmaService {
         return repository.save(tokenConfirma);
     }
 
+    @Override
+    @Transactional
+    public void delete(Long id) {
+        repository.deleteById(id);
+    }
+
 }

@@ -9,4 +9,6 @@ public interface ITokenConfirmaService {
 
     public TokenConfirma save(TokenConfirma tokenConfirma);
 
+    public void delete(Long id);
+
 }
