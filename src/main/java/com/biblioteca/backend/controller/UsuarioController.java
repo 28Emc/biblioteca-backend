@@ -9,9 +9,11 @@ import com.biblioteca.backend.model.TokenConfirma;
 import com.biblioteca.backend.model.Usuario;
 import com.biblioteca.backend.model.dto.AccountRecovery;
 import com.biblioteca.backend.model.dto.ChangePassword;
+import com.biblioteca.backend.service.EmailService;
 import com.biblioteca.backend.service.ITokenConfirmaService;
 import com.biblioteca.backend.service.IUsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +31,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -44,6 +47,12 @@ public class UsuarioController {
 
     @Autowired
     private ITokenConfirmaService tokenConfirmaService;
+
+    @Autowired
+    private EmailService emailService;
+
+    @Value("{spring.mail.username}")
+    private String emailFrom;
 
     @ApiOperation(value = "Método de listado de usuarios", response = ResponseEntity.class)
     @ApiResponses(value = { @ApiResponse(code = 200, message = " "),
@@ -62,7 +71,6 @@ public class UsuarioController {
             response.put("error", e.getMessage());
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.NOT_FOUND);
         }
-
         response.put("usuarios", usuarios);
         response.put("mensaje", "Usuarios encontrados!");
         return new ResponseEntity<Map<String, Object>>(response, HttpStatus.FOUND);
@@ -94,7 +102,6 @@ public class UsuarioController {
             response.put("error", e.getMessage());
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-
         response.put("usuario", usuario);
         response.put("mensaje", "Usuario encontrado!");
         return new ResponseEntity<Map<String, Object>>(response, HttpStatus.FOUND);
@@ -123,24 +130,20 @@ public class UsuarioController {
                 tokenConfirmaService.save(tokenConfirma);
                 response.put("tokenValidacion", tokenConfirma.getTokenConfirma());
             }
-            // String baseUrl =
-            // ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
-
-            /* TODO : AQUÍ VA LA LÓGICA DE ENVÍO DEL CORREO DE VALIDACIÓN */
-
+            String baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
+            Map<String, Object> model = new HashMap<>();
+            model.put("titulo", "Validar Correo");
+            model.put("enlace", baseUrl + "/activar-cuenta?token=" + response.get("tokenValidacion"));
+            model.put("from", "Biblioteca2020 " + "<" + emailFrom + ">");
+            model.put("to", usuario.getEmail());
+            model.put("subject", "Validar Correo | Biblioteca2020");
+            emailService.sendMail(model);
         } catch (DataIntegrityViolationException e) {
             response.put("mensaje", "Lo sentimos, hubo un error a la hora de registrar el usuario!");
             response.put("error", e.getMessage());
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-
         response.put("mensaje", "Usuario registrado! Se ha enviado un email de verificación para activar tu cuenta");
-
-        /*
-         * TODO : REDIRECCIONAR A PANTALLA DE CONFIRMA DE REGISTRO DE USUARIO (SE PUEDE
-         * REDIRECCIONAR EN ANGULAR) O SIMPLEMENTE MANDAR EL MENSAJE DE CONFIRMA
-         */
-
         return new ResponseEntity<Map<String, Object>>(response, HttpStatus.CREATED);
     }
 
@@ -176,12 +179,6 @@ public class UsuarioController {
         }
 
         response.put("mensaje", "Token validado y usuario activado! Inicia sesión con sus nuevas credenciales");
-
-        /*
-         * TODO : REDIRECCIONAR A PANTALLA DE ACTUALIZACIÓN DE CONTRASEÑA (SE PUEDE
-         * REDIRECCIONAR EN ANGULAR)
-         */
-
         return new ResponseEntity<Map<String, Object>>(response, HttpStatus.OK);
     }
 
@@ -221,12 +218,6 @@ public class UsuarioController {
         }
 
         response.put("mensaje", "Solicitud de recuperación de contraseña enviada!");
-
-        /*
-         * TODO : REDIRECCIONAR A PANTALLA DE CONFIRMA DE ENVÍO DE CORREO (SE PUEDE
-         * REDIRECCIONAR EN ANGULAR) O SIMPLEMENTE MANDAR EL MENSAJE DE CONFIRMA
-         */
-
         return new ResponseEntity<Map<String, Object>>(response, HttpStatus.OK);
     }
 
@@ -261,12 +252,6 @@ public class UsuarioController {
         }
 
         response.put("mensaje", "Token validado!");
-
-        /*
-         * TODO : REDIRECCIONAR A PANTALLA DE ACTUALIZACIÓN DE CONTRASEÑA (SE PUEDE
-         * REDIRECCIONAR EN ANGULAR)
-         */
-
         return new ResponseEntity<Map<String, Object>>(response, HttpStatus.OK);
     }
 
