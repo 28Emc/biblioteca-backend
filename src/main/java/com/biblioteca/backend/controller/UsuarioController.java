@@ -137,7 +137,7 @@ public class UsuarioController {
             model.put("from", "Biblioteca2020 " + "<" + emailFrom + ">");
             model.put("to", usuario.getEmail());
             model.put("subject", "Validar Correo | Biblioteca2020");
-            emailService.enviarEmailVerificacion(model);
+            emailService.enviarEmail(model);
         } catch (DataIntegrityViolationException e) {
             response.put("mensaje", "Lo sentimos, hubo un error a la hora de registrar el usuario!");
             response.put("error", e.getMessage());
@@ -177,7 +177,6 @@ public class UsuarioController {
             response.put("error", e.getMessage());
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-
         response.put("mensaje", "Token validado y usuario activado! Inicia sesión con sus nuevas credenciales");
         return new ResponseEntity<Map<String, Object>>(response, HttpStatus.OK);
     }
@@ -206,7 +205,7 @@ public class UsuarioController {
             TokenConfirma tokenConfirma = new TokenConfirma(usuario.get(), "RECUPERAR CONTRASEÑA");
             tokenConfirmaService.save(tokenConfirma);
             response.put("tokenValidacion", tokenConfirma.getTokenConfirma());
-            /* TODO : AQUÍ VA LA LÓGICA DE ENVÍO DEL CORREO DE CONFIRMACIÓN */
+            /* AQUÍ VA LA LÓGICA DE ENVÍO DEL CORREO DE CONFIRMACIÓN */
             String baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
             Map<String, Object> model = new HashMap<>();
             model.put("titulo", "Recuperar Password");
@@ -214,7 +213,7 @@ public class UsuarioController {
             model.put("from", "Biblioteca2020 " + "<" + emailFrom + ">");
             model.put("to", usuario.get().getEmail());
             model.put("subject", "Recuperar Password | Biblioteca2020");
-            emailService.enviarEmailRecuperacion(model);
+            emailService.enviarEmail(model);
         } catch (Exception e) {
             response.put("mensaje", "Lo sentimos, hubo un error a la hora de enviar la solicitud! Inténtelo mas tarde");
             response.put("error", e.getMessage());
@@ -280,17 +279,13 @@ public class UsuarioController {
             // response.put("usuarioAntiguo", usuarioAntiguo);
             // usuarioAntiguo = usuarioNuevo;
             usuarioService.recuperarPassword(dtoPassword);
-            /*
-             * TODO : AQUÍ VA LA LÓGICA DE ENVÍO DEL CORREO DE CONFIRMACIÓN DE RECUPERACIÓN
-             * DE CONTRASEÑA
-             */
             Map<String, Object> model = new HashMap<>();
             model.put("titulo", "Contraseña Actualizada");
             model.put("from", "Biblioteca2020 " + "<" + emailFrom + ">");
             model.put("usuario", usuarioNuevo.getUsuario());
             model.put("to", usuarioNuevo.getEmail());
             model.put("subject", "Contraseña Actualizada | Biblioteca2020");
-            emailService.enviarEmailActualizacionPass(model);
+            emailService.enviarEmail(model);
         } catch (DataIntegrityViolationException e) {
             response.put("mensaje", "Lo sentimos, hubo un error a la hora de actualizar la contraseña!");
             response.put("error", e.getMessage());
