@@ -3,7 +3,7 @@ package com.biblioteca.backend.service;
 import java.util.List;
 import java.util.Optional;
 import com.biblioteca.backend.model.Usuario;
-import com.biblioteca.backend.model.dto.ChangePassword;
+import com.biblioteca.backend.model.dto.Usuarios.ChangePassword;
 
 public interface IUsuarioService {
 

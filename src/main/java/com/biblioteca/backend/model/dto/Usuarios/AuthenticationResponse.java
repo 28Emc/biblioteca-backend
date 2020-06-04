@@ -1,4 +1,4 @@
-package com.biblioteca.backend.model.dto;
+package com.biblioteca.backend.model.dto.Usuarios;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
