@@ -49,7 +49,7 @@ public class IndexController {
     // MÉTODO PARA VALIDAR USUARIO AL LOGUEARSE
     @ApiOperation(value = "Método de login de usuario mediante email y contraseña", response = ResponseEntity.class)
     @ApiResponses(value = { @ApiResponse(code = 200, message = "Bienvenido usuario"),
-            @ApiResponse(code = 400, message = "Lo sentimos, su cuenta está desactivada. Necesita activar su cuenta primero (revisar su correo)"),
+            @ApiResponse(code = 400, message = "Lo sentimos, su cuenta está desactivada."),
             @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
             @ApiResponse(code = 404, message = "El usuario o contraseña es invàlido! Intente de nuevo"),
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de realizar el login. Inténtelo mas tarde") })
@@ -76,7 +76,7 @@ public class IndexController {
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.NOT_FOUND);
         } catch (DisabledException e) {
             // ... SI FALLA LA AUTENTICACIÓN POR EL ESTADO INACTIVO MANDO OTRO ERROR.
-            response.put("mensaje", "Lo sentimos, su cuenta está desactivada! Necesita activar su cuenta primero (revisar su correo)");
+            response.put("mensaje", "Lo sentimos, su cuenta está desactivada!");
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.BAD_REQUEST);
         }
 

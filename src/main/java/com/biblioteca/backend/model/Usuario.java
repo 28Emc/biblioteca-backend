@@ -1,12 +1,14 @@
 package com.biblioteca.backend.model;
 
 import java.util.Date;
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
 import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
@@ -14,13 +16,16 @@ import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import javax.persistence.Transient;
-
 import io.swagger.annotations.ApiModelProperty;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "tb_usuarios")
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Usuario {
 
     @Id
@@ -68,7 +73,7 @@ public class Usuario {
     @Transient
     @Column(name = "confirmar_password", length = 255, nullable = true)
     @ApiModelProperty(notes = "Confirmar Contraseña del usuario", required = false, example = "$2a$10$mpnvIqpwTF6BJNlr4pXwOOCXk7KZiqZftFHt3IxwZ5ODYMfIBtHg6")
-	private String passwordConfirmacion;
+    private String passwordConfirmacion;
 
     @Column(name = "estado", nullable = false)
     @ApiModelProperty(notes = "Estado del usuario", required = true, example = "true")
@@ -90,8 +95,14 @@ public class Usuario {
 
     // USER(1):ROLE(1)
     // CAMBIÈ AQUI DE LAZY A EAGER PARA MANEJAR ERROR NO SESSION
-    @OneToOne(fetch = FetchType.EAGER)
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "rol_id", referencedColumnName = "id")
     private Role rol;
+
+    // @JsonIgnore
+    @ManyToOne
+    @JoinColumn(name = "local_id", nullable = false)
+    private Local local;
 
     @PrePersist
     public void prePersist() {

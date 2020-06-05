@@ -97,4 +97,10 @@ public class UsuarioServiceImpl implements IUsuarioService {
         return repository.findByNroDocumentoAndEmail(nroDocumento, email);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<Usuario> findByLocal(Long id) {
+        return repository.findByLocal(id);
+    }
+
 }

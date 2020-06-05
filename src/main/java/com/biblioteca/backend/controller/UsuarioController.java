@@ -114,7 +114,7 @@ public class UsuarioController {
             @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
             @ApiResponse(code = 404, message = " "),
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de registrar el usuario. Inténtelo mas tarde") })
-    @PostMapping(value = "/crear-usuario", produces = "application/json")
+    @PostMapping(value = "/crear-usuario-nuevo", produces = "application/json")
     public ResponseEntity<?> crearUsuario(@RequestBody Usuario usuario) {
         Map<String, Object> response = new HashMap<>();
         Optional<Usuario> usuarioEncontrado = null;
@@ -186,7 +186,7 @@ public class UsuarioController {
             @ApiResponse(code = 201, message = " "),
             @ApiResponse(code = 400, message = "Lo sentimos, su cuenta està deshabilitada. Ir a 'Reactivación de cuenta'"),
             @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
-            @ApiResponse(code = 404, message = "Lo sentimos, el DNI y/o correo ingresados son incorrectos"),
+            @ApiResponse(code = 404, message = "Lo sentimos, el DNI y/o correo ingresados son incorrectos o el usuario no existe"),
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de enviar la solicitud. Inténtelo mas tarde") })
     @PostMapping(value = "/recuperar-cuenta/recuperar-password", produces = "application/json")
     public ResponseEntity<?> enviarSolicitudRecuperacionContraseñaUsuario(
@@ -196,7 +196,7 @@ public class UsuarioController {
             Optional<Usuario> usuario = usuarioService.findByNroDocumentoAndEmail(dtoAccountRecovery.getNroDocumento(),
                     dtoAccountRecovery.getEmail());
             if (!usuario.isPresent()) {
-                response.put("mensaje", "Lo sentimos, el DNI y/o correo ingresados son incorrectos!");
+                response.put("mensaje", "Lo sentimos, el DNI y/o correo ingresados son incorrectos o el usuario no existe!");
                 return new ResponseEntity<Map<String, Object>>(response, HttpStatus.NOT_FOUND);
             } else if (!usuario.get().isActivo()) {
                 response.put("mensaje", "Lo sentimos, su cuenta està deshabilitada. Ir a 'Reactivación de cuenta'");
@@ -370,6 +370,35 @@ public class UsuarioController {
         return new ResponseEntity<Map<String, Object>>(response, HttpStatus.OK);
     }
 
+    @ApiOperation(value = "Método de registro de usuarios", response = ResponseEntity.class)
+    @ApiResponses(value = { @ApiResponse(code = 200, message = " "),
+            @ApiResponse(code = 201, message = "Usuario registrado"),
+            @ApiResponse(code = 400, message = "Lo sentimos, el correo ya està asociado con otro usuario"),
+            @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
+            @ApiResponse(code = 404, message = " "),
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de registrar el usuario. Inténtelo mas tarde") })
+    @PostMapping(value = "/crear-usuario", produces = "application/json")
+    @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN')")
+    public ResponseEntity<?> crearUsuarioSinValidar(@RequestBody Usuario usuario) {
+        Map<String, Object> response = new HashMap<>();
+        Optional<Usuario> usuarioEncontrado = null;
+        try {
+            usuarioEncontrado = usuarioService.findByEmail(usuario.getEmail());
+            if (usuarioEncontrado.isPresent()) {
+                response.put("mensaje", "Lo sentimos, el correo ya està asociado con otro usuario!");
+                return new ResponseEntity<Map<String, Object>>(response, HttpStatus.BAD_REQUEST);
+            } else {
+                usuarioService.save(usuario);
+            }
+        } catch (DataIntegrityViolationException e) {
+            response.put("mensaje", "Lo sentimos, hubo un error a la hora de registrar el usuario!");
+            response.put("error", e.getMessage());
+            return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        response.put("mensaje", "Usuario registrado!");
+        return new ResponseEntity<Map<String, Object>>(response, HttpStatus.CREATED);
+    }
+
     @ApiOperation(value = "Método de actualización de usuarios", response = ResponseEntity.class)
     @ApiResponses(value = { @ApiResponse(code = 200, message = " "),
             @ApiResponse(code = 201, message = "Usuario actualizado"), @ApiResponse(code = 401, message = " "),
@@ -482,7 +511,6 @@ public class UsuarioController {
             response.put("error", e.getMessage());
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        response.put("usuario", usuarioEncontrado);
         response.put("mensaje", "Usuario deshabilitado!");
         return new ResponseEntity<Map<String, Object>>(response, HttpStatus.OK);
     }
@@ -493,7 +521,7 @@ public class UsuarioController {
             @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = "El usuario no existe"),
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de eliminar el usuario. Inténtelo mas tarde") })
     @DeleteMapping(value = "/eliminar-usuario/{id}", produces = "application/json")
-    @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyRole('ROLE_SYSADMIN')")
     public ResponseEntity<?> eliminarUsuario(@PathVariable Long id) {
         Map<String, Object> response = new HashMap<>();
         try {
@@ -509,12 +537,6 @@ public class UsuarioController {
             response.put("error", e.getMessage());
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-    }
-
-    @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO', 'ROLE_USER')")
-    @GetMapping(value = "/cancelar")
-    public String cancelar() {
-        return "redirect:/biblioteca";
     }
 
 }
