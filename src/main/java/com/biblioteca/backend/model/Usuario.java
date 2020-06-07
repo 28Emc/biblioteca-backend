@@ -24,8 +24,8 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(name = "tb_usuarios")
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 public class Usuario {
 
     @Id
@@ -94,12 +94,10 @@ public class Usuario {
     private Date fechaActualizacion;
 
     // USER(1):ROLE(1)
-    // CAMBIÈ AQUI DE LAZY A EAGER PARA MANEJAR ERROR NO SESSION
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "rol_id", referencedColumnName = "id")
     private Role rol;
 
-    // @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "local_id", nullable = false)
     private Local local;

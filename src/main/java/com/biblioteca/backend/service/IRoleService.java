@@ -6,4 +6,6 @@ import com.biblioteca.backend.model.Role;
 public interface IRoleService {
 
     public Optional<Role> findById(Long id);
+
+    public Optional<Role> findByAuthority(String authority);
 }

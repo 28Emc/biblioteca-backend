@@ -43,7 +43,7 @@ public class LocalController {
             @ApiResponse(code = 302, message = "Locales encontrados"), @ApiResponse(code = 401, message = " "),
             @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = " "),
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de buscar los locales. Inténtelo mas tarde") })
-    @GetMapping(value = "/listar-locales", produces = "application/json")
+    @GetMapping(value = "/locales", produces = "application/json")
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN')")
     public ResponseEntity<?> listarLocales() {
         Map<String, Object> response = new HashMap<>();
@@ -65,7 +65,7 @@ public class LocalController {
             @ApiResponse(code = 302, message = "Local encontrado"), @ApiResponse(code = 401, message = " "),
             @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = " "),
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de buscar el local. Inténtelo mas tarde") })
-    @GetMapping(value = "/buscar-local/{id}", produces = "application/json")
+    @GetMapping(value = "/locales/{id}", produces = "application/json")
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN')")
     public ResponseEntity<?> buscarLocal(@PathVariable Long id) {
         Map<String, Object> response = new HashMap<>();
@@ -98,7 +98,7 @@ public class LocalController {
             @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
             @ApiResponse(code = 404, message = " "),
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de registrar el local. Inténtelo mas tarde") })
-    @PostMapping(value = "/crear-local", produces = "application/json")
+    @PostMapping(value = "/locales", produces = "application/json")
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN')")
     public ResponseEntity<?> crearLocal(@RequestBody Local local) {
         Map<String, Object> response = new HashMap<>();
@@ -109,6 +109,7 @@ public class LocalController {
                 response.put("mensaje", "Lo sentimos, la dirección ya está asociada a otro local!");
                 return new ResponseEntity<Map<String, Object>>(response, HttpStatus.BAD_REQUEST);
             } else {
+                local.setActivo(true);
                 localService.save(local);
             }
         } catch (DataIntegrityViolationException e) {
@@ -125,7 +126,7 @@ public class LocalController {
             @ApiResponse(code = 201, message = "Local actualizado"), @ApiResponse(code = 401, message = " "),
             @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = "El local no existe"),
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de actualizar el local. Inténtelo mas tarde") })
-    @PutMapping(value = "/editar-local/{id}", produces = "application/json")
+    @PutMapping(value = "/locales/{id}", produces = "application/json")
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN')")
     public ResponseEntity<?> editarLocal(@RequestBody Local local, @PathVariable Long id) {
         Map<String, Object> response = new HashMap<>();
@@ -141,7 +142,7 @@ public class LocalController {
             localEncontrado.setObservaciones(local.getObservaciones());
             localEncontrado.setEmpresa(local.getEmpresa());
 
-            // SI EL ESTADO DEL LOCAL
+            // SI EL ESTADO DEL LOCAL ES FALSO, DEBO DESHABILITAR SUS "HIJOS" (EMPLEADOS Y LIBROS)
 
             localService.save(local);
         } catch (NoSuchElementException e) {
@@ -164,7 +165,7 @@ public class LocalController {
             @ApiResponse(code = 201, message = " "), @ApiResponse(code = 401, message = " "),
             @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = "El local no existe"),
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de deshabilitar el local. Inténtelo mas tarde") })
-    @PutMapping(value = "/deshabilitar-local/{id}", produces = "application/json")
+    @PutMapping(value = "/locales/{id}/deshabilitar-local", produces = "application/json")
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN')")
     public ResponseEntity<?> deshabilitarLocal(@PathVariable Long id) {
         Map<String, Object> response = new HashMap<>();
@@ -187,14 +188,6 @@ public class LocalController {
             // - GUARDO LOS CAMBIOS
             // NOTA PERSONAL : VER SI ESTE MÈTODO ES EFICIENTE O NO
             usuariosTotales = usuarioService.findByLocal(id);
-            /*
-             * for (int i = 0; i < usuarios.size(); i++) { usuarios.get(i).setActivo(false);
-             * usuarioService.save(usuarios.get(i)); }
-             */
-            /*
-             * for (Usuario usuarioItem : usuarios) { usuarioItem.setActivo(false);
-             * usuarioService.save(usuarioItem); }
-             */
             usuariosTotales.stream().forEach(u -> {
                 if (u.isActivo()) {
                     usuariosActivos.add(u);

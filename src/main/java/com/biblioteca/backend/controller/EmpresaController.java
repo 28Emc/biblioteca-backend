@@ -33,7 +33,7 @@ public class EmpresaController {
             @ApiResponse(code = 302, message = "Empresas encontradas"), @ApiResponse(code = 401, message = " "),
             @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = " "),
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de buscar las empresas. Inténtelo mas tarde") })
-    @GetMapping(value = "/listar-empresas", produces = "application/json")
+    @GetMapping(value = "/empresas", produces = "application/json")
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN')")
     public ResponseEntity<?> listarEmpresas() {
         Map<String, Object> response = new HashMap<>();
@@ -55,7 +55,7 @@ public class EmpresaController {
             @ApiResponse(code = 302, message = "Empresa encontrada"), @ApiResponse(code = 401, message = " "),
             @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = " "),
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de buscar la empresa. Inténtelo mas tarde") })
-    @GetMapping(value = "/buscar-empresa/{id}", produces = "application/json")
+    @GetMapping(value = "/empresas/{id}", produces = "application/json")
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN')")
     public ResponseEntity<?> buscarEmpresa(@PathVariable Long id) {
         Map<String, Object> response = new HashMap<>();
@@ -86,7 +86,7 @@ public class EmpresaController {
             @ApiResponse(code = 302, message = "Empresa encontrada"), @ApiResponse(code = 401, message = " "),
             @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = " "),
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de buscar la empresa. Inténtelo mas tarde") })
-    @GetMapping(value = "/buscar-empresa/{ruc}/{isActivo}", produces = "application/json")
+    @GetMapping(value = "/empresas/{ruc}/{isActivo}", produces = "application/json")
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN')")
     public ResponseEntity<?> buscarEmpresaPorRuc(@PathVariable String ruc, @PathVariable boolean isActivo) {
         Map<String, Object> response = new HashMap<>();

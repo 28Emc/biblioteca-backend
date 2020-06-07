@@ -2,6 +2,8 @@ package com.biblioteca.backend.service;
 
 import java.util.List;
 import java.util.Optional;
+import com.biblioteca.backend.model.Local;
+import com.biblioteca.backend.model.Role;
 import com.biblioteca.backend.model.Usuario;
 import com.biblioteca.backend.model.dto.Usuarios.ChangePassword;
 import com.biblioteca.backend.repository.UsuarioRepository;
@@ -15,6 +17,12 @@ public class UsuarioServiceImpl implements IUsuarioService {
 
     @Autowired
     private UsuarioRepository repository;
+
+    @Autowired
+    private IRoleService roleService;
+
+    @Autowired
+    private ILocalService localService;
 
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
@@ -41,6 +49,21 @@ public class UsuarioServiceImpl implements IUsuarioService {
     @Transactional(readOnly = true)
     public Optional<Usuario> findByEmail(String email) {
         return repository.findByEmail(email);
+    }
+
+    @Override
+    @Transactional
+    public Usuario saveNewUser(Usuario usuario) {
+        usuario.setActivo(false);
+        usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
+
+        Role rol = roleService.findByAuthority("ROLE_USER").get();
+        usuario.setRol(rol);
+
+        Local local = localService.findById(1L).get();
+        usuario.setLocal(local);
+
+        return repository.save(usuario);
     }
 
     @Override
@@ -88,6 +111,7 @@ public class UsuarioServiceImpl implements IUsuarioService {
         }
         String passwordHash = passwordEncoder.encode(dtoPassword.getNuevaPassword());
         usuario.setPassword(passwordHash);
+
         return repository.save(usuario);
     }
 

@@ -11,12 +11,18 @@ import org.springframework.transaction.annotation.Transactional;
 public class RoleServiceImpl implements IRoleService {
 
     @Autowired
-    private RoleRepository roleRepository;
+    private RoleRepository repository;
 
     @Override
     @Transactional(readOnly = true)
     public Optional<Role> findById(Long id) {
-        return roleRepository.findById(id);
+        return repository.findById(id);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<Role> findByAuthority(String authority) {
+        return repository.findByAuthority(authority);
     }
 
 }

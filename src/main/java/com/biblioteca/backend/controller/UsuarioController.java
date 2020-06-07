@@ -20,6 +20,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -51,6 +52,9 @@ public class UsuarioController {
     @Autowired
     private EmailService emailService;
 
+    @Autowired
+    private BCryptPasswordEncoder encoder;
+
     @Value("{spring.mail.username}")
     private String emailFrom;
 
@@ -59,7 +63,7 @@ public class UsuarioController {
             @ApiResponse(code = 302, message = "Usuarios encontrados"), @ApiResponse(code = 401, message = " "),
             @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = " "),
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de buscar los usuarios. Inténtelo mas tarde") })
-    @GetMapping(value = "/listar-usuarios", produces = "application/json")
+    @GetMapping(value = "/usuarios", produces = "application/json")
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
     public ResponseEntity<?> listarUsuarios() {
         Map<String, Object> response = new HashMap<>();
@@ -81,7 +85,7 @@ public class UsuarioController {
             @ApiResponse(code = 302, message = "Usuario encontrado"), @ApiResponse(code = 401, message = " "),
             @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = " "),
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de buscar el usuario. Inténtelo mas tarde") })
-    @GetMapping(value = "/buscar-usuario/{id}", produces = "application/json")
+    @GetMapping(value = "/usuarios/{id}", produces = "application/json")
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
     public ResponseEntity<?> buscarUsuario(@PathVariable Long id) {
         Map<String, Object> response = new HashMap<>();
@@ -114,7 +118,7 @@ public class UsuarioController {
             @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
             @ApiResponse(code = 404, message = " "),
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de registrar el usuario. Inténtelo mas tarde") })
-    @PostMapping(value = "/crear-usuario-nuevo", produces = "application/json")
+    @PostMapping(value = "/cuenta", produces = "application/json")
     public ResponseEntity<?> crearUsuario(@RequestBody Usuario usuario) {
         Map<String, Object> response = new HashMap<>();
         Optional<Usuario> usuarioEncontrado = null;
@@ -124,8 +128,7 @@ public class UsuarioController {
                 response.put("mensaje", "Lo sentimos, el correo ya està asociado con otro usuario!");
                 return new ResponseEntity<Map<String, Object>>(response, HttpStatus.BAD_REQUEST);
             } else {
-                usuario.setActivo(false);
-                usuarioService.save(usuario);
+                usuarioService.saveNewUser(usuario);
                 TokenConfirma tokenConfirma = new TokenConfirma(usuario, "ACTIVAR CUENTA");
                 tokenConfirmaService.save(tokenConfirma);
                 response.put("tokenValidacion", tokenConfirma.getTokenConfirma());
@@ -133,7 +136,7 @@ public class UsuarioController {
             String baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
             Map<String, Object> model = new HashMap<>();
             model.put("titulo", "Validar Correo");
-            model.put("enlace", baseUrl + "/activar-cuenta?token=" + response.get("tokenValidacion"));
+            model.put("enlace", baseUrl + "/cuenta/activar?token=" + response.get("tokenValidacion"));
             model.put("from", "Biblioteca2020 " + "<" + emailFrom + ">");
             model.put("to", usuario.getEmail());
             model.put("subject", "Validar Correo | Biblioteca2020");
@@ -154,9 +157,9 @@ public class UsuarioController {
             @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
             @ApiResponse(code = 404, message = "Lo sentimos, el enlace es inválido o el token ya caducó"),
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de procesar la solicitud. Inténtelo mas tarde") })
-    @RequestMapping(value = "/activar-cuenta", produces = "application/json", method = { RequestMethod.GET,
+    @RequestMapping(value = "/cuenta/activar", produces = "application/json", method = { RequestMethod.GET,
             RequestMethod.POST })
-    public ResponseEntity<?> validarTokenAcivacionCuentaUsuario(@RequestParam("token") String token) {
+    public ResponseEntity<?> validarTokenActivacionCuentaUsuario(@RequestParam("token") String token) {
         Map<String, Object> response = new HashMap<>();
         TokenConfirma tokenConfirma = null;
         Usuario usuario = null;
@@ -188,7 +191,7 @@ public class UsuarioController {
             @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
             @ApiResponse(code = 404, message = "Lo sentimos, el DNI y/o correo ingresados son incorrectos o el usuario no existe"),
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de enviar la solicitud. Inténtelo mas tarde") })
-    @PostMapping(value = "/recuperar-cuenta/recuperar-password", produces = "application/json")
+    @PostMapping(value = "/cuenta/recuperar-password", produces = "application/json")
     public ResponseEntity<?> enviarSolicitudRecuperacionContraseñaUsuario(
             @RequestBody AccountRecovery dtoAccountRecovery) {
         Map<String, Object> response = new HashMap<>();
@@ -196,7 +199,8 @@ public class UsuarioController {
             Optional<Usuario> usuario = usuarioService.findByNroDocumentoAndEmail(dtoAccountRecovery.getNroDocumento(),
                     dtoAccountRecovery.getEmail());
             if (!usuario.isPresent()) {
-                response.put("mensaje", "Lo sentimos, el DNI y/o correo ingresados son incorrectos o el usuario no existe!");
+                response.put("mensaje",
+                        "Lo sentimos, el DNI y/o correo ingresados son incorrectos o el usuario no existe!");
                 return new ResponseEntity<Map<String, Object>>(response, HttpStatus.NOT_FOUND);
             } else if (!usuario.get().isActivo()) {
                 response.put("mensaje", "Lo sentimos, su cuenta està deshabilitada. Ir a 'Reactivación de cuenta'");
@@ -208,8 +212,8 @@ public class UsuarioController {
             String baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
             Map<String, Object> model = new HashMap<>();
             model.put("titulo", "Recuperar Password");
-            model.put("enlace", baseUrl + "/recuperar-cuenta/recuperar-password/confirmar-token?token="
-                    + response.get("tokenValidacion"));
+            model.put("enlace",
+                    baseUrl + "/cuenta/recuperar-password/confirmar-token?token=" + response.get("tokenValidacion"));
             model.put("from", "Biblioteca2020 " + "<" + emailFrom + ">");
             model.put("to", usuario.get().getEmail());
             model.put("subject", "Recuperar Password | Biblioteca2020");
@@ -229,7 +233,7 @@ public class UsuarioController {
             @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
             @ApiResponse(code = 404, message = "Lo sentimos, el enlace es inválido o el token ya caducó"),
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de procesar la solicitud. Inténtelo mas tarde") })
-    @GetMapping(value = "/recuperar-cuenta/recuperar-password/confirmar-token", produces = "application/json")
+    @GetMapping(value = "/cuenta/recuperar-password/confirmar-token", produces = "application/json")
     public ResponseEntity<?> validarTokenRecuperacionContraseñaUsuario(@RequestParam("token") String token) {
         Map<String, Object> response = new HashMap<>();
         ChangePassword dtoPassword = null;
@@ -262,7 +266,7 @@ public class UsuarioController {
             @ApiResponse(code = 400, message = "Rellenar todos los campos"), @ApiResponse(code = 401, message = " "),
             @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = " "),
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de actualizar la contraseña. Inténtelo mas tarde") })
-    @PostMapping(value = "/recuperar-cuenta/recuperar-password/confirmar-token", produces = "application/json")
+    @PostMapping(value = "/cuenta/recuperar-password/confirmar-token", produces = "application/json")
     public ResponseEntity<?> recuperarContraseñaUsuario(@RequestBody ChangePassword dtoPassword) {
         Map<String, Object> response = new HashMap<>();
         Usuario usuarioNuevo = null;
@@ -301,7 +305,7 @@ public class UsuarioController {
             @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
             @ApiResponse(code = 404, message = "Lo sentimos, el DNI y/o correo ingresados son incorrectos"),
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de enviar la solicitud. Inténtelo mas tarde") })
-    @PostMapping(value = "/recuperar-cuenta/reactivar-cuenta", produces = "application/json")
+    @PostMapping(value = "/cuenta/reactivar-cuenta", produces = "application/json")
     public ResponseEntity<?> enviarSolicitudReactivacionCuentaUsuario(@RequestBody AccountRecovery dtoAccountRecovery) {
         Map<String, Object> response = new HashMap<>();
         try {
@@ -321,7 +325,7 @@ public class UsuarioController {
             String baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
             Map<String, Object> model = new HashMap<>();
             model.put("titulo", "Reactivacion Cuenta");
-            model.put("enlace", baseUrl + "/recuperar-cuenta/reactivar-cuenta/confirmar-token?token="
+            model.put("enlace", baseUrl + "/cuenta/reactivar-cuenta/confirmar-token?token="
                     + response.get("tokenValidacion"));
             model.put("from", "Biblioteca2020 " + "<" + emailFrom + ">");
             model.put("usuario", usuario.get().getUsuario());
@@ -344,7 +348,7 @@ public class UsuarioController {
             @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
             @ApiResponse(code = 404, message = "Lo sentimos, el enlace es inválido o el token ya caducó"),
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de procesar la solicitud. Inténtelo mas tarde") })
-    @GetMapping(value = "/recuperar-cuenta/reactivar-cuenta/confirmar-token", produces = "application/json")
+    @GetMapping(value = "/cuenta/reactivar-cuenta/confirmar-token", produces = "application/json")
     public ResponseEntity<?> validarTokenRecuperacionCuentaUsuario(@RequestParam("token") String token) {
         Map<String, Object> response = new HashMap<>();
         TokenConfirma tokenConfirma = null;
@@ -377,7 +381,7 @@ public class UsuarioController {
             @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
             @ApiResponse(code = 404, message = " "),
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de registrar el usuario. Inténtelo mas tarde") })
-    @PostMapping(value = "/crear-usuario", produces = "application/json")
+    @PostMapping(value = "/usuarios", produces = "application/json")
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<?> crearUsuarioSinValidar(@RequestBody Usuario usuario) {
         Map<String, Object> response = new HashMap<>();
@@ -388,6 +392,8 @@ public class UsuarioController {
                 response.put("mensaje", "Lo sentimos, el correo ya està asociado con otro usuario!");
                 return new ResponseEntity<Map<String, Object>>(response, HttpStatus.BAD_REQUEST);
             } else {
+                usuario.setPassword(encoder.encode(usuario.getPassword()));
+                usuario.setActivo(true);
                 usuarioService.save(usuario);
             }
         } catch (DataIntegrityViolationException e) {
@@ -404,7 +410,7 @@ public class UsuarioController {
             @ApiResponse(code = 201, message = "Usuario actualizado"), @ApiResponse(code = 401, message = " "),
             @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = "El usuario no existe"),
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de actualizar el usuario. Inténtelo mas tarde") })
-    @PutMapping(value = "/editar-usuario/{id}", produces = "application/json")
+    @PutMapping(value = "/usuarios/{id}", produces = "application/json")
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO', 'ROLE_USER')")
     public ResponseEntity<?> editarUsuario(@RequestBody Usuario usuario, @PathVariable Long id) {
         Map<String, Object> response = new HashMap<>();
@@ -423,6 +429,7 @@ public class UsuarioController {
             usuarioEncontrado.setDireccion(usuario.getDireccion());
             usuarioEncontrado.setCelular(usuario.getCelular());
             usuarioEncontrado.setEmail(usuario.getEmail());
+            // PARA CAMBIAR EL USUARIO, ES NECESARIO AUTENTICARME DE NUEVO
             usuarioEncontrado.setUsuario(usuario.getUsuario());
             usuarioEncontrado.setFotoUsuario(usuario.getFotoUsuario());
             usuarioService.save(usuarioEncontrado);
@@ -439,19 +446,19 @@ public class UsuarioController {
         return new ResponseEntity<Map<String, Object>>(response, HttpStatus.CREATED);
     }
 
-    @ApiOperation(value = "Método de cambio de contraseña del usuario (dentro del sistema)", response = ResponseEntity.class)
+    @ApiOperation(value = "Método de cambio de contraseña del usuario logueado en ese momento (dentro del sistema)", response = ResponseEntity.class)
     @ApiResponses(value = { @ApiResponse(code = 200, message = " "),
             @ApiResponse(code = 201, message = "Contraseña actualizada"), @ApiResponse(code = 401, message = " "),
             @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = " "),
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de actualizar la contraseña. Inténtelo mas tarde") })
-    @PutMapping(value = "/cambiar-password", produces = "application/json")
+    @PutMapping(value = "/usuarios/cambiar-password", produces = "application/json")
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO', 'ROLE_USER')")
     public ResponseEntity<?> cambiarContraseñaUsuario(@RequestBody ChangePassword dtoPassword,
             Authentication authentication) {
         Map<String, Object> response = new HashMap<>();
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        Usuario usuarioAntuguo = usuarioService.findByEmail(userDetails.getUsername()).get();
-        dtoPassword.setId(usuarioAntuguo.getId());
+        Usuario usuarioAntiguo = usuarioService.findByEmail(userDetails.getUsername()).get();
+        dtoPassword.setId(usuarioAntiguo.getId());
         try {
             if (dtoPassword.getPasswordActual().equals("") || dtoPassword.getNuevaPassword().equals("")
                     || dtoPassword.getConfirmarPassword().equals("")) {
@@ -476,12 +483,12 @@ public class UsuarioController {
         return new ResponseEntity<Map<String, Object>>(response, HttpStatus.CREATED);
     }
 
-    @ApiOperation(value = "Método de deshabilitación del usuario mediante el id", response = ResponseEntity.class)
+    @ApiOperation(value = "Método de deshabilitación del usuario logueado en ese momento mediante el id", response = ResponseEntity.class)
     @ApiResponses(value = { @ApiResponse(code = 200, message = "Usuario deshabilitado"),
             @ApiResponse(code = 201, message = " "), @ApiResponse(code = 401, message = " "),
             @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = "El usuario no existe"),
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de deshabilitar el usuario. Inténtelo mas tarde") })
-    @PutMapping(value = "/deshabilitar-usuario/{id}", produces = "application/json")
+    @PutMapping(value = "/usuarios/{id}/deshabilitar-cuenta", produces = "application/json")
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_USER')")
     public ResponseEntity<?> deshabilitarUsuario(@PathVariable Long id) {
         Map<String, Object> response = new HashMap<>();
@@ -520,7 +527,7 @@ public class UsuarioController {
             @ApiResponse(code = 201, message = " "), @ApiResponse(code = 401, message = " "),
             @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = "El usuario no existe"),
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de eliminar el usuario. Inténtelo mas tarde") })
-    @DeleteMapping(value = "/eliminar-usuario/{id}", produces = "application/json")
+    @DeleteMapping(value = "/usuarios/{id}", produces = "application/json")
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN')")
     public ResponseEntity<?> eliminarUsuario(@PathVariable Long id) {
         Map<String, Object> response = new HashMap<>();

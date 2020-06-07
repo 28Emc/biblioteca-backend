@@ -19,6 +19,8 @@ public interface IUsuarioService {
 
     public List<Usuario> findByLocal(Long id);
 
+    public Usuario saveNewUser(Usuario usuario);
+
     public Usuario save(Usuario usuario);
 
     public void delete(Long id);
