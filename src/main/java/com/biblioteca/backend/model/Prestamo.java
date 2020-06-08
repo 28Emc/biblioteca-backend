@@ -37,7 +37,7 @@ public class Prestamo {
     @ApiModelProperty(notes = "Fecha de despacho del préstamo", required = true, example = "2020-03-12")
     private Date fechaDespacho;
 
-    @Column(name = "fecha_registro", nullable = false)
+    @Column(name = "fecha_devolucion", nullable = false)
     @Temporal(TemporalType.TIMESTAMP)
     @ApiModelProperty(notes = "Fecha de devolución del préstamo", required = true, example = "2020-03-12")
     private Date fechaDevolucion;
@@ -67,6 +67,7 @@ public class Prestamo {
 
     @PrePersist
     public void prePersist() {
+        isActivo = false;
         fechaDespacho = new Date();
     }
 

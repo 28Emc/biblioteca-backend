@@ -59,7 +59,7 @@ public class LibroServiceImpl implements ILibroService {
     // USADO
     @Override
     @Transactional(readOnly = true)
-    public List<Libro> findByTituloLikeIgnoreCase(String titulo) {
+    public Optional<Libro> findByTituloLikeIgnoreCase(String titulo) {
         return repository.findByTituloLikeIgnoreCase(titulo);
     }
 

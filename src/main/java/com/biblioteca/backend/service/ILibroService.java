@@ -38,7 +38,7 @@ public interface ILibroService {
     public List<Libro> findByTituloGroup();
 
     // USADO
-    public List<Libro> findByTituloLikeIgnoreCase(String titulo);
+    public Optional<Libro> findByTituloLikeIgnoreCase(String titulo);
 
     // USADO
     public List<Libro> findByTituloLikeIgnoreCaseAndLocalAndIsActivo(String term, Long id, Boolean estado);

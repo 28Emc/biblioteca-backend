@@ -40,9 +40,8 @@ public interface LibroRepository extends JpaRepository<Libro, Long> {
     public List<Libro> findByCategoriaAndLocal(String categoria, Long localId);
 
     // USADO
-    // VER DISPONIBILIDAD LIBRO POR TITULO Y LOCAL
     @Query("select l from Libro l join fetch l.local lo where l.titulo like ?1")
-    public List<Libro> findByTituloLikeIgnoreCase(String titulo);
+    public Optional<Libro> findByTituloLikeIgnoreCase(String titulo);
 
     // USADO
     @Query("select l from Libro l join fetch l.local lo where l.titulo like ?1 and lo.id = ?2 and l.isActivo = ?3")

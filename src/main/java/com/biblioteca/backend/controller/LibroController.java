@@ -4,9 +4,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import com.biblioteca.backend.model.Libro;
+import com.biblioteca.backend.model.Local;
 import com.biblioteca.backend.model.Usuario;
 import com.biblioteca.backend.service.ILibroService;
+import com.biblioteca.backend.service.ILocalService;
 import com.biblioteca.backend.service.IUsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -38,8 +41,8 @@ public class LibroController {
     // @Autowired
     // private ICategoriaService categoriaService;
 
-    // @Autowired
-    // private ILocalService localService;
+    @Autowired
+    private ILocalService localService;
 
     @Autowired
     private IUsuarioService empleadoService;
@@ -79,15 +82,23 @@ public class LibroController {
         Map<String, Object> response = new HashMap<>();
         Libro libro = null;
         try {
+            // EL SYSADMIN BUSCA ENTRE TODOS LOS LIBROS (DE CUALQUIER LOCAL), Y VE SI EXISTE
+            // LOS DEMAS USUARIOS VAN A FILTRAR EL LIBRO POR SU LOCAL DE PERTENENCIA
             libro = libroService.findById(id).get();
             if (libro == null) {
                 response.put("mensaje",
                         "El libro con ID: ".concat(id.toString().concat(" no existe en la base de datos!")));
                 return new ResponseEntity<Map<String, Object>>(response, HttpStatus.NOT_FOUND);
-            } else if (!libro.getLocal().equals(empleadoLogueado.getLocal())) {
+                // ADMIN Y EMPLEADOS PUEDE VER LIBROS DE SU PROPIO LOCAL SOLAMENTE
+            } else if (!empleadoLogueado.getRol().getAuthority().equals("ROLE_SYSADMIN")
+                    && !libro.getLocal().equals(empleadoLogueado.getLocal())) {
                 response.put("mensaje",
                         "El libro con ID: ".concat(id.toString().concat(" no existe en tu local de pertenencia!")));
                 return new ResponseEntity<Map<String, Object>>(response, HttpStatus.NOT_FOUND);
+            } else {
+                response.put("libro", libro);
+                response.put("mensaje", "Libro encontrado!");
+                return new ResponseEntity<Map<String, Object>>(response, HttpStatus.FOUND);
             }
         } catch (NoSuchElementException e) {
             response.put("mensaje", "Lo sentimos, el libro no existe!");
@@ -98,9 +109,6 @@ public class LibroController {
             response.put("error", e.getMessage());
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        response.put("libro", libro);
-        response.put("mensaje", "Libro encontrado!");
-        return new ResponseEntity<Map<String, Object>>(response, HttpStatus.FOUND);
     }
 
     @ApiOperation(value = "Método de registro de libros", response = ResponseEntity.class)
@@ -116,27 +124,38 @@ public class LibroController {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         Usuario empleadoLogueado = empleadoService.findByEmail(userDetails.getUsername()).get();
         Map<String, Object> response = new HashMap<>();
-        Libro libroEncontrado = null;
+        Optional<Libro> libroEncontrado = null;
+        Optional<Local> local = null;
         try {
             // EL SYSADMIN BUSCA ENTRE TODOS LOS LIBROS (DE CUALQUIER LOCAL), Y VE SI EXISTE
             // LOS DEMAS USUARIOS VAN A FILTRAR EL LIBRO POR SU LOCAL DE PERTENENCIA
+            local = localService.findById(libro.getLocal().getId());
             switch (empleadoLogueado.getRol().getAuthority()) {
-                case "[ROLE_SYSADMIN]":
-                    libroEncontrado = libroService.findByTituloLikeIgnoreCase(libro.getTitulo()).iterator().next();
+                case "ROLE_SYSADMIN":
+                    if (local.isPresent()) {
+                        libroEncontrado = libroService.findByTituloLikeIgnoreCase(libro.getTitulo());
+                    } else {
+                        response.put("mensaje", "El local con ID: "
+                                .concat(libro.getLocal().getId().toString().concat(" no existe en la base de datos!")));
+                        return new ResponseEntity<Map<String, Object>>(response, HttpStatus.NOT_FOUND);
+                    }
                     break;
                 default:
-                    libroEncontrado = libroService
-                            .findByTituloAndLocal(libro.getTitulo(), empleadoLogueado.getLocal().getId()).get();
+                    if (local.isPresent() || local.get().getId().equals(empleadoLogueado.getLocal().getId())) {
+                        libroEncontrado = libroService.findByTituloAndLocal(libro.getTitulo(),
+                                empleadoLogueado.getLocal().getId());
+                    }
                     break;
             }
-            if (libroEncontrado != null) {
+            if (libroEncontrado.isPresent()) {
                 response.put("mensaje", "Lo sentimos, el libro ya existe!");
                 return new ResponseEntity<Map<String, Object>>(response, HttpStatus.BAD_REQUEST);
-            } else if (!empleadoLogueado.getRol().getAuthority().equals("[ROLE_SYSADMIN]")) {
+            } else if (!empleadoLogueado.getRol().getAuthority().equals("ROLE_SYSADMIN")) {
                 libro.setLocal(empleadoLogueado.getLocal());
+            } else {
+                libro.setActivo(true);
+                libroService.save(libro);
             }
-            libro.setActivo(true);
-            libroService.save(libro);
         } catch (DataIntegrityViolationException e) {
             response.put("mensaje", "Lo sentimos, hubo un error a la hora de registrar el libro!");
             response.put("error", e.getMessage());
@@ -168,7 +187,8 @@ public class LibroController {
                 // VERIFICO QUE EL ADMIN NO TENGA ACCESO A UN LIBRO QUE ESTÉ FUERA DE SU LOCAL
                 // DE
                 // PERTENENCIA
-            } else if (!libroEncontrado.getLocal().equals(empleadoLogueado.getLocal())) {
+            } else if (!empleadoLogueado.getRol().getAuthority().equals("ROLE_SYSADMIN")
+                    && !libroEncontrado.getLocal().equals(empleadoLogueado.getLocal())) {
                 response.put("mensaje",
                         "El libro con ID: ".concat(id.toString().concat(" no existe en tu local de pertenencia!")));
                 return new ResponseEntity<Map<String, Object>>(response, HttpStatus.NOT_FOUND);
@@ -176,11 +196,11 @@ public class LibroController {
             libroEncontrado.setTitulo(libro.getTitulo());
             libroEncontrado.setAutor(libro.getAutor());
             libroEncontrado.setDescripcion(libro.getDescripcion());
-            libroEncontrado.setFechaPublicacion(libro.getFechaActualizacion());
+            libroEncontrado.setFechaPublicacion(libro.getFechaPublicacion());
             libroEncontrado.setStock(libro.getStock());
             libroEncontrado.setFotoLibro(libro.getFotoLibro());
             // REPITO LA LÓGICA DEL REGISTRO AL NO SER DE ROL SYSADMIN
-            if (!empleadoLogueado.getRol().getAuthority().equals("[ROLE_SYSADMIN]")) {
+            if (!empleadoLogueado.getRol().getAuthority().equals("ROLE_SYSADMIN")) {
                 libroEncontrado.setLocal(empleadoLogueado.getLocal());
             } else {
                 libroEncontrado.setLocal(libro.getLocal());
@@ -218,7 +238,8 @@ public class LibroController {
                 response.put("mensaje",
                         "El libro con ID: ".concat(id.toString().concat(" no existe en la base de datos!")));
                 return new ResponseEntity<Map<String, Object>>(response, HttpStatus.NOT_FOUND);
-            } else if (!libroEncontrado.getLocal().equals(empleadoLogueado.getLocal())) {
+            } else if (!empleadoLogueado.getRol().getAuthority().equals("ROLE_SYSADMIN")
+                    && !libroEncontrado.getLocal().equals(empleadoLogueado.getLocal())) {
                 response.put("mensaje",
                         "El libro con ID: ".concat(id.toString().concat(" no existe en tu local de pertenencia!")));
                 return new ResponseEntity<Map<String, Object>>(response, HttpStatus.NOT_FOUND);
