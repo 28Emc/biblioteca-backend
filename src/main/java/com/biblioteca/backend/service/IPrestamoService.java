@@ -1,5 +1,6 @@
 package com.biblioteca.backend.service;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import com.biblioteca.backend.model.Prestamo;
@@ -32,6 +33,6 @@ public interface IPrestamoService {
 
     public void delete(Long id);
 
-    public String mostrarFechaAmigable();
+    public String mostrarFechaAmigable(Date fecha);
 
 }

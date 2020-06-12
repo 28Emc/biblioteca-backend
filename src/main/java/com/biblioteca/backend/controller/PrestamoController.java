@@ -5,10 +5,11 @@ import java.util.List;
 import java.util.Map;
 import com.biblioteca.backend.model.Prestamo;
 import com.biblioteca.backend.model.Usuario;
+import com.biblioteca.backend.service.EmailService;
 import com.biblioteca.backend.service.IPrestamoService;
 import com.biblioteca.backend.service.IUsuarioService;
-
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -35,6 +36,12 @@ public class PrestamoController {
 
     @Autowired
     private IUsuarioService usuarioService;
+
+    @Autowired
+    private EmailService emailService;
+
+    @Value("{spring.mail.username}")
+    private String emailFrom;
 
     @ApiOperation(value = "Método de listado de préstamos", response = ResponseEntity.class)
     @ApiResponses(value = { @ApiResponse(code = 200, message = " "),
@@ -111,11 +118,22 @@ public class PrestamoController {
                         prestamo.setUsuario(usuarioLogueado);
                         empleado = usuarioService.findById(1L).get();
                         prestamo.setEmpleado(empleado);
-                        // TODO: ENVÍO UN CORREO CONFIRMANDO EL PRÉSTAMO
                         response.put("mensaje", "Préstamo registrado correctamente!");
                         break;
                 }
                 prestamoService.save(prestamo);
+                // ENVÍO EL CORREO SOLAMENTE DESPUÉS DE HABER GUARDADO EN LA BBDD, Y OSLAMENTE
+                // SI ES USUARIO
+                if (usuarioLogueado.getRol().getAuthority().equals("ROLE_USUARIO")) {
+                    Map<String, Object> model = new HashMap<>();
+                    model.put("titulo", "Libro Solicitado");
+                    model.put("from", "Biblioteca2020 " + "<" + emailFrom + ">");
+                    // model.put("to", usuarioLogueado.getEmail());
+                    model.put("to", "edmech25@gmail.com");
+                    model.put("prestamo", prestamo);
+                    model.put("subject", "Libro Solicitado | Biblioteca2020");
+                    emailService.enviarEmail(model);
+                }
             } else {
                 response.put("mensaje", "Lo sentimos, hubo un error a la hora de registrar el préstamo!");
                 response.put("error", "Verificar si el usuario, el empleado y/o el libro estén disponibles");

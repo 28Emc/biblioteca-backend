@@ -1,7 +1,10 @@
 package com.biblioteca.backend.service;
 
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.format.TextStyle;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -36,23 +39,24 @@ public class PrestamoServiceImpl implements IPrestamoService {
 	}
 
 	@Override
-	public String mostrarFechaAmigable() {
+	public String mostrarFechaAmigable(Date fecha) {
 		// ARMANDO FECHA MAS AMIGABLE AL USUARIO CON TIME
 		Locale esp = new Locale("es", "PE");
 		// Obtienes el dia, mes y año actuales
-		String diaNum = String.valueOf(LocalDate.now().getDayOfMonth());
+		LocalDate fechaFinal = Instant.ofEpochMilli(fecha.getTime()).atZone(ZoneId.systemDefault()).toLocalDate();
+		String diaNum = String.valueOf(fechaFinal.getDayOfMonth());
 		// Mejorando cadena de dia
-		String dia = LocalDate.now().getDayOfWeek().getDisplayName(TextStyle.FULL, esp);
+		String dia = fechaFinal.getDayOfWeek().getDisplayName(TextStyle.FULL, esp);
 		String diaMayus = dia.substring(0, 1).toUpperCase();
 		String demasLetrasDia = dia.substring(1, dia.length());
 		String diaFinal = diaMayus + demasLetrasDia;
 		// Mejorando cadena de mes
-		String mes = LocalDate.now().getMonth().getDisplayName(TextStyle.FULL, esp);
+		String mes = fechaFinal.getMonth().getDisplayName(TextStyle.FULL, esp);
 		String mesMayus = mes.substring(0, 1).toUpperCase();
 		String demasLetrasMes = mes.substring(1, mes.length());
 		String mesFinal = mesMayus + demasLetrasMes;
-		String anio = String.valueOf(LocalDate.now().getYear());
-		String fechaFull = diaFinal + " " + diaNum + " de " + mesFinal + " " + anio;
+		String anio = String.valueOf(fechaFinal.getYear());
+		String fechaFull = diaFinal + ", " + diaNum + " de " + mesFinal + " " + anio;
 		return fechaFull;
 	}
 
@@ -104,11 +108,13 @@ public class PrestamoServiceImpl implements IPrestamoService {
 		return repository.fetchWithLibroWithUsuarioWithEmpleado();
 	}
 
-	/*@Override
-	@Transactional(readOnly = true)
-	public List<Prestamo> fetchWithLibroWithUsuarioWithEmpleado(Long idLibro) {
-		return repository.fetchWithLibroWithUsuarioWithEmpleado(idLibro);
-	}*/
+	/*
+	 * @Override
+	 * 
+	 * @Transactional(readOnly = true) public List<Prestamo>
+	 * fetchWithLibroWithUsuarioWithEmpleado(Long idLibro) { return
+	 * repository.fetchWithLibroWithUsuarioWithEmpleado(idLibro); }
+	 */
 
 	@Override
 	@Transactional(readOnly = true)
