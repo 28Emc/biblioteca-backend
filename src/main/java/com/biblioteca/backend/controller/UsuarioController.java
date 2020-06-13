@@ -5,6 +5,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+
+import javax.mail.MessagingException;
+
 import com.biblioteca.backend.model.TokenConfirma;
 import com.biblioteca.backend.model.Usuario;
 import com.biblioteca.backend.model.dto.Usuarios.AccountRecovery;
@@ -143,6 +146,10 @@ public class UsuarioController {
             emailService.enviarEmail(model);
         } catch (DataIntegrityViolationException e) {
             response.put("mensaje", "Lo sentimos, hubo un error a la hora de registrar el usuario!");
+            response.put("error", e.getMessage());
+            return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (MessagingException e) {
+            response.put("mensaje", "Lo sentimos, hubo un error a la hora de enviar el correo de confirmación!");
             response.put("error", e.getMessage());
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -325,8 +332,8 @@ public class UsuarioController {
             String baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
             Map<String, Object> model = new HashMap<>();
             model.put("titulo", "Reactivacion Cuenta");
-            model.put("enlace", baseUrl + "/cuenta/reactivar-cuenta/confirmar-token?token="
-                    + response.get("tokenValidacion"));
+            model.put("enlace",
+                    baseUrl + "/cuenta/reactivar-cuenta/confirmar-token?token=" + response.get("tokenValidacion"));
             model.put("from", "Biblioteca2020 " + "<" + emailFrom + ">");
             model.put("usuario", usuario.get().getUsuario());
             model.put("to", usuario.get().getEmail());
@@ -515,6 +522,10 @@ public class UsuarioController {
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.NOT_FOUND);
         } catch (DataIntegrityViolationException e) {
             response.put("mensaje", "Lo sentimos, hubo un error a la hora de deshabilitar el usuario!");
+            response.put("error", e.getMessage());
+            return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (MessagingException e) {
+            response.put("mensaje", "Lo sentimos, hubo un error a la hora de enviar el correo de confirmación!");
             response.put("error", e.getMessage());
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
