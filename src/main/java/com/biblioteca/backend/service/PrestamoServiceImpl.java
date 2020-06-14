@@ -7,8 +7,10 @@ import java.time.format.TextStyle;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import com.biblioteca.backend.model.Prestamo;
+import com.biblioteca.backend.model.Usuario;
 import com.biblioteca.backend.repository.PrestamoRespository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -19,6 +21,33 @@ public class PrestamoServiceImpl implements IPrestamoService {
 
 	@Autowired
 	private PrestamoRespository repository;
+
+	@Override
+	@Transactional(readOnly = true)
+	public List<Prestamo> listarPrestamosPorRol(Map<String, Object> response, List<Prestamo> prestamos,
+			Usuario usuarioLogueado) {
+		switch (usuarioLogueado.getRol().getAuthority()) {
+			// MUESTRO TODOS LOS PRÉSTAMOS
+			case "ROLE_SYSADMIN":
+				prestamos = fetchWithLibroWithUsuarioWithEmpleado();
+				break;
+			// MUESTRO LOS PRÉSTAMOS DEL MISMO LOCAL DEL ADMIN
+			case "ROLE_ADMIN":
+				prestamos = fetchWithLibroWithUsuarioWithEmpleado();
+				break;
+			// MUESTRO LOS PRÉSTAMOS DEL MISMO LOCAL DEL EMPLEADO Y UNICAMENTE LOS ASOCIADOS
+			// CON SU ID
+			case "ROLE_EMPLEADO":
+				prestamos = fetchWithLibroWithUsuarioWithEmpleado();
+				break;
+		}
+		if (prestamos.size() == 0) {
+			response.put("mensaje", "No hay préstamos");
+		} else {
+			response.put("prestamos", prestamos);
+		}
+		return prestamos;
+	}
 
 	@Override
 	@Transactional
@@ -98,12 +127,6 @@ public class PrestamoServiceImpl implements IPrestamoService {
 
 	@Override
 	@Transactional(readOnly = true)
-	public List<Prestamo> findAll() {
-		return repository.findAll();
-	}
-
-	@Override
-	@Transactional(readOnly = true)
 	public List<Prestamo> fetchWithLibroWithUsuarioWithEmpleado() {
 		return repository.fetchWithLibroWithUsuarioWithEmpleado();
 	}
@@ -121,4 +144,5 @@ public class PrestamoServiceImpl implements IPrestamoService {
 	public List<Prestamo> fetchByIdWithLibroWithUsuarioWithEmpleadoPerLibroAndLocal(Long idLibro, Long idLocal) {
 		return repository.fetchByIdWithLibroWithUsuarioWithEmpleadoPerLibroAndLocal(idLibro, idLocal);
 	}
+
 }

@@ -8,16 +8,18 @@ import com.biblioteca.backend.model.dto.Usuarios.ChangePassword;
 public interface IUsuarioService {
 
     public List<Usuario> findAll();
-    
+
     public Optional<Usuario> findById(Long id);
-    
+
     public Optional<Usuario> findByUsuario(String username);
 
     public Optional<Usuario> findByEmail(String email);
 
-    public Optional<Usuario> findByNroDocumentoAndEmail(String nroDocumento, String email); 
+    public Optional<Usuario> findByNroDocumentoAndEmail(String nroDocumento, String email);
 
     public List<Usuario> findByLocal(Long id);
+
+    public List<Usuario> findByRol(String authority);
 
     public Usuario saveNewUser(Usuario usuario);
 

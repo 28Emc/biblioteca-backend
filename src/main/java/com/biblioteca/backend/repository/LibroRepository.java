@@ -59,8 +59,10 @@ public interface LibroRepository extends JpaRepository<Libro, Long> {
     @Query("select l from Libro l join fetch l.categoria lc join fetch l.local ll")
     public List<Libro> fetchWithCategoriaWithLocal();
 
-    // USADO
+    @Query("select l from Libro l join fetch l.local lo where lo.id=?1")
+    public List<Libro> fetchByIdWithLocales(Long idLocal);
+
     @Query("select l from Libro l join fetch l.local lo join fetch lo.usuarios em where lo.id=?1 and em.id=?2")
-    public List<Libro> fetchByIdWithLocalesWithEmpleado(Long id, Long idEmpleado);
+    public List<Libro> fetchByIdWithLocalesAndEmpleado(Long idLocal, Long idEmpleado);
 
 }

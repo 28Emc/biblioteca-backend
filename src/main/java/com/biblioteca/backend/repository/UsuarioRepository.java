@@ -17,4 +17,7 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     @Query("select u from Usuario u join fetch u.local l where l.id=?1")
     public List<Usuario> findByLocal(Long id);
 
+    @Query("select u from Usuario u join fetch u.rol r where r.authority=?1")
+    public List<Usuario> findByRol(String authority);
+
 }

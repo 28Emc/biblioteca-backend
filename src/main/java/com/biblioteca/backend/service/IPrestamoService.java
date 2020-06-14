@@ -2,14 +2,17 @@ package com.biblioteca.backend.service;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import com.biblioteca.backend.model.Prestamo;
+import com.biblioteca.backend.model.Usuario;
 
 public interface IPrestamoService {
 
     public Optional<Prestamo> findById(Long id);
 
-    public List<Prestamo> findAll();
+    public List<Prestamo> listarPrestamosPorRol(Map<String, Object> response, List<Prestamo> prestamos,
+            Usuario usuarioLogueado);
 
     public List<Prestamo> fetchWithLibroWithUsuarioWithEmpleado();
 
@@ -20,8 +23,6 @@ public interface IPrestamoService {
     public List<Prestamo> fetchByIdWithLibroWithUsuarioWithEmpleadoPerLibro(Long idLibro);
 
     public List<Prestamo> fetchByIdWithLibroWithUsuarioWithEmpleadoPerLibroAndLocal(Long idLibro, Long idLocal);
-
-    // public List<Prestamo> fetchWithLibroWithUsuarioWithEmpleado(Long idLibro);
 
     public List<Prestamo> fetchByIdWithLibroWithUsuarioWithEmpleadoPerUser(Long id);
 

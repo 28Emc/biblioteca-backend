@@ -127,4 +127,10 @@ public class UsuarioServiceImpl implements IUsuarioService {
         return repository.findByLocal(id);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<Usuario> findByRol(String authority) {
+        return repository.findByRol(authority);
+    }
+
 }

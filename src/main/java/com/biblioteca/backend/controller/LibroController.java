@@ -52,13 +52,32 @@ public class LibroController {
             @ApiResponse(code = 302, message = "Libros encontrados"), @ApiResponse(code = 401, message = " "),
             @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = " "),
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de buscar los libros. Inténtelo mas tarde") })
-    @GetMapping(value = "/libros", produces = "application/json")
-    @PreAuthorize("hasAnyRole('ROLE_SYSADMIN')")
-    public ResponseEntity<?> listarLibros() {
+    @GetMapping(value = { "/libros", "/biblioteca" }, produces = "application/json")
+    @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO', 'ROLE_USUARIO')")
+    public ResponseEntity<?> listarLibros(Authentication authentication) {
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        Usuario usuarioLogueado = empleadoService.findByEmail(userDetails.getUsername()).get();
         Map<String, Object> response = new HashMap<>();
         List<Libro> libros = null;
         try {
-            libros = libroService.findAll();
+            switch (usuarioLogueado.getRol().getAuthority()) {
+                // MUESTRO TODOS LOS LIBROS
+                case "ROLE_SYSADMIN":
+                    libros = libroService.findAll();
+                    break;
+                // MUESTRO LOS LIBROS DEL MISMO LOCAL DEL ADMIN
+                case "ROLE_ADMIN":
+                    libros = libroService.fetchByIdWithLocales(usuarioLogueado.getLocal().getId());
+                    break;
+                // MUESTRO LOS LIBROS DEL MISMO LOCAL DEL EMPLEADO
+                case "ROLE_EMPLEADO":
+                    libros = libroService.fetchByIdWithLocales(usuarioLogueado.getLocal().getId());
+                    break;
+                // MUESTRO LA BIBLIOTECA (LIBROS MOSTRADOS A SYSADMIN, PERO ÚNICOS)
+                case "ROLE_USUARIO":
+                    libros = libroService.findAllDistinct();
+                    break;
+            }
         } catch (Exception e) {
             response.put("mensaje", "Lo sentimos, hubo un error a la hora de buscar los libros!");
             response.put("error", e.getMessage());

@@ -7,8 +7,9 @@ import com.biblioteca.backend.model.Libro;
 
 public interface ILibroService {
 
-    // USADO
     public List<Libro> findAll();
+
+    public List<Libro> findAllDistinct();
 
     // USADO
     public Libro save(Libro libro);
@@ -52,8 +53,9 @@ public interface ILibroService {
     // USADO
     public List<Libro> fetchWithCategoriaWithLocal();
 
-    // USADO
-    public List<Libro> fetchByIdWithLocalesWithEmpleado(Long id, Long idEmpleado);
+    public List<Libro> fetchByIdWithLocales(Long idLocal);
+
+    public List<Libro> fetchByIdWithLocalesAndEmpleado(Long idLocal, Long idEmpleado);
 
     // USADO
     public List<Libro> findByCategoria(String categoria);
