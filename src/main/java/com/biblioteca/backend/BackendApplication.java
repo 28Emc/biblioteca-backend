@@ -12,7 +12,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableJpaRepositories(basePackageClasses = { UsuarioRepository.class, RoleRepository.class })
 public class BackendApplication {
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Exception {
 		SpringApplication.run(BackendApplication.class, args);
 	}
 

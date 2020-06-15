@@ -49,12 +49,12 @@ public class Scheduler {
     // ENVIAR CORREO DE PRÉSTAMOS TOTALES CADA MES AL SYSADMIN
     // SE ENVÍA CADA FIN DE MES A LAS 12 AM (MEDIANOCHE)
     // SE PROGRAMA LA TAREA PARA QUE SE REPITA CADA DIA A MEDIANOCHE ...
-    @Scheduled(cron = "0 0 0 * * ?", zone = "America/Lima") // firme
-    // @Scheduled(cron = "0 */1 * ? * *", zone = "America/Lima") // prueba
+    // @Scheduled(cron = "0 0 0 * * ?", zone = "America/Lima") // firme
+    @Scheduled(cron = "0 */1 * ? * *", zone = "America/Lima") // prueba
     public void enviarEmailPrestamosTotalesMensuales() {
         // .. Y DESPUÈS SE PREGUNTA SI ESTOY EN EL ULTIMO DIA DE ESTE MES
         final Calendar c = Calendar.getInstance();
-        if (c.get(Calendar.DATE) == c.getActualMaximum(Calendar.DATE)) {
+        /*if (c.get(Calendar.DATE) == c.getActualMaximum(Calendar.DATE)) {*/
             // ESTABLECER DATASOURCE
             List<Prestamo> prestamos = prestamoService.fetchWithLibroWithUsuarioWithEmpleado();
             if (prestamos.size() > 0) {
@@ -87,7 +87,8 @@ public class Scheduler {
                     Map<String, Object> model = new HashMap<>();
                     model.put("titulo", "Reporte mensual de préstamos");
                     model.put("from", "Biblioteca2020 " + "<" + correoSysadmin + ">");
-                    model.put("to", correoSysadmin);
+                    //model.put("to", correoSysadmin);
+                    model.put("to", "edmech25@gmail.com");
                     model.put("list", prestamos);
                     model.put("subject", "Reporte mensual de préstamos | Biblioteca2020");
                     emailService.enviarEmailwithCronSchedule(model);
@@ -97,9 +98,9 @@ public class Scheduler {
             } else {
                 System.out.println("PRESTAMOS TOTALES - NRO DE PRESTAMOS TOTALES: " + prestamos.size());
             }
-        } else {
+        /*} else {
             System.out.println("PRESTAMOS TOTALES - HOY NO ES EL PRIMER DIA DEL MES");
-        }
+        }*/
     }
 
     // ENVIAR CORREO DE USUARIOS REGISTRADOS CADA MES AL SYSADMIN
