@@ -31,7 +31,7 @@ public class EmailService {
     @Autowired
     private IPrestamoService prestamoService;
 
-    @Value("${spring.mail.stocklibro}")
+    @Value("${scheduler.stocklibro}")
     private Integer stock;
 
     @Async
@@ -161,7 +161,7 @@ public class EmailService {
                         + ", el total de usuarios registrado en nuestra base de datos ha sido de: " + usuarios.size()
                         + ", distribuidos en todos los locales anexos.</h3><h3>Para mayor detalle, revisar el archivo adjunto.</h3></div>";
                 path = "static/img/img-reporte.png";
-                //bis = GenerarReportePDF.generarPDFUsuarios("Reporte de usuarios | " + mesActual, usuarios);
+                bis = GenerarReportePDF.generarPDFUsuarios("Reporte de usuarios | " + mesActual, usuarios);
                 nomReporte = "reporte-usuarios-" + mesActual + ".pdf";
                 break;
             case "Reporte de libros con stock bajo":
@@ -171,7 +171,7 @@ public class EmailService {
                         + "</h1><div id='imagen' style='text-align: center;'><img src='cid:logo-biblioteca2020' alt='reporte' width='60%' /></div><div style='font-size: 1.1rem; text-align: center;'><h3 style='font-weight: lighter; color:black;'>Saludos, a continuación se adjunta el reporte de los libros de los locales anexos con un stock bajo (menor a "
                         + stock + ").</h3><h3>Para mayor detalle, revisar el archivo adjunto.</h3></div>";
                 path = "static/img/img-reporte.png";
-                //bis = GenerarReportePDF.generarPDFLibros("Reporte de libros con stock bajo | " + mesActual, libros);
+                bis = GenerarReportePDF.generarPDFLibros("Reporte de libros con stock bajo | " + mesActual, libros);
                 nomReporte = "reporte-libros-bajo-stock-" + mesActual + ".pdf";
                 break;
         }

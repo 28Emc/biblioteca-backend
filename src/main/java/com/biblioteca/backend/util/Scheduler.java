@@ -26,12 +26,12 @@ public class Scheduler {
 
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm:ss dd/mm/yyyy");
     // private static final String correoDiego = "luis290613@gmail.com";
-    // private static final String correoSysadmin = "edi@live.it";
+    private static final String correoSysadmin = "edi@live.it";
 
     @Value("{spring.mail.username}")
-    private String correoSysadmin;
+    private String correoDeveloper;
 
-    @Value("${spring.mail.stocklibro}")
+    @Value("${scheduler.stocklibro}")
     private Integer stock;
 
     @Autowired
@@ -49,12 +49,12 @@ public class Scheduler {
     // ENVIAR CORREO DE PRÉSTAMOS TOTALES CADA MES AL SYSADMIN
     // SE ENVÍA CADA FIN DE MES A LAS 12 AM (MEDIANOCHE)
     // SE PROGRAMA LA TAREA PARA QUE SE REPITA CADA DIA A MEDIANOCHE ...
-    // @Scheduled(cron = "0 0 0 * * ?", zone = "America/Lima") // firme
-    @Scheduled(cron = "0 */1 * ? * *", zone = "America/Lima") // prueba
+    @Scheduled(cron = "0 0 0 * * ?", zone = "America/Lima") // firme
+    // @Scheduled(cron = "0 */1 * ? * *", zone = "America/Lima") // prueba
     public void enviarEmailPrestamosTotalesMensuales() {
         // .. Y DESPUÈS SE PREGUNTA SI ESTOY EN EL ULTIMO DIA DE ESTE MES
         final Calendar c = Calendar.getInstance();
-        /*if (c.get(Calendar.DATE) == c.getActualMaximum(Calendar.DATE)) {*/
+        if (c.get(Calendar.DATE) == c.getActualMaximum(Calendar.DATE)) {
             // ESTABLECER DATASOURCE
             List<Prestamo> prestamos = prestamoService.fetchWithLibroWithUsuarioWithEmpleado();
             if (prestamos.size() > 0) {
@@ -86,9 +86,8 @@ public class Scheduler {
                 try {
                     Map<String, Object> model = new HashMap<>();
                     model.put("titulo", "Reporte mensual de préstamos");
-                    model.put("from", "Biblioteca2020 " + "<" + correoSysadmin + ">");
-                    //model.put("to", correoSysadmin);
-                    model.put("to", "edmech25@gmail.com");
+                    model.put("from", "Biblioteca2020 " + "<" + correoDeveloper + ">");
+                    model.put("to", correoSysadmin);
                     model.put("list", prestamos);
                     model.put("subject", "Reporte mensual de préstamos | Biblioteca2020");
                     emailService.enviarEmailwithCronSchedule(model);
@@ -98,16 +97,16 @@ public class Scheduler {
             } else {
                 System.out.println("PRESTAMOS TOTALES - NRO DE PRESTAMOS TOTALES: " + prestamos.size());
             }
-        /*} else {
+        } else {
             System.out.println("PRESTAMOS TOTALES - HOY NO ES EL PRIMER DIA DEL MES");
-        }*/
+        }
     }
 
     // ENVIAR CORREO DE USUARIOS REGISTRADOS CADA MES AL SYSADMIN
     // SE ENVÍA CADA FIN DE MES A LAS 12 AM (MEDIANOCHE)
     // SE PROGRAMA LA TAREA PARA QUE SE REPITA CADA DIA A MEDIANOCHE ...
     @Scheduled(cron = "0 0 0 * * ?", zone = "America/Lima") // firme
-    // @Scheduled(cron = "0 */2 * ? * *", zone = "America/Lima") // prueba
+    // @Scheduled(cron = "0 */1 * ? * *", zone = "America/Lima") // prueba
     public void enviarEmailUsuariosRegistradosMensuales() {
         // .. Y DESPUÈS SE PREGUNTA SI ESTOY EN EL ULTIMO DIA DE ESTE MES
         final Calendar c = Calendar.getInstance();
@@ -140,9 +139,8 @@ public class Scheduler {
                     if (usuarios.size() > 0) {
                         Map<String, Object> model = new HashMap<>();
                         model.put("titulo", "Reporte mensual de usuarios");
-                        model.put("from", "Biblioteca2020 " + "<" + correoSysadmin + ">");
+                        model.put("from", "Biblioteca2020 " + "<" + correoDeveloper + ">");
                         model.put("to", correoSysadmin);
-                        // model.put("to", "edmech25@gmail.com");
                         model.put("list", usuarios);
                         model.put("subject", "Reporte mensual de usuarios | Biblioteca2020");
                         emailService.enviarEmailwithCronSchedule(model);
@@ -153,7 +151,6 @@ public class Scheduler {
             } else {
                 System.out.println("USUARIOS TOTALES - NRO DE USUARIOS TOTALES: " + usuarios.size());
             }
-
         } else {
             System.out.println("USUARIOS TOTALES - HOY NO ES EL PRIMER DIA DEL MES");
         }
@@ -183,9 +180,8 @@ public class Scheduler {
                     // CREAR EMAIL Y ENVIAR AL SYSADMIN
                     Map<String, Object> model = new HashMap<>();
                     model.put("titulo", "Reporte de libros con stock bajo");
-                    model.put("from", "Biblioteca2020 " + "<" + correoSysadmin + ">");
+                    model.put("from", "Biblioteca2020 " + "<" + correoDeveloper + ">");
                     model.put("to", correoSysadmin);
-                    // model.put("to", "edmech25@gmail.com");
                     model.put("list", libros);
                     model.put("subject", "Reporte de libros con stock bajo | Biblioteca2020");
                     emailService.enviarEmailwithCronSchedule(model);

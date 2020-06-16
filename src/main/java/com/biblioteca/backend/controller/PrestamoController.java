@@ -160,12 +160,13 @@ public class PrestamoController {
                     default:
                         // SI ES USUARIO, REGISTRA EL PRÉSTAMO CON SU NOMBRE, EL LOCAL DEPENDE DEL
                         // LIBRO ESCOGIDO Y EL EMPLEADO, MOMENTANEAMENTE, ES "PRUEBA" (ID 1)
-                        prestamo.setUsuario(usuarioLogueado);
-                        empleado = usuarioService.findById(1L).get();
-                        prestamo.setEmpleado(empleado);
+                        if (usuarioLogueado.getRol().getAuthority().equals("ROLE_USUARIO")) {
+                            prestamo.setUsuario(usuarioLogueado);
+                            empleado = usuarioService.findById(1L).get();
+                            prestamo.setEmpleado(empleado);    
+                        }
                         break;
                 }
-
                 libro = libroService.findById(prestamo.getLibro().getId()).get();
                 if (libro.getStock() <= 0) {
                     response.put("mensaje", "Lo sentimos, hubo un error a la hora de registrar el préstamo!");
@@ -182,7 +183,6 @@ public class PrestamoController {
                     model.put("titulo", "Libro Solicitado");
                     model.put("from", "Biblioteca2020 " + "<" + emailFrom + ">");
                     model.put("to", usuarioLogueado.getEmail());
-                    // model.put("to", "edmech25@gmail.com");
                     model.put("prestamo", prestamo);
                     model.put("subject", "Libro Solicitado | Biblioteca2020");
                     emailService.enviarEmail(model);
