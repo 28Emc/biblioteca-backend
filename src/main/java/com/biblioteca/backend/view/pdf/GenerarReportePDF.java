@@ -3,6 +3,7 @@ package com.biblioteca.backend.view.pdf;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +27,8 @@ import com.itextpdf.svg.converter.SvgConverter;
 public class GenerarReportePDF {
 
     // ################ PRESTAMOS
-    public static ByteArrayInputStream generarPDFPrestamos(String titulo, List<Prestamo> prestamos) throws Exception {
+    public static ByteArrayInputStream generarPDFPrestamos(String titulo, List<Prestamo> prestamos)
+            throws IOException, NullPointerException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         // PdfWriter
         PdfWriter writer = new PdfWriter(out);
@@ -140,7 +142,7 @@ public class GenerarReportePDF {
     }
 
     // ################ LIBROS
-    public static ByteArrayInputStream generarPDFLibros(String titulo, List<Libro> libros) throws Exception {
+    public static ByteArrayInputStream generarPDFLibros(String titulo, List<Libro> libros) throws IOException, NullPointerException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         // PdfWriter
         PdfWriter writer = new PdfWriter(out);
@@ -268,7 +270,7 @@ public class GenerarReportePDF {
     }
 
     // ################ USUARIOS
-    public static ByteArrayInputStream generarPDFUsuarios(String titulo, List<Usuario> usuarios) throws Exception {
+    public static ByteArrayInputStream generarPDFUsuarios(String titulo, List<Usuario> usuarios) throws IOException, NullPointerException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         // PdfWriter
         PdfWriter writer = new PdfWriter(out);
