@@ -1083,6 +1083,13 @@ public class ReporteController {
     // ######################## EMPLEADOS ########################
     // ######################## PDF ########################
     // GENERAR REPORTE PDF DE EMPLEADOS TOTALES
+    @ApiOperation(value = "Generación de reporte en formato pdf de empleados totales", response = ResponseEntity.class)
+    @ApiResponses(value = { @ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
+            @ApiResponse(code = 302, message = " "),
+            @ApiResponse(code = 400, message = "No tienes acceso a este recurso"),
+            @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
+            @ApiResponse(code = 404, message = " "),
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde") })
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN')")
     @GetMapping(value = "/reportes/pdf/empleados-totales", produces = MediaType.APPLICATION_PDF_VALUE)
     public ResponseEntity<?> generarPdfEmpleadosTotal(Authentication authentication) {
@@ -1125,6 +1132,13 @@ public class ReporteController {
     }
 
     // GENERAR REPORTE PDF DE EMPLEADOS POR ESTADO
+    @ApiOperation(value = "Generación de reporte en formato pdf de empleados por su estado", response = ResponseEntity.class)
+    @ApiResponses(value = { @ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
+            @ApiResponse(code = 302, message = " "),
+            @ApiResponse(code = 400, message = "Solamente puedes escoger entre disponibles y no disponibles"),
+            @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
+            @ApiResponse(code = 404, message = " "),
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde") })
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN')")
     @GetMapping(value = "/reportes/pdf/empleados-por-estado/{estado}", produces = MediaType.APPLICATION_PDF_VALUE)
     public ResponseEntity<?> generarPdfLibrosPorEstado(@PathVariable("estado") String estado,
@@ -1192,6 +1206,13 @@ public class ReporteController {
     }
 
     // GENERAR PDF DE EMPLEADOS POR LOCAL
+    @ApiOperation(value = "Generación de reporte en formato pdf de empleados por su local", response = ResponseEntity.class)
+    @ApiResponses(value = { @ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
+            @ApiResponse(code = 302, message = " "),
+            @ApiResponse(code = 400, message = "No tienes acceso a este recurso"),
+            @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
+            @ApiResponse(code = 404, message = " "),
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde") })
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN')")
     @GetMapping(value = "/reportes/pdf/empleados-por-local/{id}", produces = MediaType.APPLICATION_PDF_VALUE)
     public ResponseEntity<?> generarPdfEmpleadosPorLocal(@PathVariable("id") String id, Authentication authentication) {
@@ -1223,6 +1244,13 @@ public class ReporteController {
 
     // ######################## EXCEL ########################
     // GENERAR REPORTE EXCEL DE EMPLEADOS TOTALES
+    @ApiOperation(value = "Generación de reporte en formato pdf de empleados totales", response = ResponseEntity.class)
+    @ApiResponses(value = { @ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
+            @ApiResponse(code = 302, message = " "),
+            @ApiResponse(code = 400, message = "No tienes acceso a este recurso"),
+            @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
+            @ApiResponse(code = 404, message = " "),
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde") })
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN')")
     @GetMapping(value = "/reportes/xlsx/empleados-totales")
     public ResponseEntity<?> generarExcelEmpleadosTotal(Authentication authentication) {
@@ -1264,6 +1292,13 @@ public class ReporteController {
     }
 
     // GENERAR REPORTE EXCEL DE EMPLEADOS POR ESTADO
+    @ApiOperation(value = "Generación de reporte en formato pdf de empleados por su estado", response = ResponseEntity.class)
+    @ApiResponses(value = { @ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
+            @ApiResponse(code = 302, message = " "),
+            @ApiResponse(code = 400, message = "Solamente puedes escoger entre disponibles y no disponibles"),
+            @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
+            @ApiResponse(code = 404, message = " "),
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde") })
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN')")
     @GetMapping(value = "/reportes/xlsx/empleados-por-estado/{estado}")
     public ResponseEntity<?> repEmpleadosPorEstado(@PathVariable("estado") String estado,
@@ -1330,6 +1365,13 @@ public class ReporteController {
     }
 
     // GENERAR REPORTE EXCEL DE EMPLEADOS POR LOCAL
+    @ApiOperation(value = "Generación de reporte en formato pdf de empleados por su local", response = ResponseEntity.class)
+    @ApiResponses(value = { @ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
+            @ApiResponse(code = 302, message = " "),
+            @ApiResponse(code = 400, message = "No tienes acceso a este recurso"),
+            @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
+            @ApiResponse(code = 404, message = " "),
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde") })
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN')")
     @GetMapping(value = "/reportes/xlsx/empleados-por-local/{id}")
     public ResponseEntity<?> repEmpleadosPorLocal(@PathVariable("id") String id) {
