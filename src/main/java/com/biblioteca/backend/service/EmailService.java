@@ -23,6 +23,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Service
+@SuppressWarnings("unchecked")
 public class EmailService {
 
     @Autowired
@@ -171,7 +172,8 @@ public class EmailService {
                         + "</h1><div id='imagen' style='text-align: center;'><img src='cid:logo-biblioteca2020' alt='reporte' width='60%' /></div><div style='font-size: 1.1rem; text-align: center;'><h3 style='font-weight: lighter; color:black;'>Saludos, a continuación se adjunta el reporte de los libros de los locales anexos con un stock bajo (menor a "
                         + stock + ").</h3><h3>Para mayor detalle, revisar el archivo adjunto.</h3></div>";
                 path = "static/img/img-reporte.png";
-                bis = GenerarReportePDF.generarPDFLibros("ROLE_SYSADMIN", "Reporte de libros con stock bajo | " + mesActual, libros);
+                bis = GenerarReportePDF.generarPDFLibros("ROLE_SYSADMIN",
+                        "Reporte de libros con stock bajo | " + mesActual, libros);
                 nomReporte = "reporte-libros-bajo-stock-" + mesActual + ".pdf";
                 break;
         }

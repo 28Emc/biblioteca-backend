@@ -1,12 +1,16 @@
 package com.biblioteca.backend.controller;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import com.biblioteca.backend.model.Categoria;
+import com.biblioteca.backend.model.Libro;
 import com.biblioteca.backend.service.ICategoriaService;
+import com.biblioteca.backend.service.ILibroService;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -31,6 +35,9 @@ public class CategoriaController {
 
     @Autowired
     private ICategoriaService categoriaService;
+
+    @Autowired
+    private ILibroService libroService;
 
     @ApiOperation(value = "Método de listado de categorias", response = ResponseEntity.class)
     @ApiResponses(value = { @ApiResponse(code = 200, message = " "),
@@ -158,6 +165,9 @@ public class CategoriaController {
     public ResponseEntity<?> deshabilitarCategoria(@PathVariable Long id) {
         Map<String, Object> response = new HashMap<>();
         Categoria categoriaEncontrada = null;
+        List<Libro> librosTotales = new ArrayList<Libro>();
+        List<Libro> librosActivos = new ArrayList<Libro>();
+        List<Libro> librosInactivos = new ArrayList<Libro>();
         try {
             categoriaEncontrada = categoriaService.findById(id).get();
             if (categoriaEncontrada == null) {
@@ -165,8 +175,21 @@ public class CategoriaController {
                         "La categoría con ID: ".concat(id.toString().concat(" no existe en la base de datos!")));
                 return new ResponseEntity<Map<String, Object>>(response, HttpStatus.NOT_FOUND);
             }
-            // TODO: DESHABILITAR LOS "HIJOS" (LIBROS) ANTES DE DESHABILITAR EL "PADRE"
-            // (CATEGORÍA) - VER CASO DE LOCALES CON EMPRESA
+            // SE DESHABILITAN LOS "HIJOS" (LIBROS) ANTES DE DESHABILITAR EL "PADRE"
+            // (CATEGORÍA) - LÓGICA SIMILAR DE LOCALES CON EMPRESA (LOCALCONTROLLER)
+            // NOTA: NUEVAMENTE, REVISAR SI ESTE MÉTODO ES EFICIENTE
+            librosTotales = libroService.findByCategoria(categoriaEncontrada.getNombre());
+            librosTotales.stream().forEach(l -> {
+                if (l.isActivo()) {
+                    librosActivos.add(l);
+                    l.setActivo(false);
+                    libroService.save(l);
+                } else {
+                    librosInactivos.add(l);
+                }
+            });
+            response.put("librosDelLocalActivos", librosActivos.size());
+            response.put("librosDelLocalInactivos", librosInactivos.size());
             categoriaEncontrada.setActivo(false);
             categoriaService.save(categoriaEncontrada);
         } catch (NoSuchElementException e) {
