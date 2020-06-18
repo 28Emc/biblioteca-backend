@@ -142,7 +142,8 @@ public class GenerarReportePDF {
     }
 
     // ################ LIBROS
-    public static ByteArrayInputStream generarPDFLibros(String titulo, List<Libro> libros) throws IOException, NullPointerException {
+    public static ByteArrayInputStream generarPDFLibros(String rol, String titulo, List<Libro> libros)
+            throws IOException, NullPointerException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         // PdfWriter
         PdfWriter writer = new PdfWriter(out);
@@ -171,7 +172,7 @@ public class GenerarReportePDF {
         document.add(tablaCabecera);
         // Tabla cuerpo y estilos
         Table tablaCuerpo = null;
-        if (titulo.contains("stock")) {
+        if (titulo.contains("stock") || rol.equals("ROLE_SYSADMIN")) {
             tablaCuerpo = new Table(new float[] { 1, 2.5f, 2.3f, 2.3f, 3f, 1.3f, 1.8f });
         } else {
             tablaCuerpo = new Table(new float[] { 1, 2.5f, 2.3f, 2.3f, 2.5f, 2.3f, 1.3f, 1.8f });
@@ -186,7 +187,7 @@ public class GenerarReportePDF {
         listCabecera.add("Titulo");
         listCabecera.add("Autor");
         listCabecera.add("Categoría");
-        if (titulo.contains("stock") /* || role.equals("[ROLE_SYSADMIN]") */) {
+        if (titulo.contains("stock") || rol.equals("ROLE_SYSADMIN")) {
             listCabecera.add("Local");
         } else {
             listCabecera.add("F. Publicación");
@@ -229,7 +230,7 @@ public class GenerarReportePDF {
             cellCuerpo.setBorder(Border.NO_BORDER);
             cellCuerpo.setPadding(10f);
             tablaCuerpo.addCell(cellCuerpo);
-            if (titulo.contains("stock") /* || role.equals("[ROLE_SYSADMIN]") */) {
+            if (titulo.contains("stock") || rol.equals("ROLE_SYSADMIN")) {
                 cellCuerpo = new Cell().add(new Paragraph()
                         .add(new Text(libroItem.getLocal().getDireccion().toString()).addStyle(styleCuerpo2)));
                 cellCuerpo.setBorder(Border.NO_BORDER);
@@ -270,7 +271,8 @@ public class GenerarReportePDF {
     }
 
     // ################ USUARIOS
-    public static ByteArrayInputStream generarPDFUsuarios(String titulo, List<Usuario> usuarios) throws IOException, NullPointerException {
+    public static ByteArrayInputStream generarPDFUsuarios(String titulo, List<Usuario> usuarios)
+            throws IOException, NullPointerException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         // PdfWriter
         PdfWriter writer = new PdfWriter(out);

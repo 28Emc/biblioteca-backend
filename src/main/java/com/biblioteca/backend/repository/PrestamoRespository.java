@@ -16,7 +16,7 @@ public interface PrestamoRespository extends JpaRepository<Prestamo, Long> {
     public List<Prestamo> fetchByIdWithLibroWithUsuarioWithEmpleado(Long idLocal);
 
     // PRESTAMOS CON LIBROS, USUARIOS Y EMPLEADOS FILTRADOS POR ID_EMPLEADO
-    // SE INCLUYE EL EMPLEADO DE PRUEBA (ID 1)
+    // SE INCLUYE LOS PRÉSTAMOS DEL EMPLEADO DE PRUEBA (ID 1)
     @Query("select p from Prestamo p join fetch p.usuario pe join fetch p.libro li join fetch p.empleado em where em.id=?1 or em.id=1")
     public List<Prestamo> fetchByIdWithLibroWithUsuarioWithEmpleadoPerEmpleado(Long idEmpleado);
 

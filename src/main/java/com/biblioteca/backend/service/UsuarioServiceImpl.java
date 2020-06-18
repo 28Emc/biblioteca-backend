@@ -133,4 +133,10 @@ public class UsuarioServiceImpl implements IUsuarioService {
         return repository.findByRol(authority);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<Usuario> findByRoles() {
+        return repository.findByRoles();
+    }
+
 }

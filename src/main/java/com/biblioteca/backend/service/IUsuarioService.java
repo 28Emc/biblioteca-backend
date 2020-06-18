@@ -19,6 +19,8 @@ public interface IUsuarioService {
 
     public List<Usuario> findByLocal(Long id);
 
+    public List<Usuario> findByRoles();
+
     public List<Usuario> findByRol(String authority);
 
     public Usuario saveNewUser(Usuario usuario);
