@@ -3,12 +3,8 @@ package com.biblioteca.backend.util;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.TextStyle;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
+
 import com.biblioteca.backend.model.Libro;
 import com.biblioteca.backend.model.Prestamo;
 import com.biblioteca.backend.model.Usuario;
@@ -24,7 +20,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class Scheduler {
 
-    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm:ss dd/mm/yyyy");
+    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm:ss dd/MM/yyyy");
     // private static final String correoDiego = "luis290613@gmail.com";
     private static final String correoSysadmin = "edi@live.it";
 
@@ -78,10 +74,11 @@ public class Scheduler {
                                 + LocalDate.now().getYear() + ": " + prestamos.get(i).getId());
                     }
                 }
-                List<Prestamo> prestamosMesAnterior = prestamos;
+                List<Prestamo> pMesAnterior = new ArrayList<>();
+                prestamos = pMesAnterior;
                 System.out.println("NRO DE PRESTAMOS DE "
                         + LocalDate.now().getMonth().getDisplayName(TextStyle.FULL, esp).toUpperCase() + " "
-                        + LocalDate.now().getYear() + ": " + prestamosMesAnterior.size());
+                        + LocalDate.now().getYear() + ": " + pMesAnterior.size());
                 // CREAR EMAIL Y ENVIAR AL SYSADMIN
                 try {
                     Map<String, Object> model = new HashMap<>();
@@ -161,7 +158,7 @@ public class Scheduler {
     @Scheduled(cron = "0 0 0 * * ?", zone = "America/Lima") // firme
     // @Scheduled(cron = "0 */2 * ? * *", zone = "America/Lima") // prueba
     public void enviarEmailStockLibrosMensuales() {
-        List<Libro> libros = null;
+        List<Libro> libros;
         try {
             libros = libroService.fetchWithCategoriaWithLocal();
             if (libros.size() != 0) {
@@ -172,10 +169,9 @@ public class Scheduler {
                 if (libros.size() == 0) {
                     System.out.println(
                             dateFormat.format(new Date()) + "LIBROS - NO HAY LIBROS CON STOCK MENOR A LAS 20 UNIDADES");
-                } else {
+                } else
                     System.out.println(dateFormat.format(new Date())
-                            + "LIBROS - LIBROS CON STOCK MENOR A LAS 20 UNIDADES: " + libros.size());
-                }
+                        + "LIBROS - LIBROS CON STOCK MENOR A LAS 20 UNIDADES: " + libros.size());
                 if (libros.size() > 0) {
                     // CREAR EMAIL Y ENVIAR AL SYSADMIN
                     Map<String, Object> model = new HashMap<>();
@@ -186,10 +182,9 @@ public class Scheduler {
                     model.put("subject", "Reporte de libros con stock bajo | Biblioteca2020");
                     emailService.enviarEmailwithCronSchedule(model);
                 }
-            } else {
+            } else
                 System.out.println(dateFormat.format(new Date()) + "LIBROS - NO HAY LIBROS CON STOCK MENOR A LAS "
-                        + stock + " UNIDADES.");
-            }
+                    + stock + " UNIDADES.");
         } catch (Exception ex) {
             System.out.println(ex.getMessage());
         }
