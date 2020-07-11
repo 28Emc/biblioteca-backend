@@ -2,7 +2,7 @@ package com.biblioteca.backend.service;
 
 import java.util.Optional;
 import com.biblioteca.backend.config.security.CustomUserDetails;
-import com.biblioteca.backend.model.Usuario;
+import com.biblioteca.backend.model.Usuario.Usuario;
 import com.biblioteca.backend.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;

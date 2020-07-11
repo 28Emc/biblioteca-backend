@@ -9,8 +9,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
-import com.biblioteca.backend.model.Prestamo;
-import com.biblioteca.backend.model.Usuario;
+import com.biblioteca.backend.model.Prestamo.Prestamo;
+import com.biblioteca.backend.model.Usuario.Usuario;
 import com.biblioteca.backend.repository.PrestamoRespository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -77,16 +77,15 @@ public class PrestamoServiceImpl implements IPrestamoService {
 		// Mejorando cadena de dia
 		String dia = fechaFinal.getDayOfWeek().getDisplayName(TextStyle.FULL, esp);
 		String diaMayus = dia.substring(0, 1).toUpperCase();
-		String demasLetrasDia = dia.substring(1, dia.length());
+		String demasLetrasDia = dia.substring(1);
 		String diaFinal = diaMayus + demasLetrasDia;
 		// Mejorando cadena de mes
 		String mes = fechaFinal.getMonth().getDisplayName(TextStyle.FULL, esp);
 		String mesMayus = mes.substring(0, 1).toUpperCase();
-		String demasLetrasMes = mes.substring(1, mes.length());
+		String demasLetrasMes = mes.substring(1);
 		String mesFinal = mesMayus + demasLetrasMes;
 		String anio = String.valueOf(fechaFinal.getYear());
-		String fechaFull = diaFinal + ", " + diaNum + " de " + mesFinal + " " + anio;
-		return fechaFull;
+		return diaFinal + ", " + diaNum + " de " + mesFinal + " " + anio;
 	}
 
 	@Override

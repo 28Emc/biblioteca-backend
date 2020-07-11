@@ -8,6 +8,8 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
+
+import com.biblioteca.backend.model.Local.Local;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.swagger.annotations.ApiModelProperty;
@@ -16,37 +18,37 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "tb_empresas")
+@Table(name = "tb_empresa")
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Empresa {
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@ApiModelProperty(notes = "ID Autogenerado")
-	private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @ApiModelProperty(notes = "ID Autogenerado")
+    private Long id;
 
-	@Column(length = 100, name = "razon_social", unique = true)
-	@ApiModelProperty(notes = "Razón social de la empresa", required = true, example = "Pepito S.A.C.")
-	private String razonSocial;
+    @Column(name = "razon_social", length = 100, unique = true, nullable = false)
+    @ApiModelProperty(notes = "Razón social de la empresa", required = true, example = "Pepito S.A.C.")
+    private String razonSocial;
 
-	@Column(name = "RUC", length = 11, unique = true)
-	@ApiModelProperty(notes = "RUC de la empresa", required = true, example = "10431143201")
-	private String ruc;
+    @Column(length = 11, unique = true, nullable = false)
+    @ApiModelProperty(notes = "RUC de la empresa", required = true, example = "10431143201")
+    private String ruc;
 
-	@Column(length = 255, nullable = true)
-	@ApiModelProperty(notes = "Dirección de la empresa", required = true, example = "Av. Arequipa 456")
-	private String direccion;
+    @Column(length = 255, nullable = false)
+    @ApiModelProperty(notes = "Dirección de la empresa", required = true, example = "Av. Arequipa 456")
+    private String direccion;
 
-	@Column(name = "estado", nullable = false)
-	@ApiModelProperty(notes = "Estado de la empresa", required = true, example = "true")
-	private boolean isActivo;
+    @Column(name = "is_activo", nullable = false)
+    @ApiModelProperty(notes = "Estado de la empresa", required = true, example = "true")
+    private boolean isActivo;
 
-	// EMPRESA(1):LOCAL(*)
-	@JsonIgnore()
-	@OneToMany(mappedBy = "empresa")
-	private List<Local> locales;
+    // EMPRESA(1):LOCAL(*)
+    @JsonIgnore()
+    @OneToMany(mappedBy = "empresa")
+    private List<Local> locales;
 
 }

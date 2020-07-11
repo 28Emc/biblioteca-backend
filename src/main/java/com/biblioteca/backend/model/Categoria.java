@@ -13,6 +13,8 @@ import javax.persistence.PreUpdate;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
+
+import com.biblioteca.backend.model.Libro.Libro;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.swagger.annotations.ApiModelProperty;
@@ -21,7 +23,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "tb_categorias")
+@Table(name = "tb_categoria")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -47,7 +49,7 @@ public class Categoria {
     @ApiModelProperty(notes = "Fecha de actualización de la categoría", required = false, example = "2020-06-01")
     private Date fechaActualizacion;
 
-    @Column(name = "estado", nullable = false)
+    @Column(name = "is_activo", nullable = false)
     @ApiModelProperty(notes = "Estado de la categoría", required = true, example = "true")
     private boolean isActivo;
 

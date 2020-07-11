@@ -14,26 +14,27 @@ import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 
+import com.biblioteca.backend.model.Usuario.Usuario;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "tb_token_confirma")
+@Table(name = "tb_token")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class TokenConfirma {
+public class Token {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @ApiModelProperty(notes = "ID autogenerado")
     private Long id;
 
-    @Column(name = "token_confirma", nullable = false)
+    @Column(name = "token", nullable = false)
     @ApiModelProperty(notes = "Token de confirma de solicitud", required = true, example = "edrnb865ui4bf5u4bd2685gcbd56bf787b5fbfbf")
-    private String tokenConfirma;
+    private String token;
 
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "fecha_creacion", nullable = false)
@@ -45,14 +46,14 @@ public class TokenConfirma {
     private String tipoOperacion;
 
     @OneToOne(targetEntity = Usuario.class, fetch = FetchType.EAGER)
-    @JoinColumn(nullable = false, name = "usuario_id")
+    @JoinColumn(nullable = false, name = "id_usuario")
     private Usuario usuario;
 
-    public TokenConfirma(Usuario usuario, String tOperacion) {
+    public Token(Usuario usuario, String tOperacion) {
         this.usuario = usuario;
         fechaCreacion = new Date();
         this.tipoOperacion = tOperacion;
-        tokenConfirma = UUID.randomUUID().toString();
+        token = UUID.randomUUID().toString();
     }
 
 }

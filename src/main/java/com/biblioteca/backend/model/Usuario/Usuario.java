@@ -1,4 +1,4 @@
-package com.biblioteca.backend.model;
+package com.biblioteca.backend.model.Usuario;
 
 import java.util.Date;
 import javax.persistence.CascadeType;
@@ -16,13 +16,16 @@ import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import javax.persistence.Transient;
+
+import com.biblioteca.backend.model.Local.Local;
+import com.biblioteca.backend.model.Rol;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "tb_usuarios")
+@Table(name = "tb_usuario")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -46,9 +49,9 @@ public class Usuario {
     @ApiModelProperty(notes = "Apellido Paterno del usuario", required = true, example = "Rojas")
     private String apellidoPaterno;
 
-    @Column(length = 8, name = "nro_documento", unique = true, nullable = false)
+    @Column(name = "dni", length = 8, unique = true, nullable = false)
     @ApiModelProperty(notes = "DNI del usuario", required = true, example = "98765432")
-    private String nroDocumento;
+    private String dni;
 
     @Column(length = 200, nullable = true)
     @ApiModelProperty(notes = "Dirección del usuario", required = false, example = "Av. Lima 123")
@@ -75,7 +78,7 @@ public class Usuario {
     @ApiModelProperty(notes = "Confirmar Contraseña del usuario", required = false, example = "$2a$10$mpnvIqpwTF6BJNlr4pXwOOCXk7KZiqZftFHt3IxwZ5ODYMfIBtHg6")
     private String passwordConfirmacion;
 
-    @Column(name = "estado", nullable = false)
+    @Column(name = "is_activo", nullable = false)
     @ApiModelProperty(notes = "Estado del usuario", required = true, example = "true")
     private boolean isActivo;
 
@@ -95,11 +98,11 @@ public class Usuario {
 
     // USER(1):ROLE(1)
     @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "rol_id", referencedColumnName = "id")
-    private Role rol;
+    @JoinColumn(name = "id_rol", referencedColumnName = "id")
+    private Rol rol;
 
     @ManyToOne
-    @JoinColumn(name = "local_id", nullable = false)
+    @JoinColumn(name = "id_local", nullable = false)
     private Local local;
 
     @PrePersist

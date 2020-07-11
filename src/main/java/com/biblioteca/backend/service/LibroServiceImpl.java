@@ -7,7 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import com.biblioteca.backend.model.Libro;
+import com.biblioteca.backend.model.Libro.Libro;
 import com.biblioteca.backend.repository.LibroRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -27,9 +27,8 @@ public class LibroServiceImpl implements ILibroService {
 
     @Override
     public List<Libro> findAllDistinct() {
-        List<Libro> librosDistinct = findAll().stream().filter(distinctByKey(l -> l.getTitulo()))
+        return findAll().stream().filter(distinctByKey(Libro::getTitulo))
                 .collect(Collectors.toList());
-        return librosDistinct;
     }
 
     // MÉTODO QUE ME PERMITE FILTRAR UN LISTADO Y DEVOLVER ELEMENTOS ÚNICOS MEDIANTE
@@ -54,8 +53,8 @@ public class LibroServiceImpl implements ILibroService {
     // USADO
     @Override
     @Transactional(readOnly = true)
-    public List<Libro> findByTituloLikeIgnoreCaseAndLocalAndIsActivo(String term, Long id, Boolean estado) {
-        return repository.findByTituloLikeIgnoreCaseAndLocalAndIsActivo("%" + term + "%", id, estado);
+    public List<Libro> findByTituloLikeIgnoreCaseAndLocalAndIsActivo(String term, Long id, Boolean isActivo) {
+        return repository.findByTituloLikeIgnoreCaseAndLocalAndIsActivo("%" + term + "%", id, isActivo);
     }
 
     @Override
@@ -87,8 +86,8 @@ public class LibroServiceImpl implements ILibroService {
     // USADO
     @Override
     @Transactional(readOnly = true)
-    public Optional<Libro> findByTituloAndLocalAndIsActivo(String term, Long id, Boolean estado) {
-        return repository.findByTituloAndLocalAndIsActivo(term, id, estado);
+    public Optional<Libro> findByTituloAndLocalAndIsActivo(String term, Long id, Boolean isActivo) {
+        return repository.findByTituloAndLocalAndIsActivo(term, id, isActivo);
     }
 
     // USADO
@@ -101,15 +100,15 @@ public class LibroServiceImpl implements ILibroService {
     // USADO
     @Override
     @Transactional(readOnly = true)
-    public List<Libro> findByIsActivo(boolean estado) {
-        return repository.findByIsActivo(estado);
+    public List<Libro> findByIsActivo(boolean isActivo) {
+        return repository.findByIsActivo(isActivo);
     }
 
     // USADO
     @Override
     @Transactional(readOnly = true)
-    public List<Libro> findByLocalAndIsActivo(Long idLocal, boolean estado) {
-        return repository.findByLocalAndIsActivo(idLocal, estado);
+    public List<Libro> findByLocalAndIsActivo(Long idLocal, boolean isActivo) {
+        return repository.findByLocalAndIsActivo(idLocal, isActivo);
     }
 
     // USADO

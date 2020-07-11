@@ -2,10 +2,10 @@ package com.biblioteca.backend.service;
 
 import java.util.List;
 import java.util.Optional;
-import com.biblioteca.backend.model.Local;
-import com.biblioteca.backend.model.Role;
-import com.biblioteca.backend.model.Usuario;
-import com.biblioteca.backend.model.dto.Usuarios.ChangePassword;
+import com.biblioteca.backend.model.Local.Local;
+import com.biblioteca.backend.model.Rol;
+import com.biblioteca.backend.model.Usuario.Usuario;
+import com.biblioteca.backend.model.Usuario.DTO.ChangePassword;
 import com.biblioteca.backend.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -57,7 +57,7 @@ public class UsuarioServiceImpl implements IUsuarioService {
         usuario.setActivo(false);
         usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
 
-        Role rol = roleService.findByAuthority("ROLE_USER").get();
+        Rol rol = roleService.findByAuthority("ROLE_USER").get();
         usuario.setRol(rol);
 
         Local local = localService.findById(1L).get();
@@ -117,8 +117,8 @@ public class UsuarioServiceImpl implements IUsuarioService {
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<Usuario> findByNroDocumentoAndEmail(String nroDocumento, String email) {
-        return repository.findByNroDocumentoAndEmail(nroDocumento, email);
+    public Optional<Usuario> findByDniAndEmail(String dni, String email) {
+        return repository.findByDniAndEmail(dni, email);
     }
 
     @Override

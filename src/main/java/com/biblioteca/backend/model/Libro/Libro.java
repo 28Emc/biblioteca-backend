@@ -1,4 +1,4 @@
-package com.biblioteca.backend.model;
+package com.biblioteca.backend.model.Libro;
 
 import java.util.Date;
 import java.util.List;
@@ -18,6 +18,10 @@ import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import javax.persistence.Transient;
+
+import com.biblioteca.backend.model.Categoria;
+import com.biblioteca.backend.model.Local.Local;
+import com.biblioteca.backend.model.Prestamo.Prestamo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.hibernate.annotations.Type;
@@ -28,7 +32,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "tb_libros")
+@Table(name = "tb_libro")
 @Getter
 @Setter
 @AllArgsConstructor
@@ -40,6 +44,10 @@ public class Libro {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @ApiModelProperty(notes = "ID Autogenerado")
     private Long id;
+
+    @Column(name = "isbn", nullable = false, unique = true)
+    @ApiModelProperty(notes = "ISBN del libro", required = true, example = "9791234567896")
+    private String ISBN;
 
     @Column(length = 100, nullable = false)
     @ApiModelProperty(notes = "Titulo del libro", required = true, example = "El Camino de los Reyes")
@@ -72,7 +80,7 @@ public class Libro {
     @ApiModelProperty(notes = "Fecha de actualización del libro", required = false, example = "2020-06-01")
     private Date fechaActualizacion;
 
-    @Column(name = "estado", nullable = false)
+    @Column(name = "is_activo", nullable = false)
     @ApiModelProperty(notes = "Estado del libro", required = true, example = "true")
     private boolean isActivo;
 
@@ -87,26 +95,50 @@ public class Libro {
     // LIBRO(*):LOCAL(1)
     //@JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "local_id")
+    @JoinColumn(name = "id_local")
     private Local local;
 
     // LIBRO(1):PRESTAMO(*)
     @JsonIgnore
-    @OneToMany(mappedBy = "libro"
-    , fetch = FetchType.LAZY, cascade = CascadeType.ALL
-    )
+    @OneToMany(mappedBy = "libro", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<Prestamo> prestamos;
 
     // LIBRO(*):CATEGORIA(1)
     // @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "categoria_id", nullable = false)
+    @JoinColumn(name = "id_categoria", nullable = false)
     private Categoria categoria;
 
     @PrePersist
     public void prePersist() {
         isActivo = true;
         fechaRegistro = new Date();
+        /*if (isISBN13(getISBN()))
+            ISBN = getISBN();
+        else ISBN = "";*/
+    }
+
+    // ALGORITMO PARA DETERMINAR SI EL CODIGO ISBN DEL LIBRO ES VÁLIDO
+    public boolean isISBN13(String number) {
+        int sum = 0;
+        int multiple = 0;
+        char ch = '\0';
+        int digit = 0;
+        for (int i = 1; i < 13; i++) {
+            if (i % 2 == 0) {
+                multiple = 3;
+            } else {
+                multiple = 1;
+            }
+            ch = number.charAt(i - 1);
+            digit = Character.getNumericValue(ch);
+            sum += (multiple * digit);
+        }
+        if (sum % 10 == 0) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     @PreUpdate

@@ -1,4 +1,4 @@
-package com.biblioteca.backend.model;
+package com.biblioteca.backend.model.Prestamo;
 
 import java.util.Date;
 import javax.persistence.Column;
@@ -13,6 +13,9 @@ import javax.persistence.PrePersist;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
+
+import com.biblioteca.backend.model.Libro.Libro;
+import com.biblioteca.backend.model.Usuario.Usuario;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -20,7 +23,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "tb_prestamos")
+@Table(name = "tb_prestamo")
 @Getter
 @Setter
 @AllArgsConstructor
@@ -42,7 +45,7 @@ public class Prestamo {
     @ApiModelProperty(notes = "Fecha de devolución del préstamo", required = true, example = "2020-03-12")
     private Date fechaDevolucion;
 
-    @Column(name = "estado", nullable = false)
+    @Column(name = "is_activo", nullable = false)
     @ApiModelProperty(notes = "Estado del préstamo", required = true, example = "true")
     private boolean isActivo;
 
@@ -52,17 +55,17 @@ public class Prestamo {
 
     // PRESTAMOS(*):USER(1)
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "usuario_id", nullable = false)
+    @JoinColumn(name = "id_usuario", nullable = false)
     private Usuario usuario;
 
     // PRESTAMOS(*):EMPLEADO(1)
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "empleado_id", nullable = false)
+    @JoinColumn(name = "id_empleado", nullable = false)
     private Usuario empleado;
 
     // PRESTAMOS(*):LIBRO(1)
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "libro_id", nullable = false)
+    @JoinColumn(name = "id_libro", nullable = false)
     private Libro libro;
 
     @PrePersist

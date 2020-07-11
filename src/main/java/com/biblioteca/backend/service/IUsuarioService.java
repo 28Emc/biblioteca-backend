@@ -2,8 +2,9 @@ package com.biblioteca.backend.service;
 
 import java.util.List;
 import java.util.Optional;
-import com.biblioteca.backend.model.Usuario;
-import com.biblioteca.backend.model.dto.Usuarios.ChangePassword;
+
+import com.biblioteca.backend.model.Usuario.DTO.ChangePassword;
+import com.biblioteca.backend.model.Usuario.Usuario;
 
 public interface IUsuarioService {
 
@@ -15,9 +16,9 @@ public interface IUsuarioService {
 
     public Optional<Usuario> findByEmail(String email);
 
-    public Optional<Usuario> findByNroDocumentoAndEmail(String nroDocumento, String email);
+    public Optional<Usuario> findByDniAndEmail(String dni, String email);
 
-    public List<Usuario> findByLocal(Long id);
+    public List<Usuario> findByLocal(Long idLocal);
 
     public List<Usuario> findByRoles();
 

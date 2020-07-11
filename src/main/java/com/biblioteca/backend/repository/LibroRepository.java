@@ -3,7 +3,7 @@ package com.biblioteca.backend.repository;
 import java.util.List;
 import java.util.Optional;
 
-import com.biblioteca.backend.model.Libro;
+import com.biblioteca.backend.model.Libro.Libro;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -25,7 +25,7 @@ public interface LibroRepository extends JpaRepository<Libro, Long> {
     public List<Libro> findByLocal(Long idLocal);
 
     // USADO
-    public List<Libro> findByIsActivo(boolean estado);
+    public List<Libro> findByIsActivo(boolean isActivo);
 
     // USADO
     @Query("select l from Libro l where l.categoria.nombre like?1")
@@ -33,11 +33,11 @@ public interface LibroRepository extends JpaRepository<Libro, Long> {
 
     // USADO
     @Query("select l from Libro l join fetch l.local ll where ll.id=?1 and l.isActivo=?2")
-    public List<Libro> findByLocalAndIsActivo(Long idLocal, boolean estado);
+    public List<Libro> findByLocalAndIsActivo(Long idLocal, boolean isActivo);
 
     // USADO
     @Query("select l from Libro l join fetch l.categoria lc join fetch l.local ll where lc.nombre like ?1 and ll.id=?2")
-    public List<Libro> findByCategoriaAndLocal(String categoria, Long localId);
+    public List<Libro> findByCategoriaAndLocal(String categoria, Long idLocal);
 
     // USADO
     @Query("select l from Libro l join fetch l.local lo where l.titulo like ?1")
@@ -45,7 +45,7 @@ public interface LibroRepository extends JpaRepository<Libro, Long> {
 
     // USADO
     @Query("select l from Libro l join fetch l.local lo where l.titulo like ?1 and lo.id = ?2 and l.isActivo = ?3")
-    public List<Libro> findByTituloLikeIgnoreCaseAndLocalAndIsActivo(String term, Long id, Boolean estado);
+    public List<Libro> findByTituloLikeIgnoreCaseAndLocalAndIsActivo(String term, Long id, Boolean isActivo);
 
     // USADO
     @Query("select l from Libro l join fetch l.local lo where l.titulo like ?1 and lo.id = ?2")
@@ -53,7 +53,7 @@ public interface LibroRepository extends JpaRepository<Libro, Long> {
 
     // USADO
     @Query("select l from Libro l join fetch l.local lo where l.titulo like ?1 and lo.id = ?2 and l.isActivo = ?3")
-    public Optional<Libro> findByTituloAndLocalAndIsActivo(String term, Long id, Boolean estado);
+    public Optional<Libro> findByTituloAndLocalAndIsActivo(String term, Long id, Boolean isActivo);
 
     // USADO
     @Query("select l from Libro l join fetch l.categoria lc join fetch l.local ll")

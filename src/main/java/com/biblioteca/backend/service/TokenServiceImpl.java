@@ -1,28 +1,28 @@
 package com.biblioteca.backend.service;
 
 import java.util.Optional;
-import com.biblioteca.backend.model.TokenConfirma;
-import com.biblioteca.backend.repository.TokenConfirmaRepository;
+import com.biblioteca.backend.model.Token;
+import com.biblioteca.backend.repository.TokenRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class TokenConfirmaServiceImpl implements ITokenConfirmaService {
+public class TokenServiceImpl implements ITokenService {
 
     @Autowired
-    private TokenConfirmaRepository repository;
+    private TokenRepository repository;
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<TokenConfirma> findByTokenConfirma(String token) {
-        return repository.findByTokenConfirma(token);
+    public Optional<Token> findByToken(String token) {
+        return repository.findByToken(token);
     }
 
     @Override
     @Transactional
-    public TokenConfirma save(TokenConfirma tokenConfirma) {
-        return repository.save(tokenConfirma);
+    public Token save(Token token) {
+        return repository.save(token);
     }
 
     @Override

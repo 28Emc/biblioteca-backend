@@ -6,8 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
-import com.biblioteca.backend.model.Local;
-import com.biblioteca.backend.model.Usuario;
+import com.biblioteca.backend.model.Local.Local;
+import com.biblioteca.backend.model.Usuario.Usuario;
 import com.biblioteca.backend.service.ILocalService;
 import com.biblioteca.backend.service.IUsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -139,7 +139,7 @@ public class LocalController {
                 return new ResponseEntity<Map<String, Object>>(response, HttpStatus.NOT_FOUND);
             }
             localEncontrado.setDireccion(local.getDireccion());
-            localEncontrado.setObservaciones(local.getObservaciones());
+            localEncontrado.setInfoAdicional(local.getInfoAdicional());
             localEncontrado.setEmpresa(local.getEmpresa());
 
             // SI EL ESTADO DEL LOCAL ES FALSO, DEBO DESHABILITAR SUS "HIJOS" (EMPLEADOS Y LIBROS)

@@ -1,4 +1,4 @@
-package com.biblioteca.backend.model.dto.Usuarios;
+package com.biblioteca.backend.model.Usuario.DTO;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;

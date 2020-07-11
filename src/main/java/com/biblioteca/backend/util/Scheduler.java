@@ -5,9 +5,9 @@ import java.time.LocalDate;
 import java.time.format.TextStyle;
 import java.util.*;
 
-import com.biblioteca.backend.model.Libro;
-import com.biblioteca.backend.model.Prestamo;
-import com.biblioteca.backend.model.Usuario;
+import com.biblioteca.backend.model.Libro.Libro;
+import com.biblioteca.backend.model.Prestamo.Prestamo;
+import com.biblioteca.backend.model.Usuario.Usuario;
 import com.biblioteca.backend.service.EmailService;
 import com.biblioteca.backend.service.ILibroService;
 import com.biblioteca.backend.service.IPrestamoService;

@@ -3,7 +3,7 @@ package com.biblioteca.backend.service;
 import java.util.List;
 import java.util.Optional;
 import com.biblioteca.backend.model.Empresa;
-import com.biblioteca.backend.model.Local;
+import com.biblioteca.backend.model.Local.Local;
 import com.biblioteca.backend.repository.LocalRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

@@ -1,4 +1,4 @@
-package com.biblioteca.backend.model;
+package com.biblioteca.backend.model.Local;
 
 import java.util.Date;
 import java.util.List;
@@ -15,6 +15,9 @@ import javax.persistence.PreUpdate;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
+
+import com.biblioteca.backend.model.Empresa;
+import com.biblioteca.backend.model.Usuario.Usuario;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
@@ -25,7 +28,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "tb_locales")
+@Table(name = "tb_local")
 @Getter
 @Setter
 @AllArgsConstructor
@@ -43,9 +46,9 @@ public class Local {
     @ApiModelProperty(notes = "Dirección del local", required = true, example = "Av. Lima 123")
     private String direccion;
 
-    @Column(nullable = true)
-    @ApiModelProperty(notes = "Observaciones del local", required = false, example = "Local central")
-    private String observaciones;
+    @Column(name = "info_adicional", nullable = true)
+    @ApiModelProperty(notes = "Información adicional del local", required = false, example = "Local central")
+    private String infoAdicional;
 
     @Column(name = "fecha_registro", nullable = false)
     @Temporal(TemporalType.TIMESTAMP)
@@ -57,14 +60,14 @@ public class Local {
     @ApiModelProperty(notes = "Fecha de actualización del local", required = false, example = "2020-06-01")
     private Date fechaActualizacion;
 
-    @Column(name = "estado", nullable = false)
+    @Column(name = "is_activo", nullable = false)
     @ApiModelProperty(notes = "Estado del local", required = true, example = "true")
     private boolean isActivo;
 
     // @JsonIgnore // COMENTO ESTA LINEA PARA PODER REGISTRAR LOCALES Y ASIGNAR UNA
     // EMPRESA, SIN QUE ESTA EMPRESA CARGUE A SUS LOCALES, CREANDO UN BUCLE INFINITO
     @ManyToOne
-    @JoinColumn(name = "empresa_id", nullable = false)
+    @JoinColumn(name = "id_empresa", nullable = false)
     private Empresa empresa;
 
     // LOCAL(1):EMPLEADO(*)

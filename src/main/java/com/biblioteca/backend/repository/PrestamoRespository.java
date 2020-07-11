@@ -1,7 +1,7 @@
 package com.biblioteca.backend.repository;
 
 import java.util.List;
-import com.biblioteca.backend.model.Prestamo;
+import com.biblioteca.backend.model.Prestamo.Prestamo;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 

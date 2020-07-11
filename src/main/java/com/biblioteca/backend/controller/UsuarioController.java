@@ -6,12 +6,12 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import javax.mail.MessagingException;
-import com.biblioteca.backend.model.TokenConfirma;
-import com.biblioteca.backend.model.Usuario;
-import com.biblioteca.backend.model.dto.Usuarios.AccountRecovery;
-import com.biblioteca.backend.model.dto.Usuarios.ChangePassword;
+import com.biblioteca.backend.model.Token;
+import com.biblioteca.backend.model.Usuario.Usuario;
+import com.biblioteca.backend.model.Usuario.DTO.AccountRecovery;
+import com.biblioteca.backend.model.Usuario.DTO.ChangePassword;
 import com.biblioteca.backend.service.EmailService;
-import com.biblioteca.backend.service.ITokenConfirmaService;
+import com.biblioteca.backend.service.ITokenService;
 import com.biblioteca.backend.service.IUsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -48,7 +48,7 @@ public class UsuarioController {
     private IUsuarioService usuarioService;
 
     @Autowired
-    private ITokenConfirmaService tokenConfirmaService;
+    private ITokenService tokenService;
 
     @Autowired
     private EmailService emailService;
@@ -130,9 +130,9 @@ public class UsuarioController {
                 return new ResponseEntity<Map<String, Object>>(response, HttpStatus.BAD_REQUEST);
             } else {
                 usuarioService.saveNewUser(usuario);
-                TokenConfirma tokenConfirma = new TokenConfirma(usuario, "ACTIVAR CUENTA");
-                tokenConfirmaService.save(tokenConfirma);
-                response.put("tokenValidacion", tokenConfirma.getTokenConfirma());
+                Token tokenConfirma = new Token(usuario, "ACTIVAR CUENTA");
+                tokenService.save(tokenConfirma);
+                response.put("tokenValidacion", tokenConfirma.getToken());
             }
             String baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
             Map<String, Object> model = new HashMap<>();
@@ -166,15 +166,15 @@ public class UsuarioController {
             RequestMethod.POST })
     public ResponseEntity<?> validarTokenActivacionCuentaUsuario(@RequestParam("token") String token) {
         Map<String, Object> response = new HashMap<>();
-        TokenConfirma tokenConfirma = null;
+        Token tokenConfirma = null;
         Usuario usuario = null;
         try {
-            tokenConfirma = tokenConfirmaService.findByTokenConfirma(token).get();
+            tokenConfirma = tokenService.findByToken(token).get();
             if (tokenConfirma != null) {
                 usuario = usuarioService.findByEmail(tokenConfirma.getUsuario().getEmail()).get();
                 usuario.setActivo(true);
                 usuarioService.save(usuario);
-                tokenConfirmaService.delete(tokenConfirma.getId());
+                tokenService.delete(tokenConfirma.getId());
             }
         } catch (NoSuchElementException e) {
             response.put("mensaje", "Lo sentimos, el enlace es inválido o el token ya caducó!");
@@ -201,7 +201,7 @@ public class UsuarioController {
             @RequestBody AccountRecovery dtoAccountRecovery) {
         Map<String, Object> response = new HashMap<>();
         try {
-            Optional<Usuario> usuario = usuarioService.findByNroDocumentoAndEmail(dtoAccountRecovery.getNroDocumento(),
+            Optional<Usuario> usuario = usuarioService.findByDniAndEmail(dtoAccountRecovery.getNroDocumento(),
                     dtoAccountRecovery.getEmail());
             if (!usuario.isPresent()) {
                 response.put("mensaje",
@@ -211,9 +211,9 @@ public class UsuarioController {
                 response.put("mensaje", "Lo sentimos, su cuenta està deshabilitada. Ir a 'Reactivación de cuenta'");
                 return new ResponseEntity<Map<String, Object>>(response, HttpStatus.BAD_REQUEST);
             }
-            TokenConfirma tokenConfirma = new TokenConfirma(usuario.get(), "RECUPERAR CONTRASEÑA");
-            tokenConfirmaService.save(tokenConfirma);
-            response.put("tokenValidacion", tokenConfirma.getTokenConfirma());
+            Token tokenConfirma = new Token(usuario.get(), "RECUPERAR CONTRASEÑA");
+            tokenService.save(tokenConfirma);
+            response.put("tokenValidacion", tokenConfirma.getToken());
             String baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
             Map<String, Object> model = new HashMap<>();
             model.put("titulo", "Recuperar Password");
@@ -242,15 +242,15 @@ public class UsuarioController {
     public ResponseEntity<?> validarTokenRecuperacionContraseñaUsuario(@RequestParam("token") String token) {
         Map<String, Object> response = new HashMap<>();
         ChangePassword dtoPassword = null;
-        TokenConfirma tokenConfirma = null;
+        Token tokenConfirma = null;
         try {
-            tokenConfirma = tokenConfirmaService.findByTokenConfirma(token).get();
+            tokenConfirma = tokenService.findByToken(token).get();
             if (token != null) {
                 dtoPassword = new ChangePassword();
                 Usuario usuario = usuarioService.findByEmail(tokenConfirma.getUsuario().getEmail()).get();
                 dtoPassword.setId(usuario.getId());
                 response.put("changePassword", dtoPassword);
-                tokenConfirmaService.delete(tokenConfirma.getId());
+                tokenService.delete(tokenConfirma.getId());
             }
         } catch (NoSuchElementException e) {
             response.put("mensaje", "Lo sentimos, el enlace es inválido o el token ya caducó!");
@@ -314,7 +314,7 @@ public class UsuarioController {
     public ResponseEntity<?> enviarSolicitudReactivacionCuentaUsuario(@RequestBody AccountRecovery dtoAccountRecovery) {
         Map<String, Object> response = new HashMap<>();
         try {
-            Optional<Usuario> usuario = usuarioService.findByNroDocumentoAndEmail(dtoAccountRecovery.getNroDocumento(),
+            Optional<Usuario> usuario = usuarioService.findByDniAndEmail(dtoAccountRecovery.getNroDocumento(),
                     dtoAccountRecovery.getEmail());
             if (!usuario.isPresent()) {
                 response.put("mensaje", "Lo sentimos, el DNI y/o correo ingresados son incorrectos!");
@@ -324,9 +324,9 @@ public class UsuarioController {
                         "Estimado usuario, su cuenta se encuentra activa actualmente, por lo tanto su solicitud no puede ser procesada!");
                 return new ResponseEntity<Map<String, Object>>(response, HttpStatus.BAD_REQUEST);
             }
-            TokenConfirma tokenConfirma = new TokenConfirma(usuario.get(), "REACTIVAR CUENTA");
-            tokenConfirmaService.save(tokenConfirma);
-            response.put("tokenValidacion", tokenConfirma.getTokenConfirma());
+            Token tokenConfirma = new Token(usuario.get(), "REACTIVAR CUENTA");
+            tokenService.save(tokenConfirma);
+            response.put("tokenValidacion", tokenConfirma.getToken());
             String baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
             Map<String, Object> model = new HashMap<>();
             model.put("titulo", "Reactivacion Cuenta");
@@ -356,14 +356,14 @@ public class UsuarioController {
     @GetMapping(value = "/cuenta/reactivar-cuenta/confirmar-token", produces = "application/json")
     public ResponseEntity<?> validarTokenRecuperacionCuentaUsuario(@RequestParam("token") String token) {
         Map<String, Object> response = new HashMap<>();
-        TokenConfirma tokenConfirma = null;
+        Token tokenConfirma = null;
         try {
-            tokenConfirma = tokenConfirmaService.findByTokenConfirma(token).get();
+            tokenConfirma = tokenService.findByToken(token).get();
             if (token != null) {
                 Usuario usuario = usuarioService.findByEmail(tokenConfirma.getUsuario().getEmail()).get();
                 usuario.setActivo(true);
                 usuarioService.save(usuario);
-                tokenConfirmaService.delete(tokenConfirma.getId());
+                tokenService.delete(tokenConfirma.getId());
             }
         } catch (NoSuchElementException e) {
             response.put("mensaje", "Lo sentimos, el enlace es inválido o el token ya caducó!");
@@ -430,7 +430,7 @@ public class UsuarioController {
             usuarioEncontrado.setNombres(usuario.getNombres());
             usuarioEncontrado.setApellidoMaterno(usuario.getApellidoMaterno());
             usuarioEncontrado.setApellidoPaterno(usuario.getApellidoPaterno());
-            usuarioEncontrado.setNroDocumento(usuario.getNroDocumento());
+            usuarioEncontrado.setDni(usuario.getDni());
             usuarioEncontrado.setDireccion(usuario.getDireccion());
             usuarioEncontrado.setCelular(usuario.getCelular());
             usuarioEncontrado.setEmail(usuario.getEmail());

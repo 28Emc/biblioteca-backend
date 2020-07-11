@@ -5,9 +5,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import com.biblioteca.backend.model.Libro;
-import com.biblioteca.backend.model.Prestamo;
-import com.biblioteca.backend.model.Usuario;
+import com.biblioteca.backend.model.Libro.Libro;
+import com.biblioteca.backend.model.Prestamo.Prestamo;
+import com.biblioteca.backend.model.Usuario.Usuario;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.FillPatternType;
@@ -26,7 +26,7 @@ public class GenerarReporteExcel {
             throws IOException, NullPointerException {
         // int columns = datos.size();//para generar total de columnas por ID
         // encontrados
-        try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream();) {
+        try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             // CREANDO PLANTILLA DE EXCEL
             Sheet sheet = workbook.createSheet(titulo);
             int rowNum = 0;
@@ -110,7 +110,7 @@ public class GenerarReporteExcel {
 
     // ################ USUARIOS
     public static ByteArrayInputStream generarExcelUsuarios(String titulo, List<Usuario> usuarios) throws IOException {
-        try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream();) {
+        try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             Sheet sheet = workbook.createSheet(titulo);
             int rowNum = 0;
             int cellNum = 0;
@@ -152,7 +152,7 @@ public class GenerarReporteExcel {
                 fila.createCell(1).setCellValue(usuarioItem.getNombres());
                 fila.createCell(2).setCellValue(usuarioItem.getApellidoPaterno());
                 fila.createCell(3).setCellValue(usuarioItem.getApellidoMaterno());
-                fila.createCell(4).setCellValue(usuarioItem.getNroDocumento());
+                fila.createCell(4).setCellValue(usuarioItem.getDni());
                 fila.createCell(5).setCellValue(usuarioItem.getDireccion());
                 fila.createCell(6).setCellValue(usuarioItem.getEmail());
                 fila.createCell(7).setCellValue(usuarioItem.getCelular());

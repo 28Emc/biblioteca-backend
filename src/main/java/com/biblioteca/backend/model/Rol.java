@@ -7,6 +7,8 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
+
+import com.biblioteca.backend.model.Usuario.Usuario;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
@@ -14,11 +16,11 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "tb_roles")
+@Table(name = "tb_rol")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class Role {
+public class Rol {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,9 +33,9 @@ public class Role {
     private String authority;
 
     @JsonIgnore // IMPIDO EL BLOQUE INFINITO DE ROLES QUE MUESTRAN USUARIOS ASOCIADOS A ROLES Y
-                // ASI SUCESIVAMENTE, PERO PIERDO EL REGISTRO AL MOMENTO DE CONSULTAR EL USUARIO
-                // (MUESTRA EL ROL, PERO YA NO LOS USUARIOS QUE TIENEN ESE ROL EN LA MISMA
-                // CONSULTA)
+    // ASI SUCESIVAMENTE, PERO PIERDO EL REGISTRO AL MOMENTO DE CONSULTAR EL USUARIO
+    // (MUESTRA EL ROL, PERO YA NO LOS USUARIOS QUE TIENEN ESE ROL EN LA MISMA
+    // CONSULTA)
     @OneToOne(mappedBy = "rol")
     private Usuario usuario;
 

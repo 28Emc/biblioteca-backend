@@ -7,9 +7,9 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import com.biblioteca.backend.model.Libro;
-import com.biblioteca.backend.model.Prestamo;
-import com.biblioteca.backend.model.Usuario;
+import com.biblioteca.backend.model.Libro.Libro;
+import com.biblioteca.backend.model.Prestamo.Prestamo;
+import com.biblioteca.backend.model.Usuario.Usuario;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.layout.Document;
@@ -110,7 +110,7 @@ public class GenerarReportePDF {
             cellCuerpo = new Cell().add(new Paragraph().add(new Text(
                     prestamoItem.getUsuario().getNombres() + ", " + prestamoItem.getUsuario().getApellidoMaterno() + " "
                             + prestamoItem.getUsuario().getApellidoPaterno() + " ("
-                            + prestamoItem.getUsuario().getNroDocumento() + ")").addStyle(styleCuerpo2)));
+                            + prestamoItem.getUsuario().getDni() + ")").addStyle(styleCuerpo2)));
             cellCuerpo.setBorder(Border.NO_BORDER);
             cellCuerpo.setPadding(10f);
             tablaCuerpo.addCell(cellCuerpo);
@@ -338,7 +338,7 @@ public class GenerarReportePDF {
             cellCuerpo.setPadding(10f);
             tablaCuerpo.addCell(cellCuerpo);
             cellCuerpo = new Cell()
-                    .add(new Paragraph().add(new Text(usuarioItem.getNroDocumento()).addStyle(styleCuerpo2)));
+                    .add(new Paragraph().add(new Text(usuarioItem.getDni()).addStyle(styleCuerpo2)));
             cellCuerpo.setBorder(Border.NO_BORDER);
             cellCuerpo.setPadding(10f);
             tablaCuerpo.addCell(cellCuerpo);
