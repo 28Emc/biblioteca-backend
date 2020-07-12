@@ -20,7 +20,7 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     @Query("select u from Usuario u join fetch u.rol r where r.authority=?1")
     public List<Usuario> findByRol(String authority);
 
-    @Query("select u from Usuario u join fetch u.rol r where r.authority in ('ROLE_ADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
+    @Query("select u from Usuario u join fetch u.rol r where r.authority in ('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
     public List<Usuario> findByRoles();
 
 }

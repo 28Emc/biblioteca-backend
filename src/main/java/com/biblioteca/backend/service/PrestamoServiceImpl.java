@@ -23,33 +23,6 @@ public class PrestamoServiceImpl implements IPrestamoService {
 	private PrestamoRespository repository;
 
 	@Override
-	@Transactional(readOnly = true)
-	public List<Prestamo> listarPrestamosPorRol(Map<String, Object> response, List<Prestamo> prestamos,
-			Usuario usuarioLogueado) {
-		switch (usuarioLogueado.getRol().getAuthority()) {
-			// MUESTRO TODOS LOS PRÉSTAMOS
-			case "ROLE_SYSADMIN":
-				prestamos = fetchWithLibroWithUsuarioWithEmpleado();
-				break;
-			// MUESTRO LOS PRÉSTAMOS DEL MISMO LOCAL DEL ADMIN
-			case "ROLE_ADMIN":
-				prestamos = fetchWithLibroWithUsuarioWithEmpleado();
-				break;
-			// MUESTRO LOS PRÉSTAMOS DEL MISMO LOCAL DEL EMPLEADO Y UNICAMENTE LOS ASOCIADOS
-			// CON SU ID
-			case "ROLE_EMPLEADO":
-				prestamos = fetchWithLibroWithUsuarioWithEmpleado();
-				break;
-		}
-		if (prestamos.size() == 0) {
-			response.put("mensaje", "No hay préstamos");
-		} else {
-			response.put("prestamos", prestamos);
-		}
-		return prestamos;
-	}
-
-	@Override
 	@Transactional
 	public Prestamo save(Prestamo prestamo) {
 		return repository.save(prestamo);

@@ -18,4 +18,6 @@ public interface LocalRepository extends JpaRepository<Local, Long> {
 
     public List<Local> findByEmpresa(Empresa empresa);
 
+    public boolean existsByDireccion(String direccion);
+
 }

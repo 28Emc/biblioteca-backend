@@ -1,18 +1,14 @@
 package com.biblioteca.backend.controller;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Optional;
+import java.util.*;
 import javax.mail.MessagingException;
+
 import com.biblioteca.backend.model.Token;
+import com.biblioteca.backend.model.Usuario.DTO.UsuarioDTO;
 import com.biblioteca.backend.model.Usuario.Usuario;
 import com.biblioteca.backend.model.Usuario.DTO.AccountRecovery;
 import com.biblioteca.backend.model.Usuario.DTO.ChangePassword;
-import com.biblioteca.backend.service.EmailService;
-import com.biblioteca.backend.service.ITokenService;
-import com.biblioteca.backend.service.IUsuarioService;
+import com.biblioteca.backend.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -39,7 +35,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 
-@CrossOrigin(origins = { "*", "http://localhost:4200" })
+@CrossOrigin(origins = {"*", "http://localhost:4200"})
 @RestController
 @Api(value = "usuario", description = "Operaciones referentes a los usuarios")
 public class UsuarioController {
@@ -59,100 +55,182 @@ public class UsuarioController {
     @Value("{spring.mail.username}")
     private String emailFrom;
 
+    @ApiOperation(value = "Método de listado de empleados", response = ResponseEntity.class)
+    @ApiResponses(value = {@ApiResponse(code = 200, message = " "),
+            @ApiResponse(code = 302, message = "Empleados encontrados"), @ApiResponse(code = 401, message = " "),
+            @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = " "),
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de buscar los empleados. Inténtelo mas tarde")})
+    @GetMapping(value = "/empleados", produces = "application/json")
+    @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN')")
+    public ResponseEntity<?> listarEmpleados(Authentication authentication) {
+        Map<String, Object> response = new HashMap<>();
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        Usuario empleadoLogueado = usuarioService.findByEmail(userDetails.getUsername()).orElseThrow(
+                () -> new NoSuchElementException("El empleado no existe")
+        );
+        List<Usuario> empleados = new ArrayList<>();
+        try {
+            switch (empleadoLogueado.getRol().getAuthority()) {
+                case "ROLE_SYSADMIN":
+                    empleados = usuarioService.findByRoles();
+                    break;
+                case "ROLE_ADMIN":
+                    empleados = usuarioService.findByLocal(empleadoLogueado.getLocal().getId());
+                    break;
+            }
+        } catch (Exception e) {
+            response.put("mensaje", "Lo sentimos, hubo un error a la hora de buscar los empleados!");
+            response.put("error", e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.FOUND);
+        }
+        response.put("empleados", empleados);
+        response.put("mensaje", "Empleados encontrados!");
+        return new ResponseEntity<>(response, HttpStatus.FOUND);
+    }
+
     @ApiOperation(value = "Método de listado de usuarios", response = ResponseEntity.class)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = " "),
+    @ApiResponses(value = {@ApiResponse(code = 200, message = " "),
             @ApiResponse(code = 302, message = "Usuarios encontrados"), @ApiResponse(code = 401, message = " "),
             @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = " "),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de buscar los usuarios. Inténtelo mas tarde") })
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de buscar los usuarios. Inténtelo mas tarde")})
     @GetMapping(value = "/usuarios", produces = "application/json")
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
     public ResponseEntity<?> listarUsuarios() {
         Map<String, Object> response = new HashMap<>();
-        List<Usuario> usuarios = null;
+        List<Usuario> usuarios;
         try {
-            usuarios = usuarioService.findAll();
+            usuarios = usuarioService.findByRol("ROLE_USUARIO");
         } catch (Exception e) {
             response.put("mensaje", "Lo sentimos, hubo un error a la hora de buscar los usuarios!");
             response.put("error", e.getMessage());
-            return new ResponseEntity<Map<String, Object>>(response, HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(response, HttpStatus.FOUND);
         }
         response.put("usuarios", usuarios);
         response.put("mensaje", "Usuarios encontrados!");
-        return new ResponseEntity<Map<String, Object>>(response, HttpStatus.FOUND);
+        return new ResponseEntity<>(response, HttpStatus.FOUND);
     }
 
     @ApiOperation(value = "Método de consulta de usuario por su id", response = ResponseEntity.class)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = " "),
+    @ApiResponses(value = {@ApiResponse(code = 200, message = " "),
             @ApiResponse(code = 302, message = "Usuario encontrado"), @ApiResponse(code = 401, message = " "),
             @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = " "),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de buscar el usuario. Inténtelo mas tarde") })
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de buscar el usuario. Inténtelo mas tarde")})
     @GetMapping(value = "/usuarios/{id}", produces = "application/json")
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
     public ResponseEntity<?> buscarUsuario(@PathVariable Long id) {
         Map<String, Object> response = new HashMap<>();
-        Usuario usuario = null;
+        Usuario usuario;
         try {
-            usuario = usuarioService.findById(id).get();
-            if (usuario == null) {
-                response.put("mensaje",
-                        "El usuario con ID: ".concat(id.toString().concat(" no existe en la base de datos!")));
-                return new ResponseEntity<Map<String, Object>>(response, HttpStatus.NOT_FOUND);
+            usuario = usuarioService.findById(id).orElseThrow();
+            if (usuario.getId() == 1 || !usuario.getRol().getAuthority().equals("ROLE_USUARIO")) {
+                response.put("mensaje", "Lo sentimos, el usuario no existe!");
+                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
             }
         } catch (NoSuchElementException e) {
             response.put("mensaje", "Lo sentimos, el usuario no existe!");
             response.put("error", e.getMessage());
-            return new ResponseEntity<Map<String, Object>>(response, HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (Exception e) {
             response.put("mensaje", "Lo sentimos, hubo un error a la hora de buscar el usuario!");
             response.put("error", e.getMessage());
-            return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
         response.put("usuario", usuario);
         response.put("mensaje", "Usuario encontrado!");
-        return new ResponseEntity<Map<String, Object>>(response, HttpStatus.FOUND);
+        return new ResponseEntity<>(response, HttpStatus.FOUND);
+    }
+
+    @ApiOperation(value = "Método de consulta de empleados por su id", response = ResponseEntity.class)
+    @ApiResponses(value = {@ApiResponse(code = 200, message = " "),
+            @ApiResponse(code = 302, message = "Empleado encontrado"), @ApiResponse(code = 401, message = " "),
+            @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = " "),
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de buscar el empleado. Inténtelo mas tarde")})
+    @GetMapping(value = "/empleados/{id}", produces = "application/json")
+    @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN')")
+    public ResponseEntity<?> buscarEmpleado(@PathVariable Long id, Authentication authentication) {
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        Usuario empleadoLogueado = usuarioService.findByEmail(userDetails.getUsername()).orElseThrow();
+        Map<String, Object> response = new HashMap<>();
+        Usuario empleado;
+        try {
+            empleado = usuarioService.findById(id).orElseThrow();
+            if (empleado.getId() == 1 || empleado.getRol().getAuthority().equals("ROLE_USUARIO")) {
+                response.put("mensaje", "Lo sentimos, el empleado no existe!");
+                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+            } else if (empleadoLogueado.getRol().getAuthority().equals("ROLE_ADMIN")
+                    && !empleado.getLocal().getId().equals(empleadoLogueado.getLocal().getId())) {
+                // PENSAR SI COLOCAR QUE "EL EMPLEADO NO EXISTE" DIRECTAMENTE
+                response.put("mensaje", "Lo sentimos, no puedes consultar empleados de otros locales");
+                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+            }
+        } catch (NoSuchElementException e) {
+            response.put("mensaje", "Lo sentimos, el empleado no existe!");
+            response.put("error", e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            response.put("mensaje", "Lo sentimos, hubo un error a la hora de buscar el empleado!");
+            response.put("error", e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        response.put("empleado", empleado);
+        response.put("mensaje", "Empleado encontrado!");
+        return new ResponseEntity<>(response, HttpStatus.FOUND);
     }
 
     @ApiOperation(value = "Método de registro de usuarios (hecho para usuarios nuevos) con cuenta por activar", response = ResponseEntity.class)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = " "),
+    @ApiResponses(value = {@ApiResponse(code = 200, message = " "),
             @ApiResponse(code = 201, message = "Usuario registrado"),
             @ApiResponse(code = 400, message = "Lo sentimos, el correo ya està asociado con otro usuario"),
             @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
             @ApiResponse(code = 404, message = " "),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de registrar el usuario. Inténtelo mas tarde") })
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de registrar el usuario. Inténtelo mas tarde")})
     @PostMapping(value = "/cuenta", produces = "application/json")
-    public ResponseEntity<?> crearUsuario(@RequestBody Usuario usuario) {
+    public ResponseEntity<?> crearUsuario(@RequestBody UsuarioDTO usuarioDTO) {
         Map<String, Object> response = new HashMap<>();
-        Optional<Usuario> usuarioEncontrado = null;
+        Optional<Usuario> usuarioEncontrado;
         try {
-            usuarioEncontrado = usuarioService.findByEmail(usuario.getEmail());
+            usuarioEncontrado = usuarioService.findByEmail(usuarioDTO.getEmail());
             if (usuarioEncontrado.isPresent()) {
                 response.put("mensaje", "Lo sentimos, el correo ya està asociado con otro usuario!");
-                return new ResponseEntity<Map<String, Object>>(response, HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             } else {
+                Usuario usuario = new Usuario();
+                usuario.setNombres(usuarioDTO.getNombres());
+                usuario.setApellidoPaterno(usuarioDTO.getApellidoPaterno());
+                usuario.setApellidoMaterno(usuarioDTO.getApellidoMaterno());
+                usuario.setDni(usuarioDTO.getDni());
+                usuario.setDireccion(usuarioDTO.getDireccion());
+                usuario.setCelular(usuarioDTO.getCelular());
+                usuario.setEmail(usuarioDTO.getEmail());
+                usuario.setUsuario(usuarioDTO.getUsuario());
+                usuario.setPassword(usuarioDTO.getPassword());
+                usuario.setFotoUsuario(usuarioDTO.getFotoUsuario());
                 usuarioService.saveNewUser(usuario);
                 Token tokenConfirma = new Token(usuario, "ACTIVAR CUENTA");
                 tokenService.save(tokenConfirma);
                 response.put("tokenValidacion", tokenConfirma.getToken());
+                //}
+
+                String baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
+                Map<String, Object> model = new HashMap<>();
+                model.put("titulo", "Validar Correo");
+                model.put("enlace", baseUrl + "/cuenta/activar?token=" + response.get("tokenValidacion"));
+                model.put("from", "Biblioteca2020 " + "<" + emailFrom + ">");
+                model.put("to", usuario.getEmail());
+                model.put("subject", "Validar Correo | Biblioteca2020");
+                emailService.enviarEmail(model);
             }
-            String baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
-            Map<String, Object> model = new HashMap<>();
-            model.put("titulo", "Validar Correo");
-            model.put("enlace", baseUrl + "/cuenta/activar?token=" + response.get("tokenValidacion"));
-            model.put("from", "Biblioteca2020 " + "<" + emailFrom + ">");
-            model.put("to", usuario.getEmail());
-            model.put("subject", "Validar Correo | Biblioteca2020");
-            emailService.enviarEmail(model);
-        } catch (DataIntegrityViolationException e) {
+        } catch (NoSuchElementException | DataIntegrityViolationException e) {
             response.put("mensaje", "Lo sentimos, hubo un error a la hora de registrar el usuario!");
             response.put("error", e.getMessage());
-            return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (MessagingException e) {
             response.put("mensaje", "Lo sentimos, hubo un error a la hora de enviar el correo de confirmación!");
             response.put("error", e.getMessage());
-            return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
         response.put("mensaje", "Usuario registrado! Se ha enviado un email de verificación para activar tu cuenta");
-        return new ResponseEntity<Map<String, Object>>(response, HttpStatus.CREATED);
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     @ApiOperation(value = "Método de activación de cuenta de usuario mediante token", response = ResponseEntity.class)
@@ -161,59 +239,59 @@ public class UsuarioController {
             @ApiResponse(code = 201, message = " "), @ApiResponse(code = 400, message = " "),
             @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
             @ApiResponse(code = 404, message = "Lo sentimos, el enlace es inválido o el token ya caducó"),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de procesar la solicitud. Inténtelo mas tarde") })
-    @RequestMapping(value = "/cuenta/activar", produces = "application/json", method = { RequestMethod.GET,
-            RequestMethod.POST })
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de procesar la solicitud. Inténtelo mas tarde")})
+    @RequestMapping(value = "/cuenta/activar", produces = "application/json", method = {RequestMethod.GET,
+            RequestMethod.POST})
     public ResponseEntity<?> validarTokenActivacionCuentaUsuario(@RequestParam("token") String token) {
         Map<String, Object> response = new HashMap<>();
-        Token tokenConfirma = null;
-        Usuario usuario = null;
+        Token tokenConfirma;
+        Usuario usuario;
         try {
-            tokenConfirma = tokenService.findByToken(token).get();
-            if (tokenConfirma != null) {
-                usuario = usuarioService.findByEmail(tokenConfirma.getUsuario().getEmail()).get();
-                usuario.setActivo(true);
-                usuarioService.save(usuario);
-                tokenService.delete(tokenConfirma.getId());
-            }
+            tokenConfirma = tokenService.findByToken(token).orElseThrow();
+            usuario = usuarioService.findByEmail(tokenConfirma.getUsuario().getEmail()).orElseThrow();
+            usuario.setActivo(true);
+            usuarioService.save(usuario);
+            tokenService.delete(tokenConfirma.getId());
         } catch (NoSuchElementException e) {
             response.put("mensaje", "Lo sentimos, el enlace es inválido o el token ya caducó!");
             response.put("error", e.getMessage());
-            return new ResponseEntity<Map<String, Object>>(response, HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (Exception e) {
             response.put("mensaje", "Lo sentimos, hubo un error a la hora de enviar la solicitud! Inténtelo mas tarde");
             response.put("error", e.getMessage());
-            return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        response.put("mensaje", "Token validado y usuario activado! Inicia sesión con sus nuevas credenciales");
-        return new ResponseEntity<Map<String, Object>>(response, HttpStatus.OK);
+        response.put("mensaje", "Activación de cuenta realizado con éxito! Inicia sesión con sus nuevas credenciales.");
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @ApiOperation(value = "Método de recuperación de contraseña del usuario mediante email y DNI", response = ResponseEntity.class)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = "Solicitud de recuperación de contraseña enviada"),
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Solicitud de recuperación de contraseña enviada"),
             @ApiResponse(code = 201, message = " "),
             @ApiResponse(code = 400, message = "Lo sentimos, su cuenta està deshabilitada. Ir a 'Reactivación de cuenta'"),
             @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
             @ApiResponse(code = 404, message = "Lo sentimos, el DNI y/o correo ingresados son incorrectos o el usuario no existe"),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de enviar la solicitud. Inténtelo mas tarde") })
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de enviar la solicitud. Inténtelo mas tarde")})
     @PostMapping(value = "/cuenta/recuperar-password", produces = "application/json")
-    public ResponseEntity<?> enviarSolicitudRecuperacionContraseñaUsuario(
+    public ResponseEntity<?> enviarSolicitudRecuperacionContrasenaUsuario(
             @RequestBody AccountRecovery dtoAccountRecovery) {
         Map<String, Object> response = new HashMap<>();
+        Optional<Usuario> usuario;
         try {
-            Optional<Usuario> usuario = usuarioService.findByDniAndEmail(dtoAccountRecovery.getNroDocumento(),
+            usuario = usuarioService.findByDniAndEmail(dtoAccountRecovery.getNroDocumento(),
                     dtoAccountRecovery.getEmail());
-            if (!usuario.isPresent()) {
+            if (usuario.isEmpty()) {
                 response.put("mensaje",
                         "Lo sentimos, el DNI y/o correo ingresados son incorrectos o el usuario no existe!");
-                return new ResponseEntity<Map<String, Object>>(response, HttpStatus.NOT_FOUND);
+                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
             } else if (!usuario.get().isActivo()) {
                 response.put("mensaje", "Lo sentimos, su cuenta està deshabilitada. Ir a 'Reactivación de cuenta'");
-                return new ResponseEntity<Map<String, Object>>(response, HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
             Token tokenConfirma = new Token(usuario.get(), "RECUPERAR CONTRASEÑA");
             tokenService.save(tokenConfirma);
             response.put("tokenValidacion", tokenConfirma.getToken());
+
             String baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
             Map<String, Object> model = new HashMap<>();
             model.put("titulo", "Recuperar Password");
@@ -223,66 +301,66 @@ public class UsuarioController {
             model.put("to", usuario.get().getEmail());
             model.put("subject", "Recuperar Password | Biblioteca2020");
             emailService.enviarEmail(model);
+
         } catch (Exception e) {
             response.put("mensaje", "Lo sentimos, hubo un error a la hora de enviar la solicitud! Inténtelo mas tarde");
             response.put("error", e.getMessage());
-            return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
         response.put("mensaje", "Solicitud de recuperación de contraseña enviada!");
-        return new ResponseEntity<Map<String, Object>>(response, HttpStatus.OK);
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @ApiOperation(value = "Método de validación de token de recuperación de contraseña de usuario", response = ResponseEntity.class)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = "Token validado"),
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Token validado"),
             @ApiResponse(code = 201, message = " "), @ApiResponse(code = 400, message = " "),
             @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
             @ApiResponse(code = 404, message = "Lo sentimos, el enlace es inválido o el token ya caducó"),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de procesar la solicitud. Inténtelo mas tarde") })
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de procesar la solicitud. Inténtelo mas tarde")})
     @GetMapping(value = "/cuenta/recuperar-password/confirmar-token", produces = "application/json")
-    public ResponseEntity<?> validarTokenRecuperacionContraseñaUsuario(@RequestParam("token") String token) {
+    public ResponseEntity<?> validarTokenRecuperacionContrasenaUsuario(@RequestParam("token") String token) {
         Map<String, Object> response = new HashMap<>();
-        ChangePassword dtoPassword = null;
-        Token tokenConfirma = null;
+        ChangePassword dtoPassword;
+        Token tokenConfirma;
         try {
-            tokenConfirma = tokenService.findByToken(token).get();
-            if (token != null) {
-                dtoPassword = new ChangePassword();
-                Usuario usuario = usuarioService.findByEmail(tokenConfirma.getUsuario().getEmail()).get();
-                dtoPassword.setId(usuario.getId());
-                response.put("changePassword", dtoPassword);
-                tokenService.delete(tokenConfirma.getId());
-            }
+            tokenConfirma = tokenService.findByToken(token).orElseThrow();
+            dtoPassword = new ChangePassword();
+            Usuario usuario = usuarioService.findByEmail(tokenConfirma.getUsuario().getEmail()).orElseThrow();
+            dtoPassword.setId(usuario.getId());
+            response.put("changePassword", dtoPassword);
+            tokenService.delete(tokenConfirma.getId());
         } catch (NoSuchElementException e) {
             response.put("mensaje", "Lo sentimos, el enlace es inválido o el token ya caducó!");
             response.put("error", e.getMessage());
-            return new ResponseEntity<Map<String, Object>>(response, HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (Exception e) {
             response.put("mensaje", "Lo sentimos, hubo un error a la hora de enviar la solicitud! Inténtelo mas tarde");
             response.put("error", e.getMessage());
-            return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
         response.put("mensaje", "Token validado!");
-        return new ResponseEntity<Map<String, Object>>(response, HttpStatus.OK);
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @ApiOperation(value = "Método de cambio de contraseña del usuario (afuera del sistema)", response = ResponseEntity.class)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = " "),
+    @ApiResponses(value = {@ApiResponse(code = 200, message = " "),
             @ApiResponse(code = 201, message = "Contraseña recuperada y actualizada"),
             @ApiResponse(code = 400, message = "Rellenar todos los campos"), @ApiResponse(code = 401, message = " "),
             @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = " "),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de actualizar la contraseña. Inténtelo mas tarde") })
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de actualizar la contraseña. Inténtelo mas tarde")})
     @PostMapping(value = "/cuenta/recuperar-password/confirmar-token", produces = "application/json")
-    public ResponseEntity<?> recuperarContraseñaUsuario(@RequestBody ChangePassword dtoPassword) {
+    public ResponseEntity<?> recuperarContrasenaUsuario(@RequestBody ChangePassword dtoPassword) {
         Map<String, Object> response = new HashMap<>();
-        Usuario usuarioNuevo = null;
+        Usuario usuarioNuevo;
         dtoPassword.setPasswordActual(null);
         try {
             if (dtoPassword.getNuevaPassword().equals("") || dtoPassword.getConfirmarPassword().equals("")) {
                 response.put("mensaje", "Rellenar todos los campos!");
-                return new ResponseEntity<Map<String, Object>>(response, HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
-            usuarioNuevo = usuarioService.findById(dtoPassword.getId()).get();
+            usuarioNuevo = usuarioService.findById(dtoPassword.getId()).orElseThrow();
             usuarioService.recuperarPassword(dtoPassword);
+
             Map<String, Object> model = new HashMap<>();
             model.put("titulo", "Contraseña Actualizada");
             model.put("from", "Biblioteca2020 " + "<" + emailFrom + ">");
@@ -290,43 +368,46 @@ public class UsuarioController {
             model.put("to", usuarioNuevo.getEmail());
             model.put("subject", "Contraseña Actualizada | Biblioteca2020");
             emailService.enviarEmail(model);
-        } catch (DataIntegrityViolationException e) {
+
+        } catch (NoSuchElementException | DataIntegrityViolationException e) {
             response.put("mensaje", "Lo sentimos, hubo un error a la hora de actualizar la contraseña!");
             response.put("error", e.getMessage());
-            return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (Exception e) {
-            response.put("mensaje", "Lo sentimos, hubo un error a la hora de actualizar la contraseña!");
+            response.put("mensaje", "Lo sentimos, hubo un error a la hora de actualizar la contraseña! Inténtelo mas tarde");
             response.put("error", e.getMessage());
-            return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
         response.put("mensaje", "Contraseña recuperada y actualizada!");
-        return new ResponseEntity<Map<String, Object>>(response, HttpStatus.CREATED);
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     @ApiOperation(value = "Método de reactivación de cuenta de usuario mediante email y DNI", response = ResponseEntity.class)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = "Solicitud de reactivación de cuenta enviada"),
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Solicitud de reactivación de cuenta enviada"),
             @ApiResponse(code = 201, message = " "),
             @ApiResponse(code = 400, message = "Estimado usuario, su cuenta se encuentra activa actualmente, por lo tanto su solicitud no puede ser procesada."),
             @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
             @ApiResponse(code = 404, message = "Lo sentimos, el DNI y/o correo ingresados son incorrectos"),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de enviar la solicitud. Inténtelo mas tarde") })
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de enviar la solicitud. Inténtelo mas tarde")})
     @PostMapping(value = "/cuenta/reactivar-cuenta", produces = "application/json")
     public ResponseEntity<?> enviarSolicitudReactivacionCuentaUsuario(@RequestBody AccountRecovery dtoAccountRecovery) {
         Map<String, Object> response = new HashMap<>();
+        Optional<Usuario> usuario;
         try {
-            Optional<Usuario> usuario = usuarioService.findByDniAndEmail(dtoAccountRecovery.getNroDocumento(),
+            usuario = usuarioService.findByDniAndEmail(dtoAccountRecovery.getNroDocumento(),
                     dtoAccountRecovery.getEmail());
-            if (!usuario.isPresent()) {
+            if (usuario.isEmpty()) {
                 response.put("mensaje", "Lo sentimos, el DNI y/o correo ingresados son incorrectos!");
-                return new ResponseEntity<Map<String, Object>>(response, HttpStatus.NOT_FOUND);
+                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
             } else if (usuario.get().isActivo()) {
                 response.put("mensaje",
-                        "Estimado usuario, su cuenta se encuentra activa actualmente, por lo tanto su solicitud no puede ser procesada!");
-                return new ResponseEntity<Map<String, Object>>(response, HttpStatus.BAD_REQUEST);
+                        "Estimado usuario, su cuenta se encuentra actualmente activa, por lo tanto su solicitud no puede ser procesada!");
+                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
             Token tokenConfirma = new Token(usuario.get(), "REACTIVAR CUENTA");
             tokenService.save(tokenConfirma);
             response.put("tokenValidacion", tokenConfirma.getToken());
+
             String baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
             Map<String, Object> model = new HashMap<>();
             model.put("titulo", "Reactivacion Cuenta");
@@ -337,13 +418,17 @@ public class UsuarioController {
             model.put("to", usuario.get().getEmail());
             model.put("subject", "Reactivacion Cuenta | Biblioteca2020");
             emailService.enviarEmail(model);
+        } catch (NoSuchElementException e) {
+            response.put("mensaje", "Lo sentimos, hubo un error a la hora de enviar la solicitud!");
+            response.put("error", e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (Exception e) {
             response.put("mensaje", "Lo sentimos, hubo un error a la hora de enviar la solicitud! Inténtelo mas tarde");
             response.put("error", e.getMessage());
-            return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
         response.put("mensaje", "Solicitud de reactivación de cuenta enviada!");
-        return new ResponseEntity<Map<String, Object>>(response, HttpStatus.OK);
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @ApiOperation(value = "Método de validación de token de reactivación de cuenta de usuario", response = ResponseEntity.class)
@@ -352,81 +437,75 @@ public class UsuarioController {
             @ApiResponse(code = 201, message = " "), @ApiResponse(code = 400, message = " "),
             @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
             @ApiResponse(code = 404, message = "Lo sentimos, el enlace es inválido o el token ya caducó"),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de procesar la solicitud. Inténtelo mas tarde") })
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de procesar la solicitud. Inténtelo mas tarde")})
     @GetMapping(value = "/cuenta/reactivar-cuenta/confirmar-token", produces = "application/json")
     public ResponseEntity<?> validarTokenRecuperacionCuentaUsuario(@RequestParam("token") String token) {
         Map<String, Object> response = new HashMap<>();
-        Token tokenConfirma = null;
+        Token tokenConfirma;
         try {
-            tokenConfirma = tokenService.findByToken(token).get();
-            if (token != null) {
-                Usuario usuario = usuarioService.findByEmail(tokenConfirma.getUsuario().getEmail()).get();
-                usuario.setActivo(true);
-                usuarioService.save(usuario);
-                tokenService.delete(tokenConfirma.getId());
-            }
+            tokenConfirma = tokenService.findByToken(token).orElseThrow();
+            Usuario usuario = usuarioService.findByEmail(tokenConfirma.getUsuario().getEmail()).orElseThrow();
+            usuario.setActivo(true);
+            usuarioService.save(usuario);
+            tokenService.delete(tokenConfirma.getId());
         } catch (NoSuchElementException e) {
             response.put("mensaje", "Lo sentimos, el enlace es inválido o el token ya caducó!");
             response.put("error", e.getMessage());
-            return new ResponseEntity<Map<String, Object>>(response, HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (Exception e) {
             response.put("mensaje", "Lo sentimos, hubo un error a la hora de enviar la solicitud! Inténtelo mas tarde");
             response.put("error", e.getMessage());
-            return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
         response.put("mensaje",
-                "Reactivacion de cuenta de usuario realizada de manera satisfactoria! Ahora puede iniciar sesión.");
-        return new ResponseEntity<Map<String, Object>>(response, HttpStatus.OK);
+                "Reactivacion de cuenta completada! Ahora puede iniciar sesión.");
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @ApiOperation(value = "Método de registro de usuarios", response = ResponseEntity.class)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = " "),
+    @ApiResponses(value = {@ApiResponse(code = 200, message = " "),
             @ApiResponse(code = 201, message = "Usuario registrado"),
             @ApiResponse(code = 400, message = "Lo sentimos, el correo ya està asociado con otro usuario"),
             @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
             @ApiResponse(code = 404, message = " "),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de registrar el usuario. Inténtelo mas tarde") })
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de registrar el usuario. Inténtelo mas tarde")})
     @PostMapping(value = "/usuarios", produces = "application/json")
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<?> crearUsuarioSinValidar(@RequestBody Usuario usuario) {
         Map<String, Object> response = new HashMap<>();
-        Optional<Usuario> usuarioEncontrado = null;
+        Optional<Usuario> usuarioEncontrado;
         try {
             usuarioEncontrado = usuarioService.findByEmail(usuario.getEmail());
             if (usuarioEncontrado.isPresent()) {
                 response.put("mensaje", "Lo sentimos, el correo ya està asociado con otro usuario!");
-                return new ResponseEntity<Map<String, Object>>(response, HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             } else {
                 usuario.setPassword(encoder.encode(usuario.getPassword()));
                 usuario.setActivo(true);
                 usuarioService.save(usuario);
             }
-        } catch (DataIntegrityViolationException e) {
+        } catch (NoSuchElementException | DataIntegrityViolationException e) {
             response.put("mensaje", "Lo sentimos, hubo un error a la hora de registrar el usuario!");
             response.put("error", e.getMessage());
-            return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
         response.put("mensaje", "Usuario registrado!");
-        return new ResponseEntity<Map<String, Object>>(response, HttpStatus.CREATED);
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     @ApiOperation(value = "Método de actualización de usuarios", response = ResponseEntity.class)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = " "),
+    @ApiResponses(value = {@ApiResponse(code = 200, message = " "),
             @ApiResponse(code = 201, message = "Usuario actualizado"), @ApiResponse(code = 401, message = " "),
             @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = "El usuario no existe"),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de actualizar el usuario. Inténtelo mas tarde") })
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de actualizar el usuario. Inténtelo mas tarde")})
     @PutMapping(value = "/usuarios/{id}", produces = "application/json")
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO', 'ROLE_USER')")
     public ResponseEntity<?> editarUsuario(@RequestBody Usuario usuario, @PathVariable Long id) {
         Map<String, Object> response = new HashMap<>();
-        Usuario usuarioEncontrado = null;
+        Usuario usuarioEncontrado;
         try {
-            usuarioEncontrado = usuarioService.findById(id).get();
-            if (usuarioEncontrado == null) {
-                response.put("mensaje",
-                        "El usuario con ID: ".concat(id.toString().concat(" no existe en la base de datos!")));
-                return new ResponseEntity<Map<String, Object>>(response, HttpStatus.NOT_FOUND);
-            }
+            usuarioEncontrado = usuarioService.findById(id).orElseThrow();
+
             usuarioEncontrado.setNombres(usuario.getNombres());
             usuarioEncontrado.setApellidoMaterno(usuario.getApellidoMaterno());
             usuarioEncontrado.setApellidoPaterno(usuario.getApellidoPaterno());
@@ -441,72 +520,68 @@ public class UsuarioController {
         } catch (NoSuchElementException e) {
             response.put("mensaje", "Lo sentimos, el usuario no existe!");
             response.put("error", e.getMessage());
-            return new ResponseEntity<Map<String, Object>>(response, HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (DataIntegrityViolationException e) {
             response.put("mensaje", "Lo sentimos, hubo un error a la hora de actualizar el usuario!");
             response.put("error", e.getMessage());
-            return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
         response.put("mensaje", "Usuario actualizado!");
-        return new ResponseEntity<Map<String, Object>>(response, HttpStatus.CREATED);
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     @ApiOperation(value = "Método de cambio de contraseña del usuario logueado en ese momento (dentro del sistema)", response = ResponseEntity.class)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = " "),
+    @ApiResponses(value = {@ApiResponse(code = 200, message = " "),
             @ApiResponse(code = 201, message = "Contraseña actualizada"), @ApiResponse(code = 401, message = " "),
             @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = " "),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de actualizar la contraseña. Inténtelo mas tarde") })
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de actualizar la contraseña. Inténtelo mas tarde")})
     @PutMapping(value = "/usuarios/cambiar-password", produces = "application/json")
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO', 'ROLE_USER')")
     public ResponseEntity<?> cambiarContraseñaUsuario(@RequestBody ChangePassword dtoPassword,
-            Authentication authentication) {
+                                                      Authentication authentication) {
         Map<String, Object> response = new HashMap<>();
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        Usuario usuarioAntiguo = usuarioService.findByEmail(userDetails.getUsername()).get();
+        Usuario usuarioAntiguo = usuarioService.findByEmail(userDetails.getUsername()).orElseThrow();
         dtoPassword.setId(usuarioAntiguo.getId());
         try {
             if (dtoPassword.getPasswordActual().equals("") || dtoPassword.getNuevaPassword().equals("")
                     || dtoPassword.getConfirmarPassword().equals("")) {
                 response.put("mensaje", "Rellenar todos los campos!");
-                return new ResponseEntity<Map<String, Object>>(response, HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
             usuarioService.cambiarPassword(dtoPassword);
         } catch (NoSuchElementException e) {
             response.put("mensaje", "Lo sentimos, el usuario no existe!");
             response.put("error", e.getMessage());
-            return new ResponseEntity<Map<String, Object>>(response, HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (DataIntegrityViolationException e) {
             response.put("mensaje", "Lo sentimos, hubo un error a la hora de actualizar la contraseña!");
             response.put("error", e.getMessage());
-            return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (Exception e) {
-            response.put("mensaje", "Lo sentimos, hubo un error a la hora de actualizar la contraseña!");
+            response.put("mensaje", "Lo sentimos, hubo un error a la hora de actualizar la contraseña! Inténtelo mas tarde.");
             response.put("error", e.getMessage());
-            return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
         response.put("mensaje", "Contraseña actualizada!");
-        return new ResponseEntity<Map<String, Object>>(response, HttpStatus.CREATED);
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     @ApiOperation(value = "Método de deshabilitación del usuario logueado en ese momento mediante el id", response = ResponseEntity.class)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = "Usuario deshabilitado"),
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Usuario deshabilitado"),
             @ApiResponse(code = 201, message = " "), @ApiResponse(code = 401, message = " "),
             @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = "El usuario no existe"),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de deshabilitar el usuario. Inténtelo mas tarde") })
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de deshabilitar el usuario. Inténtelo mas tarde")})
     @PutMapping(value = "/usuarios/{id}/deshabilitar-cuenta", produces = "application/json")
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_USER')")
     public ResponseEntity<?> deshabilitarUsuario(@PathVariable Long id) {
         Map<String, Object> response = new HashMap<>();
-        Usuario usuarioEncontrado = null;
+        Usuario usuarioEncontrado;
         try {
-            usuarioEncontrado = usuarioService.findById(id).get();
-            if (usuarioEncontrado == null) {
-                response.put("mensaje",
-                        "El usuario con ID: ".concat(id.toString().concat(" no existe en la base de datos!")));
-                return new ResponseEntity<Map<String, Object>>(response, HttpStatus.NOT_FOUND);
-            }
+            usuarioEncontrado = usuarioService.findById(id).orElseThrow();
             usuarioEncontrado.setActivo(false);
             usuarioService.save(usuarioEncontrado);
+
             Map<String, Object> model = new HashMap<>();
             model.put("titulo", "Usuario Deshabilitado");
             model.put("from", "Biblioteca2020 " + "<" + emailFrom + ">");
@@ -514,28 +589,29 @@ public class UsuarioController {
             model.put("to", usuarioEncontrado.getEmail());
             model.put("subject", "Usuario Deshabilitado | Biblioteca2020");
             emailService.enviarEmail(model);
+
         } catch (NoSuchElementException e) {
             response.put("mensaje", "Lo sentimos, el usuario no existe!");
             response.put("error", e.getMessage());
-            return new ResponseEntity<Map<String, Object>>(response, HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (DataIntegrityViolationException e) {
             response.put("mensaje", "Lo sentimos, hubo un error a la hora de deshabilitar el usuario!");
             response.put("error", e.getMessage());
-            return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (MessagingException e) {
             response.put("mensaje", "Lo sentimos, hubo un error a la hora de enviar el correo de confirmación!");
             response.put("error", e.getMessage());
-            return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
         response.put("mensaje", "Usuario deshabilitado!");
-        return new ResponseEntity<Map<String, Object>>(response, HttpStatus.OK);
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @ApiOperation(value = "Método de eliminación del usuario mediante el id", response = ResponseEntity.class)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = "Usuario eliminado"),
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Usuario eliminado"),
             @ApiResponse(code = 201, message = " "), @ApiResponse(code = 401, message = " "),
             @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = "El usuario no existe"),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de eliminar el usuario. Inténtelo mas tarde") })
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de eliminar el usuario. Inténtelo mas tarde")})
     @DeleteMapping(value = "/usuarios/{id}", produces = "application/json")
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN')")
     public ResponseEntity<?> eliminarUsuario(@PathVariable Long id) {
@@ -543,15 +619,15 @@ public class UsuarioController {
         try {
             usuarioService.delete(id);
             response.put("mensaje", "Usuario eliminado!");
-            return new ResponseEntity<Map<String, Object>>(response, HttpStatus.OK);
+            return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (NoSuchElementException e) {
             response.put("mensaje", "Lo sentimos, el usuario no existe!");
             response.put("error", e.getMessage());
-            return new ResponseEntity<Map<String, Object>>(response, HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (DataIntegrityViolationException e) {
             response.put("mensaje", "Lo sentimos, hubo un error a la hora de eliminar el usuario!");
             response.put("error", e.getMessage());
-            return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

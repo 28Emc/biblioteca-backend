@@ -57,11 +57,8 @@ public class UsuarioServiceImpl implements IUsuarioService {
         usuario.setActivo(false);
         usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
 
-        Rol rol = roleService.findByAuthority("ROLE_USER").get();
-        usuario.setRol(rol);
-
-        Local local = localService.findById(1L).get();
-        usuario.setLocal(local);
+        usuario.setRol(roleService.findByAuthority("ROLE_USUARIO").orElseThrow());
+        usuario.setLocal(localService.findById(1L).orElseThrow());
 
         return repository.save(usuario);
     }

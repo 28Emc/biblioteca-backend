@@ -11,9 +11,6 @@ public interface IPrestamoService {
 
     public Optional<Prestamo> findById(Long id);
 
-    public List<Prestamo> listarPrestamosPorRol(Map<String, Object> response, List<Prestamo> prestamos,
-            Usuario usuarioLogueado);
-
     public List<Prestamo> fetchWithLibroWithUsuarioWithEmpleado();
 
     public List<Prestamo> fetchByIdWithLibroWithUsuarioWithEmpleado(Long idLocal);

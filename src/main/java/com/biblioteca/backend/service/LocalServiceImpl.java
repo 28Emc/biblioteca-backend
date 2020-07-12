@@ -46,6 +46,12 @@ public class LocalServiceImpl implements ILocalService {
     }
 
     @Override
+    @Transactional
+    public boolean existsByDireccion(String direccion) {
+        return repository.existsByDireccion(direccion);
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public Optional<Local> fetchByIdWithEmpresaAndUsuario(Long idEmpresa, Long idUsuario) {
         return repository.fetchByIdWithEmpresaAndUsuario(idEmpresa, idUsuario);

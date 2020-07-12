@@ -19,4 +19,6 @@ public interface ILocalService {
 
     public Local save(Local local);
 
+    public boolean existsByDireccion(String direccion);
+
 }
