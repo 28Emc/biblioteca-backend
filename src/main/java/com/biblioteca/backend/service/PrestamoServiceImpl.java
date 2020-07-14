@@ -2,6 +2,7 @@ package com.biblioteca.backend.service;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.TextStyle;
 import java.util.Date;
@@ -41,23 +42,23 @@ public class PrestamoServiceImpl implements IPrestamoService {
 	}
 
 	@Override
-	public String mostrarFechaAmigable(Date fecha) {
+	public String mostrarFechaAmigable(LocalDateTime fecha) {
 		// ARMANDO FECHA MAS AMIGABLE AL USUARIO CON TIME
 		Locale esp = new Locale("es", "PE");
 		// Obtienes el dia, mes y año actuales
-		LocalDate fechaFinal = Instant.ofEpochMilli(fecha.getTime()).atZone(ZoneId.systemDefault()).toLocalDate();
-		String diaNum = String.valueOf(fechaFinal.getDayOfMonth());
+		//LocalDate fechaFinal = Instant.ofEpochMilli(fecha.getTime()).atZone(ZoneId.systemDefault()).toLocalDate();
+		String diaNum = String.valueOf(fecha.getDayOfMonth());
 		// Mejorando cadena de dia
-		String dia = fechaFinal.getDayOfWeek().getDisplayName(TextStyle.FULL, esp);
+		String dia = fecha.getDayOfWeek().getDisplayName(TextStyle.FULL, esp);
 		String diaMayus = dia.substring(0, 1).toUpperCase();
 		String demasLetrasDia = dia.substring(1);
 		String diaFinal = diaMayus + demasLetrasDia;
 		// Mejorando cadena de mes
-		String mes = fechaFinal.getMonth().getDisplayName(TextStyle.FULL, esp);
+		String mes = fecha.getMonth().getDisplayName(TextStyle.FULL, esp);
 		String mesMayus = mes.substring(0, 1).toUpperCase();
 		String demasLetrasMes = mes.substring(1);
 		String mesFinal = mesMayus + demasLetrasMes;
-		String anio = String.valueOf(fechaFinal.getYear());
+		String anio = String.valueOf(fecha.getYear());
 		return diaFinal + ", " + diaNum + " de " + mesFinal + " " + anio;
 	}
 

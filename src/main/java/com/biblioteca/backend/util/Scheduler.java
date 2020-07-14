@@ -2,6 +2,8 @@ package com.biblioteca.backend.util;
 
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.TextStyle;
 import java.util.*;
 
@@ -58,12 +60,14 @@ public class Scheduler {
                 // O MEJOR DICHO, DEJO SOLAMENTE LOS RESULTADOS DEL ULTIMO MES
                 Locale esp = new Locale("es", "PE");
                 Calendar calUltimoDiaMes = Calendar.getInstance(esp);
+                TimeZone tz = calUltimoDiaMes.getTimeZone();
+                ZoneId zid = tz == null ? ZoneId.systemDefault() : tz.toZoneId();
                 calUltimoDiaMes.set(Calendar.DAY_OF_MONTH, calUltimoDiaMes.getActualMaximum(Calendar.DAY_OF_MONTH));
                 calUltimoDiaMes.add(Calendar.MONTH, -1);
                 System.out.println("PRESTAMOS TOTALES - FECHA DEL ULTIMO DIA DEL MES ANTERIOR: "
                         + calUltimoDiaMes.getTime().toString().toUpperCase());
                 for (int i = 0; i < prestamos.size(); i++) {
-                    prestamos.removeIf(n -> n.getFechaDespacho().before(calUltimoDiaMes.getTime()));
+                    prestamos.removeIf(n -> n.getFechaDespacho().isBefore(LocalDateTime.ofInstant(calUltimoDiaMes.toInstant(), zid)));
                     if (prestamos.size() == 0) {
                         System.out.println("PRESTAMOS TOTALES - NO HAY PRÉSTAMOS DE "
                                 + LocalDate.now().getMonth().getDisplayName(TextStyle.FULL, esp).toUpperCase() + " "
@@ -115,12 +119,14 @@ public class Scheduler {
                 // O MEJOR DICHO, DEJO SOLAMENTE LOS RESULTADOS DEL ULTIMO MES
                 Locale esp = new Locale("es", "PE");
                 Calendar calUltimoDiaMes = Calendar.getInstance(esp);
+                TimeZone tz = calUltimoDiaMes.getTimeZone();
+                ZoneId zid = tz == null ? ZoneId.systemDefault() : tz.toZoneId();
                 calUltimoDiaMes.set(Calendar.DAY_OF_MONTH, calUltimoDiaMes.getActualMaximum(Calendar.DAY_OF_MONTH));
                 calUltimoDiaMes.add(Calendar.MONTH, -1);
                 System.out.println("USUARIOS TOTALES - FECHA DEL ULTIMO DIA DEL MES ANTERIOR: "
                         + calUltimoDiaMes.getTime().toString().toUpperCase());
                 for (int i = 0; i < usuarios.size(); i++) {
-                    usuarios.removeIf(n -> n.getFechaRegistro().before(calUltimoDiaMes.getTime()));
+                    usuarios.removeIf(n -> n.getFechaRegistro().isBefore(LocalDateTime.ofInstant(calUltimoDiaMes.toInstant(), zid)));
                     if (usuarios.size() == 0) {
                         System.out.println("USUARIOS TOTALES - NO HAY USUARIOS DE "
                                 + LocalDate.now().getMonth().getDisplayName(TextStyle.FULL, esp).toUpperCase() + " "
