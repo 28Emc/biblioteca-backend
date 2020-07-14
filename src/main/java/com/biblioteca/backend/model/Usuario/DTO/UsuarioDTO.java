@@ -7,6 +7,8 @@ import lombok.Data;
 @Data
 public class UsuarioDTO {
 
+    // AQUI VAN LAS VALIDACIONES DEL PAQUETE STARTER-VALIDATIONS
+
     private Long id;
 
     private String nombres;

@@ -110,36 +110,6 @@ public class UsuarioController {
         return new ResponseEntity<>(response, HttpStatus.FOUND);
     }
 
-    @ApiOperation(value = "Método de consulta de usuario por su id", response = ResponseEntity.class)
-    @ApiResponses(value = {@ApiResponse(code = 200, message = " "),
-            @ApiResponse(code = 302, message = "Usuario encontrado"), @ApiResponse(code = 401, message = " "),
-            @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = " "),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de buscar el usuario. Inténtelo mas tarde")})
-    @GetMapping(value = "/usuarios/{id}", produces = "application/json")
-    @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
-    public ResponseEntity<?> buscarUsuario(@PathVariable Long id) {
-        Map<String, Object> response = new HashMap<>();
-        Usuario usuario;
-        try {
-            usuario = usuarioService.findById(id).orElseThrow();
-            if (usuario.getId() == 1 || !usuario.getRol().getAuthority().equals("ROLE_USUARIO")) {
-                response.put("mensaje", "Lo sentimos, el usuario no existe!");
-                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-            }
-        } catch (NoSuchElementException e) {
-            response.put("mensaje", "Lo sentimos, el usuario no existe!");
-            response.put("error", e.getMessage());
-            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-        } catch (Exception e) {
-            response.put("mensaje", "Lo sentimos, hubo un error a la hora de buscar el usuario!");
-            response.put("error", e.getMessage());
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-        response.put("usuario", usuario);
-        response.put("mensaje", "Usuario encontrado!");
-        return new ResponseEntity<>(response, HttpStatus.FOUND);
-    }
-
     @ApiOperation(value = "Método de consulta de empleados por su id", response = ResponseEntity.class)
     @ApiResponses(value = {@ApiResponse(code = 200, message = " "),
             @ApiResponse(code = 302, message = "Empleado encontrado"), @ApiResponse(code = 401, message = " "),
@@ -177,6 +147,36 @@ public class UsuarioController {
         return new ResponseEntity<>(response, HttpStatus.FOUND);
     }
 
+    @ApiOperation(value = "Método de consulta de usuario por su id", response = ResponseEntity.class)
+    @ApiResponses(value = {@ApiResponse(code = 200, message = " "),
+            @ApiResponse(code = 302, message = "Usuario encontrado"), @ApiResponse(code = 401, message = " "),
+            @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = " "),
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de buscar el usuario. Inténtelo mas tarde")})
+    @GetMapping(value = "/usuarios/{id}", produces = "application/json")
+    @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
+    public ResponseEntity<?> buscarUsuario(@PathVariable Long id) {
+        Map<String, Object> response = new HashMap<>();
+        Usuario usuario;
+        try {
+            usuario = usuarioService.findById(id).orElseThrow();
+            if (usuario.getId() == 1 || !usuario.getRol().getAuthority().equals("ROLE_USUARIO")) {
+                response.put("mensaje", "Lo sentimos, el usuario no existe!");
+                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+            }
+        } catch (NoSuchElementException e) {
+            response.put("mensaje", "Lo sentimos, el usuario no existe!");
+            response.put("error", e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            response.put("mensaje", "Lo sentimos, hubo un error a la hora de buscar el usuario!");
+            response.put("error", e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        response.put("usuario", usuario);
+        response.put("mensaje", "Usuario encontrado!");
+        return new ResponseEntity<>(response, HttpStatus.FOUND);
+    }
+
     @ApiOperation(value = "Método de registro de usuarios (hecho para usuarios nuevos) con cuenta por activar", response = ResponseEntity.class)
     @ApiResponses(value = {@ApiResponse(code = 200, message = " "),
             @ApiResponse(code = 201, message = "Usuario registrado"),
@@ -205,7 +205,7 @@ public class UsuarioController {
                 usuario.setUsuario(usuarioDTO.getUsuario());
                 usuario.setPassword(usuarioDTO.getPassword());
                 usuario.setFotoUsuario(usuarioDTO.getFotoUsuario());
-                usuarioService.saveNewUser(usuario);
+                usuarioService.saveUser(usuario, "CUENTA INACTIVA");
                 Token tokenConfirma = new Token(usuario, "ACTIVAR CUENTA");
                 tokenService.save(tokenConfirma);
                 response.put("tokenValidacion", tokenConfirma.getToken());
@@ -250,7 +250,7 @@ public class UsuarioController {
             tokenConfirma = tokenService.findByToken(token).orElseThrow();
             usuario = usuarioService.findByEmail(tokenConfirma.getUsuario().getEmail()).orElseThrow();
             usuario.setActivo(true);
-            usuarioService.save(usuario);
+            usuarioService.saveUser(usuario, "CUENTA ACTIVADA");
             tokenService.delete(tokenConfirma.getId());
         } catch (NoSuchElementException e) {
             response.put("mensaje", "Lo sentimos, el enlace es inválido o el token ya caducó!");
@@ -273,8 +273,7 @@ public class UsuarioController {
             @ApiResponse(code = 404, message = "Lo sentimos, el DNI y/o correo ingresados son incorrectos o el usuario no existe"),
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de enviar la solicitud. Inténtelo mas tarde")})
     @PostMapping(value = "/cuenta/recuperar-password", produces = "application/json")
-    public ResponseEntity<?> enviarSolicitudRecuperacionContrasenaUsuario(
-            @RequestBody AccountRecovery dtoAccountRecovery) {
+    public ResponseEntity<?> enviarSolicitudRecuperacionContrasenaUsuario(@RequestBody AccountRecovery dtoAccountRecovery) {
         Map<String, Object> response = new HashMap<>();
         Optional<Usuario> usuario;
         try {
@@ -418,6 +417,7 @@ public class UsuarioController {
             model.put("to", usuario.get().getEmail());
             model.put("subject", "Reactivacion Cuenta | Biblioteca2020");
             emailService.enviarEmail(model);
+
         } catch (NoSuchElementException e) {
             response.put("mensaje", "Lo sentimos, hubo un error a la hora de enviar la solicitud!");
             response.put("error", e.getMessage());
@@ -446,7 +446,7 @@ public class UsuarioController {
             tokenConfirma = tokenService.findByToken(token).orElseThrow();
             Usuario usuario = usuarioService.findByEmail(tokenConfirma.getUsuario().getEmail()).orElseThrow();
             usuario.setActivo(true);
-            usuarioService.save(usuario);
+            usuarioService.saveUser(usuario, "CUENTA RECUPERADA");
             tokenService.delete(tokenConfirma.getId());
         } catch (NoSuchElementException e) {
             response.put("mensaje", "Lo sentimos, el enlace es inválido o el token ya caducó!");
@@ -462,27 +462,39 @@ public class UsuarioController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @ApiOperation(value = "Método de registro de usuarios", response = ResponseEntity.class)
+    @ApiOperation(value = "Método de registro de usuarios dentro del sistema", response = ResponseEntity.class)
     @ApiResponses(value = {@ApiResponse(code = 200, message = " "),
             @ApiResponse(code = 201, message = "Usuario registrado"),
-            @ApiResponse(code = 400, message = "Lo sentimos, el correo ya està asociado con otro usuario"),
+            @ApiResponse(code = 400, message = "Lo sentimos, el correo ya està registrado con otro usuario"),
             @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
             @ApiResponse(code = 404, message = " "),
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de registrar el usuario. Inténtelo mas tarde")})
     @PostMapping(value = "/usuarios", produces = "application/json")
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN')")
-    public ResponseEntity<?> crearUsuarioSinValidar(@RequestBody Usuario usuario) {
+    public ResponseEntity<?> crearUsuarioEnSistema(@RequestBody UsuarioDTO usuarioDTO) {
         Map<String, Object> response = new HashMap<>();
         Optional<Usuario> usuarioEncontrado;
         try {
-            usuarioEncontrado = usuarioService.findByEmail(usuario.getEmail());
+            usuarioEncontrado = usuarioService.findByEmail(usuarioDTO.getEmail());
             if (usuarioEncontrado.isPresent()) {
-                response.put("mensaje", "Lo sentimos, el correo ya està asociado con otro usuario!");
+                response.put("mensaje", "Lo sentimos, el correo ya està registrado con otro usuario!");
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             } else {
-                usuario.setPassword(encoder.encode(usuario.getPassword()));
+                Usuario usuario = new Usuario();
+                usuario.setNombres(usuarioDTO.getNombres());
+                usuario.setApellidoPaterno(usuarioDTO.getApellidoPaterno());
+                usuario.setApellidoMaterno(usuarioDTO.getApellidoMaterno());
+                usuario.setDni(usuarioDTO.getDni());
+                usuario.setDireccion(usuarioDTO.getDireccion());
+                usuario.setCelular(usuarioDTO.getCelular());
+                usuario.setEmail(usuarioDTO.getEmail());
+                usuario.setUsuario(usuarioDTO.getUsuario());
+                usuario.setPassword(encoder.encode(usuarioDTO.getPassword()));
+                usuario.setFotoUsuario(usuarioDTO.getFotoUsuario());
                 usuario.setActivo(true);
-                usuarioService.save(usuario);
+                usuario.setRol(usuarioDTO.getRol());
+                usuario.setLocal(usuarioDTO.getLocal());
+                usuarioService.saveUser(usuario, "CUENTA REGISTRADA DESDE SISTEMA");
             }
         } catch (NoSuchElementException | DataIntegrityViolationException e) {
             response.put("mensaje", "Lo sentimos, hubo un error a la hora de registrar el usuario!");
@@ -500,23 +512,22 @@ public class UsuarioController {
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de actualizar el usuario. Inténtelo mas tarde")})
     @PutMapping(value = "/usuarios/{id}", produces = "application/json")
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO', 'ROLE_USER')")
-    public ResponseEntity<?> editarUsuario(@RequestBody Usuario usuario, @PathVariable Long id) {
+    public ResponseEntity<?> editarUsuario(@RequestBody UsuarioDTO usuarioDTO, @PathVariable Long id) {
         Map<String, Object> response = new HashMap<>();
         Usuario usuarioEncontrado;
         try {
             usuarioEncontrado = usuarioService.findById(id).orElseThrow();
-
-            usuarioEncontrado.setNombres(usuario.getNombres());
-            usuarioEncontrado.setApellidoMaterno(usuario.getApellidoMaterno());
-            usuarioEncontrado.setApellidoPaterno(usuario.getApellidoPaterno());
-            usuarioEncontrado.setDni(usuario.getDni());
-            usuarioEncontrado.setDireccion(usuario.getDireccion());
-            usuarioEncontrado.setCelular(usuario.getCelular());
-            usuarioEncontrado.setEmail(usuario.getEmail());
+            usuarioEncontrado.setNombres(usuarioDTO.getNombres());
+            usuarioEncontrado.setApellidoMaterno(usuarioDTO.getApellidoMaterno());
+            usuarioEncontrado.setApellidoPaterno(usuarioDTO.getApellidoPaterno());
+            usuarioEncontrado.setDni(usuarioDTO.getDni());
+            usuarioEncontrado.setDireccion(usuarioDTO.getDireccion());
+            usuarioEncontrado.setCelular(usuarioDTO.getCelular());
+            usuarioEncontrado.setEmail(usuarioDTO.getEmail());
             // PARA CAMBIAR EL USUARIO, ES NECESARIO AUTENTICARME DE NUEVO
-            usuarioEncontrado.setUsuario(usuario.getUsuario());
-            usuarioEncontrado.setFotoUsuario(usuario.getFotoUsuario());
-            usuarioService.save(usuarioEncontrado);
+            usuarioEncontrado.setUsuario(usuarioDTO.getUsuario());
+            usuarioEncontrado.setFotoUsuario(usuarioDTO.getFotoUsuario());
+            usuarioService.saveUser(usuarioEncontrado, "CUENTA ACTUALIZADA DESDE SISTEMA");
         } catch (NoSuchElementException e) {
             response.put("mensaje", "Lo sentimos, el usuario no existe!");
             response.put("error", e.getMessage());
@@ -537,7 +548,7 @@ public class UsuarioController {
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de actualizar la contraseña. Inténtelo mas tarde")})
     @PutMapping(value = "/usuarios/cambiar-password", produces = "application/json")
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO', 'ROLE_USER')")
-    public ResponseEntity<?> cambiarContraseñaUsuario(@RequestBody ChangePassword dtoPassword,
+    public ResponseEntity<?> cambiarContrasenaUsuario(@RequestBody ChangePassword dtoPassword,
                                                       Authentication authentication) {
         Map<String, Object> response = new HashMap<>();
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
@@ -580,7 +591,7 @@ public class UsuarioController {
         try {
             usuarioEncontrado = usuarioService.findById(id).orElseThrow();
             usuarioEncontrado.setActivo(false);
-            usuarioService.save(usuarioEncontrado);
+            usuarioService.saveUser(usuarioEncontrado, "CUENTA DESHABILITADA");
 
             Map<String, Object> model = new HashMap<>();
             model.put("titulo", "Usuario Deshabilitado");

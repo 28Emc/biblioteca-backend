@@ -18,8 +18,7 @@ import javax.persistence.TemporalType;
 
 import com.biblioteca.backend.model.Empresa;
 import com.biblioteca.backend.model.Usuario.Usuario;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.*;
 
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
@@ -64,8 +63,6 @@ public class Local {
     @ApiModelProperty(notes = "Estado del local", required = true, example = "true")
     private boolean isActivo;
 
-    // @JsonIgnore // COMENTO ESTA LINEA PARA PODER REGISTRAR LOCALES Y ASIGNAR UNA
-    // EMPRESA, SIN QUE ESTA EMPRESA CARGUE A SUS LOCALES, CREANDO UN BUCLE INFINITO
     @ManyToOne
     @JoinColumn(name = "id_empresa", nullable = false)
     private Empresa empresa;

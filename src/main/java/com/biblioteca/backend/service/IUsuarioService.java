@@ -24,9 +24,9 @@ public interface IUsuarioService {
 
     public List<Usuario> findByRol(String authority);
 
-    public Usuario saveNewUser(Usuario usuario);
+    public Usuario saveUser(Usuario usuario, String tipoOperacion);
 
-    public Usuario save(Usuario usuario);
+    //public Usuario save(Usuario usuario);
 
     public void delete(Long id);
 

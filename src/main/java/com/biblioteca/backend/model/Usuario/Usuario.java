@@ -19,10 +19,9 @@ import javax.persistence.Transient;
 
 import com.biblioteca.backend.model.Local.Local;
 import com.biblioteca.backend.model.Rol;
+import com.fasterxml.jackson.annotation.*;
 import io.swagger.annotations.ApiModelProperty;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @Table(name = "tb_usuario")
@@ -97,8 +96,9 @@ public class Usuario {
     private Date fechaActualizacion;
 
     // USER(1):ROLE(1)
-    @OneToOne(cascade = CascadeType.ALL)
+    @OneToOne(cascade = CascadeType.MERGE)
     @JoinColumn(name = "id_rol", referencedColumnName = "id")
+    @JsonManagedReference
     private Rol rol;
 
     @ManyToOne

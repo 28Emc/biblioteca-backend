@@ -10,8 +10,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 import com.biblioteca.backend.model.Local.Local;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.*;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -22,7 +21,6 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Empresa {
 
     @Id
@@ -47,7 +45,7 @@ public class Empresa {
     private boolean isActivo;
 
     // EMPRESA(1):LOCAL(*)
-    @JsonIgnore()
+    @JsonIgnore
     @OneToMany(mappedBy = "empresa")
     private List<Local> locales;
 

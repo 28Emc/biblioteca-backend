@@ -16,6 +16,9 @@ import javax.persistence.TemporalType;
 
 import com.biblioteca.backend.model.Libro.Libro;
 import com.biblioteca.backend.model.Usuario.Usuario;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

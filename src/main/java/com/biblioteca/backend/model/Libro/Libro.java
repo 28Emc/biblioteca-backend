@@ -22,8 +22,7 @@ import javax.persistence.Transient;
 import com.biblioteca.backend.model.Categoria;
 import com.biblioteca.backend.model.Local.Local;
 import com.biblioteca.backend.model.Prestamo.Prestamo;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.*;
 import org.hibernate.annotations.Type;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
@@ -37,7 +36,6 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Libro {
 
     @Id
@@ -93,7 +91,6 @@ public class Libro {
     private String fotoLibro;
 
     // LIBRO(*):LOCAL(1)
-    //@JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_local")
     private Local local;
@@ -104,7 +101,6 @@ public class Libro {
     private List<Prestamo> prestamos;
 
     // LIBRO(*):CATEGORIA(1)
-    // @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_categoria", nullable = false)
     private Categoria categoria;

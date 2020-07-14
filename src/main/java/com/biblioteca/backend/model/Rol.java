@@ -9,13 +9,13 @@ import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 import com.biblioteca.backend.model.Usuario.Usuario;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.*;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.*;
 
 @Entity
 @Table(name = "tb_rol")
-@Getter @Setter
+@Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class Rol {
@@ -30,11 +30,8 @@ public class Rol {
     @ApiModelProperty(notes = "Nombre del rol", required = true, example = "ROLE_ADMIN")
     private String authority;
 
-    // IMPIDO EL BLOQUE INFINITO DE ROLES QUE MUESTRAN USUARIOS ASOCIADOS A ROLES Y
-    // ASI SUCESIVAMENTE, PERO PIERDO EL REGISTRO AL MOMENTO DE CONSULTAR EL USUARIO
-    // (MUESTRA EL ROL, PERO YA NO LOS USUARIOS QUE TIENEN ESE ROL EN LA MISMA
-    // CONSULTA)
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    //@JsonIgnore
+    @JsonBackReference
     @OneToOne(mappedBy = "rol")
     private Usuario usuario;
 
