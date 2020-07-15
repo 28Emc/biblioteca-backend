@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import com.biblioteca.backend.model.Categoria;
+import com.biblioteca.backend.model.Categoria.Categoria;
 import com.biblioteca.backend.model.Libro.Libro;
 import com.biblioteca.backend.model.Prestamo.Prestamo;
 import com.biblioteca.backend.model.Usuario.Usuario;

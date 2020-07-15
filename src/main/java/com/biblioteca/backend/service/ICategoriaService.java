@@ -2,7 +2,7 @@ package com.biblioteca.backend.service;
 
 import java.util.List;
 import java.util.Optional;
-import com.biblioteca.backend.model.Categoria;
+import com.biblioteca.backend.model.Categoria.Categoria;
 
 public interface ICategoriaService {
 

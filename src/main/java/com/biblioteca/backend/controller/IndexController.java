@@ -88,7 +88,7 @@ public class IndexController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @ApiOperation(value = "Acceso a una zona permitida solamente a los usuarios autenticados", response = ResponseEntity.class)
+    /*@ApiOperation(value = "Acceso a una zona permitida solamente a los usuarios autenticados", response = ResponseEntity.class)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Bienvenido, se encuentra una zona de acceso reservada a los usuarios autenticados"),
             @ApiResponse(code = 401, message = ""),
@@ -109,6 +109,6 @@ public class IndexController {
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         }
         return new ResponseEntity<>(response, HttpStatus.OK);
-    }
+    }*/
 
 }

@@ -9,6 +9,7 @@ import java.util.Optional;
 import com.biblioteca.backend.model.Libro.Libro;
 import com.biblioteca.backend.model.Local.Local;
 import com.biblioteca.backend.model.Usuario.Usuario;
+import com.biblioteca.backend.service.ICategoriaService;
 import com.biblioteca.backend.service.ILibroService;
 import com.biblioteca.backend.service.ILocalService;
 import com.biblioteca.backend.service.IUsuarioService;
@@ -39,8 +40,8 @@ public class LibroController {
     @Autowired
     private ILibroService libroService;
 
-    // @Autowired
-    // private ICategoriaService categoriaService;
+    @Autowired
+    private ICategoriaService categoriaService;
 
     @Autowired
     private ILocalService localService;

@@ -2,7 +2,7 @@ package com.biblioteca.backend.service;
 
 import java.util.List;
 import java.util.Optional;
-import com.biblioteca.backend.model.Categoria;
+import com.biblioteca.backend.model.Categoria.Categoria;
 import com.biblioteca.backend.repository.CategoriaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
