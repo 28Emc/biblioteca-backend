@@ -231,7 +231,7 @@ public class LocalController {
                 if (u.isActivo()) {
                     usuariosActivos.add(u);
                     u.setActivo(false);
-                    usuarioService.saveUser(u, "LOCAL DESHABILITADO");
+                    usuarioService.save(u);
                 } else {
                     usuariosInactivos.add(u);
                 }

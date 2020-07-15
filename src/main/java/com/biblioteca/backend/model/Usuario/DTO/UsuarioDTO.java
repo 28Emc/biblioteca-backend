@@ -1,8 +1,5 @@
 package com.biblioteca.backend.model.Usuario.DTO;
 
-import com.biblioteca.backend.model.Local.Local;
-import com.biblioteca.backend.model.Rol;
-
 public class UsuarioDTO {
 
     // AQUI VAN LAS VALIDACIONES DEL PAQUETE STARTER-VALIDATIONS
@@ -27,15 +24,13 @@ public class UsuarioDTO {
 
     private String password;
 
-    private String passwordConfirmacion;
-
     private boolean isActivo;
 
     private String fotoUsuario;
 
-    private Rol rol;
+    private Long rol;
 
-    private Local local;
+    private Long local;
 
     public Long getId() {
         return id;
@@ -117,14 +112,6 @@ public class UsuarioDTO {
         this.password = password;
     }
 
-    public String getPasswordConfirmacion() {
-        return passwordConfirmacion;
-    }
-
-    public void setPasswordConfirmacion(String passwordConfirmacion) {
-        this.passwordConfirmacion = passwordConfirmacion;
-    }
-
     public boolean isActivo() {
         return isActivo;
     }
@@ -141,26 +128,26 @@ public class UsuarioDTO {
         this.fotoUsuario = fotoUsuario;
     }
 
-    public Rol getRol() {
+    public Long getRol() {
         return rol;
     }
 
-    public void setRol(Rol rol) {
+    public void setRol(Long rol) {
         this.rol = rol;
     }
 
-    public Local getLocal() {
+    public Long getLocal() {
         return local;
     }
 
-    public void setLocal(Local local) {
+    public void setLocal(Long local) {
         this.local = local;
     }
 
     public UsuarioDTO() {
     }
 
-    public UsuarioDTO(Long id, String nombres, String apellidoMaterno, String apellidoPaterno, String dni, String direccion, String celular, String email, String usuario, String password, String passwordConfirmacion, boolean isActivo, String fotoUsuario, Rol rol, Local local) {
+    public UsuarioDTO(Long id, String nombres, String apellidoMaterno, String apellidoPaterno, String dni, String direccion, String celular, String email, String usuario, String password, boolean isActivo, String fotoUsuario, Long rol, Long local) {
         this.id = id;
         this.nombres = nombres;
         this.apellidoMaterno = apellidoMaterno;
@@ -171,7 +158,6 @@ public class UsuarioDTO {
         this.email = email;
         this.usuario = usuario;
         this.password = password;
-        this.passwordConfirmacion = passwordConfirmacion;
         this.isActivo = isActivo;
         this.fotoUsuario = fotoUsuario;
         this.rol = rol;

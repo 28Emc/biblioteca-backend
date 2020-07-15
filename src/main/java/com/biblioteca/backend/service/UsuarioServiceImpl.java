@@ -53,32 +53,9 @@ public class UsuarioServiceImpl implements IUsuarioService {
 
     @Override
     @Transactional
-    public Usuario saveUser(Usuario usuario, String tipoOperacion) {
-        switch (tipoOperacion){
-            case "CUENTA INACTIVA":
-                usuario.setActivo(false);
-                usuario.setRol(roleService.findByAuthority("ROLE_USUARIO").orElseThrow());
-                usuario.setLocal(localService.findById(1L).orElseThrow());
-                break;
-            case "USUARIO NUEVO DESDE SISTEMA":
-                usuario.setActivo(true);
-                break;
-            case "CUENTA ACTIVADA":
-            case "CUENTA RECUPERADA":
-            case "CUENTA REGISTRADA DESDE SISTEMA":
-            case "CUENTA ACTUALIZADA DESDE SISTEMA":
-            case "CUENTA DESHABILITADA":
-                break;
-        }
-        usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
-        return repository.save(usuario);
-    }
-
-    /*@Override
-    @Transactional
     public Usuario save(Usuario usuario) {
         return repository.save(usuario);
-    }*/
+    }
 
     @Override
     @Transactional
