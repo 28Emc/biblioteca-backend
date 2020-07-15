@@ -107,11 +107,12 @@ public class CategoriaController {
         Map<String, Object> response = new HashMap<>();
         Optional<Categoria> categoriaEncontrada;
         try {
+            // TODO: AQUI VA LA VALIDACIÓN DEL OBJETO (@NOTBLANK, @VALID)
             categoriaEncontrada = categoriaService.findByNombre(categoriaDTO.getNombre());
             if (categoriaEncontrada.isPresent()) {
                 response.put("mensaje", "Lo sentimos, la categoría ya existe");
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-                // SE SUSTITUYE CON ANOTACIÓN @NOTBLANK
+                // TODO: @NOTBLANK
             } else if (categoriaDTO.getNombre() == null || categoriaDTO.getNombre().isBlank()) {
                 response.put("mensaje",
                         "Lo sentimos, el nombre de la categoría es requerido");
@@ -142,13 +143,14 @@ public class CategoriaController {
         Map<String, Object> response = new HashMap<>();
         Categoria categoriaEncontrada;
         try {
+            // TODO: AQUI VA LA VALIDACIÓN DEL OBJETO (@NOTBLANK, @VALID)
             if (id.matches("^\\d+$")) {
                 categoriaEncontrada = categoriaService.findById(Long.parseLong(id)).orElseThrow();
             } else {
                 response.put("mensaje", "Lo sentimos, el id es inválido");
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
-            // SE SUSTITUYE CON ANOTACIÓN @NOTBLANK
+            // TODO: @NOTBLANK
             if (categoriaDTO.getNombre() == null || categoriaDTO.getNombre().isBlank()) {
                 response.put("mensaje",
                         "Lo sentimos, el nombre de la categoría es requerido");

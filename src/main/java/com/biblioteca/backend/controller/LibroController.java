@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
+import com.biblioteca.backend.model.Libro.DTO.LibroDTO;
 import com.biblioteca.backend.model.Libro.Libro;
 import com.biblioteca.backend.model.Local.Local;
 import com.biblioteca.backend.model.Usuario.Usuario;
@@ -81,12 +82,16 @@ public class LibroController {
                     response.put("libros", libros);
                     break;
             }
+        } catch (NoSuchElementException e) {
+            response.put("mensaje", "Lo sentimos, hubo un error a la hora de buscar los libros");
+            response.put("error", e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (Exception e) {
-            response.put("mensaje", "Lo sentimos, hubo un error a la hora de buscar los libros!");
+            response.put("mensaje", "Lo sentimos, hubo un error a la hora de buscar los libros. Inténtelo mas tarde");
             response.put("error", e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         }
-        response.put("mensaje", "Libros encontrados!");
+        response.put("mensaje", "Libros encontrados");
         return new ResponseEntity<>(response, HttpStatus.FOUND);
     }
 
@@ -97,7 +102,7 @@ public class LibroController {
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de buscar el libro. Inténtelo mas tarde")})
     @GetMapping(value = "/libros/{id}", produces = "application/json")
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
-    public ResponseEntity<?> buscarLibro(@PathVariable Long id, Authentication authentication) {
+    public ResponseEntity<?> buscarLibro(@PathVariable String id, Authentication authentication) {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         Usuario empleadoLogueado = empleadoService.findByEmail(userDetails.getUsername()).orElseThrow();
         Map<String, Object> response = new HashMap<>();
@@ -105,28 +110,29 @@ public class LibroController {
         try {
             // EL SYSADMIN BUSCA ENTRE TODOS LOS LIBROS (DE CUALQUIER LOCAL), Y VE SI EXISTE
             // LOS DEMAS USUARIOS VAN A FILTRAR EL LIBRO POR SU LOCAL DE PERTENENCIA
-            libro = libroService.findById(id).orElseThrow();
-            if (libro == null) {
-                response.put("mensaje",
-                        "El libro con ID: ".concat(id.toString().concat(" no existe en la base de datos!")));
-                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-                // ADMIN Y EMPLEADOS PUEDE VER LIBROS DE SU PROPIO LOCAL SOLAMENTE
-            } else if (!empleadoLogueado.getRol().getAuthority().equals("ROLE_SYSADMIN")
+            if (id.matches("^\\d+$")) {
+                libro = libroService.findById(Long.parseLong(id)).orElseThrow();
+            } else {
+                response.put("mensaje", "Lo sentimos, el id es inválido");
+                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+            }
+            // ADMIN Y EMPLEADOS PUEDE VER LIBROS DE SU PROPIO LOCAL SOLAMENTE
+            if (!empleadoLogueado.getRol().getAuthority().equals("ROLE_SYSADMIN")
                     && !libro.getLocal().equals(empleadoLogueado.getLocal())) {
                 response.put("mensaje",
-                        "El libro con ID: ".concat(id.toString().concat(" no existe en tu local de pertenencia!")));
+                        "El libro con ID: ".concat(id.concat(" no existe en tu local de pertenencia")));
                 return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
             } else {
                 response.put("libro", libro);
-                response.put("mensaje", "Libro encontrado!");
+                response.put("mensaje", "Libro encontrado");
                 return new ResponseEntity<>(response, HttpStatus.FOUND);
             }
         } catch (NoSuchElementException e) {
-            response.put("mensaje", "Lo sentimos, el libro no existe!");
+            response.put("mensaje", "Lo sentimos, el libro no existe");
             response.put("error", e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (Exception e) {
-            response.put("mensaje", "Lo sentimos, hubo un error a la hora de buscar el libro!");
+            response.put("mensaje", "Lo sentimos, hubo un error a la hora de buscar el libro. Inténtelo mas tarde");
             response.put("error", e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -141,40 +147,51 @@ public class LibroController {
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de registrar el libro. Inténtelo mas tarde")})
     @PostMapping(value = "/libros", produces = "application/json")
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
-    public ResponseEntity<?> crearLibro(@RequestBody Libro libro, Authentication authentication) {
+    public ResponseEntity<?> crearLibro(@RequestBody LibroDTO libroDTO, Authentication authentication) {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         Usuario empleadoLogueado = empleadoService.findByEmail(userDetails.getUsername()).orElseThrow();
         Map<String, Object> response = new HashMap<>();
         Optional<Libro> libroEncontrado;
         Local local;
         try {
+            // TODO: AQUI VA LA VALIDACIÓN DEL OBJETO DTO (@NOTBLANK, @VALID)
             // EL SYSADMIN BUSCA ENTRE TODOS LOS LIBROS (DE CUALQUIER LOCAL), Y VE SI EXISTE
             // LOS DEMAS USUARIOS VAN A FILTRAR EL LIBRO POR SU LOCAL DE PERTENENCIA
-            local = localService.findById(libro.getLocal().getId()).orElseThrow();
+            local = localService.findById(libroDTO.getLocal()).orElseThrow();
+            Libro libro = new Libro();
             switch (empleadoLogueado.getRol().getAuthority()) {
                 case "ROLE_SYSADMIN":
-                    libroEncontrado = libroService.findByTituloLikeIgnoreCase(libro.getTitulo());
+                    libroEncontrado = libroService.findByTituloLikeIgnoreCase(libroDTO.getTitulo());
                     if (libroEncontrado.isPresent()) {
-                        response.put("mensaje", "Lo sentimos, el libro ya existe!");
+                        response.put("mensaje", "Lo sentimos, el libro ya existe");
                         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
                     }
-                    libro.setActivo(true);
+                    libro.setLocal(localService.findById(libroDTO.getLocal()).orElseThrow());
                     break;
                 case "ROLE_ADMIN":
                 case "ROLE_EMPLEADO":
                     if (local.getId().equals(empleadoLogueado.getLocal().getId())) {
-                        libroEncontrado = libroService.findByTituloAndLocal(libro.getTitulo(),
+                        libroEncontrado = libroService.findByTituloAndLocal(libroDTO.getTitulo(),
                                 empleadoLogueado.getLocal().getId());
                         if (libroEncontrado.isPresent()) {
-                            response.put("mensaje", "Lo sentimos, el libro ya existe!");
+                            response.put("mensaje", "Lo sentimos, el libro ya existe");
                             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
                         }
                         libro.setLocal(empleadoLogueado.getLocal());
                     }
                     break;
             }
+            libro.setISBN(libroDTO.getISBN());
+            // TITULO SE VALIDA CON NO SER REPETIDO
+            libro.setTitulo(libroDTO.getTitulo());
+            libro.setAutor(libroDTO.getAutor());
+            libro.setDescripcion(libroDTO.getDescripcion());
+            libro.setFechaPublicacion(libroDTO.getFechaPublicacion());
+            libro.setStock(libroDTO.getStock());
+            libro.setFotoLibro(libroDTO.getFotoLibro());
+            libro.setCategoria(categoriaService.findById(libroDTO.getCategoria()).orElseThrow());
             libroService.save(libro);
-        } catch (DataIntegrityViolationException | NoSuchElementException e) {
+        } catch (NoSuchElementException | DataIntegrityViolationException e) {
             response.put("mensaje", "Lo sentimos, hubo un error a la hora de registrar el libro!");
             response.put("error", e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -190,48 +207,51 @@ public class LibroController {
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de actualizar el libro. Inténtelo mas tarde")})
     @PutMapping(value = "/libros/{id}", produces = "application/json")
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN')")
-    public ResponseEntity<?> editarLibro(@RequestBody Libro libro, @PathVariable Long id,
+    public ResponseEntity<?> editarLibro(@RequestBody LibroDTO libroDTO, @PathVariable String id,
                                          Authentication authentication) {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         Usuario empleadoLogueado = empleadoService.findByEmail(userDetails.getUsername()).orElseThrow();
         Map<String, Object> response = new HashMap<>();
         Libro libroEncontrado;
         try {
-            libroEncontrado = libroService.findById(id).orElseThrow();
+            // TODO: AQUI VA LA VALIDACIÓN DEL OBJETO (@NOTBLANK, @VALID)
+            if (id.matches("^\\d+$")) {
+                libroEncontrado = libroService.findById(Long.parseLong(id)).orElseThrow();
+            } else {
+                response.put("mensaje", "Lo sentimos, el id es inválido");
+                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+            }
             // VERIFICO QUE EL ADMIN NO TENGA ACCESO A UN LIBRO QUE ESTÉ FUERA DE SU LOCAL
             // DE
             // PERTENENCIA
             if (!empleadoLogueado.getRol().getAuthority().equals("ROLE_SYSADMIN")
                     && !libroEncontrado.getLocal().equals(empleadoLogueado.getLocal())) {
                 response.put("mensaje",
-                        "El libro con ID: ".concat(id.toString().concat(" no existe en tu local de pertenencia!")));
+                        "El libro con ID: ".concat(id.toString().concat(" no existe en tu local de pertenencia")));
                 return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
             }
-            libroEncontrado.setISBN(libro.getISBN());
-            libroEncontrado.setTitulo(libro.getTitulo());
-            libroEncontrado.setAutor(libro.getAutor());
-            libroEncontrado.setDescripcion(libro.getDescripcion());
-            libroEncontrado.setFechaPublicacion(libro.getFechaPublicacion());
-            libroEncontrado.setStock(libro.getStock());
-            libroEncontrado.setFotoLibro(libro.getFotoLibro());
+            libroEncontrado.setISBN(libroDTO.getISBN());
+            // TITULO SE VALIDA CON NO SER REPETIDO
+            libroEncontrado.setTitulo(libroDTO.getTitulo());
+            libroEncontrado.setAutor(libroDTO.getAutor());
+            libroEncontrado.setDescripcion(libroDTO.getDescripcion());
+            libroEncontrado.setFechaPublicacion(libroDTO.getFechaPublicacion());
+            libroEncontrado.setStock(libroDTO.getStock());
+            libroEncontrado.setFotoLibro(libroDTO.getFotoLibro());
             // REPITO LA LÓGICA DEL REGISTRO AL NO SER DE ROL SYSADMIN
             if (!empleadoLogueado.getRol().getAuthority().equals("ROLE_SYSADMIN")) {
                 libroEncontrado.setLocal(empleadoLogueado.getLocal());
             } else {
-                libroEncontrado.setLocal(libro.getLocal());
+                libroEncontrado.setLocal(localService.findById(libroDTO.getLocal()).orElseThrow());
             }
-            libroEncontrado.setCategoria(libro.getCategoria());
+            libroEncontrado.setCategoria(categoriaService.findById(libroDTO.getCategoria()).orElseThrow());
             libroService.save(libroEncontrado);
-        } catch (NoSuchElementException e) {
-            response.put("mensaje", "Lo sentimos, el libro no existe!");
-            response.put("error", e.getMessage());
-            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-        } catch (DataIntegrityViolationException e) {
-            response.put("mensaje", "Lo sentimos, hubo un error a la hora de actualizar el libro!");
+        } catch (NoSuchElementException | DataIntegrityViolationException e) {
+            response.put("mensaje", "Lo sentimos, hubo un error a la hora de actualizar el libro");
             response.put("error", e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        response.put("mensaje", "Libro Actualizado!");
+        response.put("mensaje", "Libro Actualizado");
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
@@ -242,31 +262,36 @@ public class LibroController {
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de deshabilitar el libro. Inténtelo mas tarde")})
     @PutMapping(value = "/libros/{id}/deshabilitar", produces = "application/json")
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN')")
-    public ResponseEntity<?> deshabilitarLibro(@PathVariable Long id, Authentication authentication) {
+    public ResponseEntity<?> deshabilitarLibro(@PathVariable String id, Authentication authentication) {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         Usuario empleadoLogueado = empleadoService.findByEmail(userDetails.getUsername()).orElseThrow();
         Map<String, Object> response = new HashMap<>();
         Libro libroEncontrado;
         try {
-            libroEncontrado = libroService.findById(id).orElseThrow();
+            if (id.matches("^\\d+$")) {
+                libroEncontrado = libroService.findById(Long.parseLong(id)).orElseThrow();
+            } else {
+                response.put("mensaje", "Lo sentimos, el id es inválido");
+                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+            }
+            if (!libroEncontrado.isActivo()) {
+                response.put("mensaje", "Lo sentimos, el libro ya está deshabilitado");
+                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+            }
             if (!empleadoLogueado.getRol().getAuthority().equals("ROLE_SYSADMIN")
                     && !libroEncontrado.getLocal().equals(empleadoLogueado.getLocal())) {
                 response.put("mensaje",
-                        "El libro con ID: ".concat(id.toString().concat(" no existe en tu local de pertenencia!")));
+                        "El libro con ID: ".concat(id.concat(" no existe en tu local de pertenencia")));
                 return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
             }
             libroEncontrado.setActivo(false);
             libroService.save(libroEncontrado);
-        } catch (NoSuchElementException e) {
-            response.put("mensaje", "Lo sentimos, el libro no existe!");
-            response.put("error", e.getMessage());
-            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-        } catch (DataIntegrityViolationException e) {
-            response.put("mensaje", "Lo sentimos, hubo un rror a la hora de deshabilitar el libro!");
+        } catch (NoSuchElementException | DataIntegrityViolationException e) {
+            response.put("mensaje", "Lo sentimos, hubo un error a la hora de deshabilitar el libro");
             response.put("error", e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        response.put("mensaje", "Libro Deshabilitado!");
+        response.put("mensaje", "Libro Deshabilitado");
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 

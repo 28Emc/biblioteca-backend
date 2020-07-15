@@ -118,10 +118,12 @@ public class LocalController {
         Map<String, Object> response = new HashMap<>();
         Optional<Local> localEncontrado;
         try {
+            // TODO: AQUI VA LA VALIDACIÓN DEL OBJETO (@NOTBLANK, @VALID)
             localEncontrado = localService.findByDireccion(localDTO.getDireccion());
             if (localEncontrado.isPresent()) {
                 response.put("mensaje", "Lo sentimos, la dirección ya está asociada a otro local");
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+                // TODO: @NOTBLANK
             } else if (localDTO.getDireccion() == null || localDTO.getDireccion().isBlank()) {
                 response.put("mensaje",
                         "Lo sentimos, la dirección del local es requerida");
@@ -154,13 +156,14 @@ public class LocalController {
         Map<String, Object> response = new HashMap<>();
         Local localEncontrado;
         try {
+            // TODO: AQUI VA LA VALIDACIÓN DEL OBJETO (@NOTBLANK, @VALID)
             if (id.matches("^\\d+$") && !id.equals("1")) {
                 localEncontrado = localService.findById(Long.parseLong(id)).orElseThrow();
             } else {
                 response.put("mensaje", "Lo sentimos, el id es inválido");
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
-            // SE SUSTITUYE CON ANOTACIÓN @NOTBLANK
+            // TODO: @NOTBLANK
             if (localDTO.getDireccion() == null || localDTO.getDireccion().isBlank()) {
                 response.put("mensaje",
                         "Lo sentimos, la dirección del local es requerida");
