@@ -609,17 +609,16 @@ public class UsuarioController {
             usuarioEncontrado.setEmail(usuarioDTO.getEmail());
             usuarioEncontrado.setFotoUsuario(usuarioDTO.getFotoUsuario());
             // VALIDO SI ESTOY ACTUALIZANDO MI PROPIO REGISTRO PRIMERO, PARA ESCONDER LOS ROLES Y LOCALES
-            if (usuarioEncontrado.getRol().getAuthority().equals(usuarioLogueado.getRol().getAuthority())) {
-                // TODO: EN ANGULAR ESCONDO EL ROL Y LOCAL
+            /*if (usuarioEncontrado.getRol().getAuthority().equals(usuarioLogueado.getRol().getAuthority())) {
                 // PARA CAMBIAR EL USUARIO O EL ROL, ES NECESARIO AUTENTICARME DE NUEVO
                 // LA VARIABLE CAMBIOIMPORTANTE ME PERMITE SABER SI TENGO QUE CERRAR SESIÓN O NO DEBIDO A LOS CAMBIOS
                 response.put("cambioImportante", usuarioEncontrado.getUsuario().equals(usuarioDTO.getUsuario()));
-                usuarioEncontrado.setUsuario(usuarioDTO.getUsuario());
+                //usuarioEncontrado.setUsuario(usuarioDTO.getUsuario());
                 usuarioEncontrado.setRol(usuarioLogueado.getRol());
                 usuarioEncontrado.setLocal(usuarioLogueado.getLocal());
                 // SI NO PASO NADA A ROL Y LOCAL, SE ASUME QUE SE TRATE DE UN USUARIO
             } else if (usuarioDTO.getRol() == null && usuarioDTO.getLocal() == null &&
-                    usuarioLogueado.getRol().getAuthority().equals("ROLE_USUARIO")) {
+                    "ROLE_USUARIO".equals(usuarioLogueado.getRol().getAuthority())) {
                 usuarioEncontrado.setRol(roleService.findById(4L).orElseThrow());
                 usuarioEncontrado.setLocal(localService.findById(1L).orElseThrow());
             } else {
@@ -628,7 +627,9 @@ public class UsuarioController {
                     usuarioEncontrado.setRol(roleService.findById(usuarioDTO.getRol()).orElseThrow());
                     usuarioEncontrado.setLocal(localService.findById(usuarioDTO.getLocal()).orElseThrow());
                 }
-            }
+            }*/
+            //
+            usuarioEncontrado.setUsuario(usuarioDTO.getUsuario());
             usuarioService.save(usuarioEncontrado);
         } catch (NoSuchElementException | DataIntegrityViolationException e) {
             response.put("mensaje", "Lo sentimos, hubo un error a la hora de actualizar el usuario");
