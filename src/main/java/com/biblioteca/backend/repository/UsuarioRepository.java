@@ -8,19 +8,22 @@ import org.springframework.data.jpa.repository.Query;
 
 public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     
-    public Optional<Usuario> findByUsuario(String username);
+    Optional<Usuario> findByUsuario(String username);
 
-    public Optional<Usuario> findByEmail(String email);
+    Optional<Usuario> findByEmail(String email);
 
-    public Optional<Usuario> findByDniAndEmail(String dni, String email);
+    Optional<Usuario> findByDniAndEmail(String dni, String email);
 
     @Query("select u from Usuario u join fetch u.local l where l.id=?1")
-    public List<Usuario> findByLocal(Long id);
+    List<Usuario> findByLocal(Long id);
 
     @Query("select u from Usuario u join fetch u.rol r where r.authority=?1")
-    public List<Usuario> findByRol(String authority);
+    List<Usuario> findByRol(String authority);
 
     @Query("select u from Usuario u join fetch u.rol r where r.authority in ('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
-    public List<Usuario> findByRoles();
+    List<Usuario> findByRoles();
+
+    @Query("select u from Usuario u join fetch u.rol r join fetch u.local l where r.authority like 'ROLE_ADMIN' and l.id=?1")
+    Optional<Usuario> existsAdminInLocal(Long local);
 
 }

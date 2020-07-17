@@ -8,29 +8,31 @@ import com.biblioteca.backend.model.Usuario.Usuario;
 
 public interface IUsuarioService {
 
-    public List<Usuario> findAll();
+    List<Usuario> findAll();
 
-    public Optional<Usuario> findById(Long id);
+    Optional<Usuario> findById(Long id);
 
-    public Optional<Usuario> findByUsuario(String username);
+    Optional<Usuario> findByUsuario(String username);
 
-    public Optional<Usuario> findByEmail(String email);
+    Optional<Usuario> findByEmail(String email);
 
-    public Optional<Usuario> findByDniAndEmail(String dni, String email);
+    Optional<Usuario> findByDniAndEmail(String dni, String email);
 
-    public List<Usuario> findByLocal(Long idLocal);
+    List<Usuario> findByLocal(Long idLocal);
 
-    public List<Usuario> findByRoles();
+    List<Usuario> findByRoles();
 
-    public List<Usuario> findByRol(String authority);
+    List<Usuario> findByRol(String authority);
 
-    //public Usuario saveUser(Usuario usuario, String tipoOperacion);
+    Optional<Usuario> existsAdminInLocal(Long local);
 
-    public Usuario save(Usuario usuario);
+    //Usuario saveUser(Usuario usuario, String tipoOperacion);
 
-    public void delete(Long id);
+    Usuario save(Usuario usuario);
 
-    public Usuario cambiarPassword(ChangePassword dtoPassword) throws Exception;
+    void delete(Long id);
 
-    public Usuario recuperarPassword(ChangePassword dtoPassword) throws Exception;
+    Usuario cambiarPassword(ChangePassword dtoPassword) throws Exception;
+
+    Usuario recuperarPassword(ChangePassword dtoPassword) throws Exception;
 }

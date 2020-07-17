@@ -600,36 +600,43 @@ public class UsuarioController {
                 response.put("mensaje", "Lo sentimos, el id es inválido");
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
-            usuarioEncontrado.setNombres(usuarioDTO.getNombres());
-            usuarioEncontrado.setApellidoMaterno(usuarioDTO.getApellidoMaterno());
-            usuarioEncontrado.setApellidoPaterno(usuarioDTO.getApellidoPaterno());
-            usuarioEncontrado.setDni(usuarioDTO.getDni());
+            usuarioEncontrado.setNombres(usuarioDTO.getNombres()); // SOLO LECTURA?
+            usuarioEncontrado.setApellidoMaterno(usuarioDTO.getApellidoMaterno()); // SOLO LECTURA?
+            usuarioEncontrado.setApellidoPaterno(usuarioDTO.getApellidoPaterno()); // SOLO LECTURA?
+            usuarioEncontrado.setDni(usuarioDTO.getDni()); // SOLO LECTURA?
             usuarioEncontrado.setDireccion(usuarioDTO.getDireccion());
-            usuarioEncontrado.setCelular(usuarioDTO.getCelular());
-            usuarioEncontrado.setEmail(usuarioDTO.getEmail());
+            usuarioEncontrado.setCelular(usuarioDTO.getCelular()); // SOLO LECTURA?
+            usuarioEncontrado.setEmail(usuarioDTO.getEmail()); // SOLO LECTURA?
             usuarioEncontrado.setFotoUsuario(usuarioDTO.getFotoUsuario());
-            // VALIDO SI ESTOY ACTUALIZANDO MI PROPIO REGISTRO PRIMERO, PARA ESCONDER LOS ROLES Y LOCALES
-            /*if (usuarioEncontrado.getRol().getAuthority().equals(usuarioLogueado.getRol().getAuthority())) {
-                // PARA CAMBIAR EL USUARIO O EL ROL, ES NECESARIO AUTENTICARME DE NUEVO
-                // LA VARIABLE CAMBIOIMPORTANTE ME PERMITE SABER SI TENGO QUE CERRAR SESIÓN O NO DEBIDO A LOS CAMBIOS
-                response.put("cambioImportante", usuarioEncontrado.getUsuario().equals(usuarioDTO.getUsuario()));
-                //usuarioEncontrado.setUsuario(usuarioDTO.getUsuario());
+            // SI ES MI REGISTRO, SETEO MIS PROPIOS CAMPOS EN EL ROL Y LOCAL
+            if (usuarioEncontrado.getId().equals(usuarioLogueado.getId())) {
                 usuarioEncontrado.setRol(usuarioLogueado.getRol());
                 usuarioEncontrado.setLocal(usuarioLogueado.getLocal());
-                // SI NO PASO NADA A ROL Y LOCAL, SE ASUME QUE SE TRATE DE UN USUARIO
-            } else if (usuarioDTO.getRol() == null && usuarioDTO.getLocal() == null &&
-                    "ROLE_USUARIO".equals(usuarioLogueado.getRol().getAuthority())) {
-                usuarioEncontrado.setRol(roleService.findById(4L).orElseThrow());
-                usuarioEncontrado.setLocal(localService.findById(1L).orElseThrow());
+                /* TODO: PARA QUE SYSADMIN PUEDA HACER QUE UN USUARIO SEA
+                    - EMPLEADO, VALIDO QUE LE PASE ROL CON ID 3 Y EL LOCAL NO TENGA ID 1
+                    - USUARIO, VALIDO QUE LE PASE ROL CON ID 4 Y EL LOCAL TENGA SOLAMENTE ID 1
+                    - ADMIN, VALIDO QUE EL ADMIN DEL LOCAL DESIGNADO NO EXISTA, Y EL LOCAL NO TENGA ID 1
+                */
+            } else if ("ROLE_EMPLEADO".equals(roleService.findById(usuarioDTO.getRol()).orElseThrow().getAuthority()) &&
+                    localService.findById(usuarioDTO.getLocal()).orElseThrow().getId() != 1) {
+                usuarioEncontrado.setRol(roleService.findById(usuarioDTO.getRol()).orElseThrow());
+                usuarioEncontrado.setLocal(localService.findById(usuarioDTO.getLocal()).orElseThrow());
+            } else if ("ROLE_USUARIO".equals(roleService.findById(usuarioDTO.getRol()).orElseThrow().getAuthority()) &&
+                    localService.findById(usuarioDTO.getLocal()).orElseThrow().getId() == 1) {
+                usuarioEncontrado.setRol(roleService.findById(usuarioDTO.getRol()).orElseThrow());
+                usuarioEncontrado.setLocal(localService.findById(usuarioDTO.getLocal()).orElseThrow());
+            } else if ("ROLE_ADMIN".equals(roleService.findById(usuarioDTO.getRol()).orElseThrow().getAuthority()) &&
+                    usuarioService.existsAdminInLocal(usuarioDTO.getLocal()).isPresent() &&
+                    localService.findById(usuarioDTO.getLocal()).orElseThrow().getId() != 1) {
+                usuarioEncontrado.setRol(roleService.findById(usuarioDTO.getRol()).orElseThrow());
+                usuarioEncontrado.setLocal(localService.findById(usuarioDTO.getLocal()).orElseThrow());
             } else {
-                // SI ES OTRO USUARIO, VALIDAR ROL DEL USUARIO QUE REALIZA LA OPERACIÓN PARA CAMBIAR EL ROL
-                if ("ROLE_SYSADMIN".equals(usuarioLogueado.getRol().getAuthority())) {
-                    usuarioEncontrado.setRol(roleService.findById(usuarioDTO.getRol()).orElseThrow());
-                    usuarioEncontrado.setLocal(localService.findById(usuarioDTO.getLocal()).orElseThrow());
-                }
-            }*/
-            //
-            usuarioEncontrado.setUsuario(usuarioDTO.getUsuario());
+                response.put("mensaje", "Lo sentimos, el rol y/o local asignados son inválidos o no están disponibles" +
+                        " actualmente para este usuario");
+                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+            }
+
+            usuarioEncontrado.setUsuario(usuarioDTO.getUsuario()); // SOLO LECTURA?
             usuarioService.save(usuarioEncontrado);
         } catch (NoSuchElementException | DataIntegrityViolationException e) {
             response.put("mensaje", "Lo sentimos, hubo un error a la hora de actualizar el usuario");
@@ -659,37 +666,52 @@ public class UsuarioController {
                 response.put("mensaje", "Lo sentimos, el id es inválido");
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
-            empleadoEncontrado.setNombres(usuarioDTO.getNombres());
-            empleadoEncontrado.setApellidoMaterno(usuarioDTO.getApellidoMaterno());
-            empleadoEncontrado.setApellidoPaterno(usuarioDTO.getApellidoPaterno());
-            empleadoEncontrado.setDni(usuarioDTO.getDni());
+            empleadoEncontrado.setNombres(usuarioDTO.getNombres()); // SOLO LECTURA?
+            empleadoEncontrado.setApellidoMaterno(usuarioDTO.getApellidoMaterno()); // SOLO LECTURA?
+            empleadoEncontrado.setApellidoPaterno(usuarioDTO.getApellidoPaterno()); // SOLO LECTURA?
+            empleadoEncontrado.setDni(usuarioDTO.getDni()); // SOLO LECTURA?
             empleadoEncontrado.setDireccion(usuarioDTO.getDireccion());
-            empleadoEncontrado.setCelular(usuarioDTO.getCelular());
-            empleadoEncontrado.setEmail(usuarioDTO.getEmail());
-            empleadoEncontrado.setFotoUsuario(usuarioDTO.getFotoUsuario());
+            empleadoEncontrado.setCelular(usuarioDTO.getCelular()); // SOLO LECTURA?
+            empleadoEncontrado.setEmail(usuarioDTO.getEmail()); // SOLO LECTURA?
+            empleadoEncontrado.setFotoUsuario(usuarioDTO.getFotoUsuario()); // SOLO LECTURA?
             // VALIDO SI ESTOY ACTUALIZANDO MI PROPIO REGISTRO PRIMERO, PARA ESCONDER LOS ROLES Y LOCALES
-            if (empleadoEncontrado.getRol().getAuthority().equals(empleadoLogueado.getRol().getAuthority())) {
+            if (empleadoEncontrado.getId().equals(empleadoLogueado.getId())) {
                 // TODO: EN ANGULAR ESCONDO EL ROL Y LOCAL
-                // PARA CAMBIAR EL USUARIO O EL ROL, ES NECESARIO AUTENTICARME DE NUEVO
-                response.put("cambioImportante", empleadoEncontrado.getUsuario().equals(usuarioDTO.getUsuario()));
-                empleadoEncontrado.setUsuario(usuarioDTO.getUsuario());
                 empleadoEncontrado.setRol(empleadoLogueado.getRol());
                 empleadoEncontrado.setLocal(empleadoLogueado.getLocal());
                 // SI ES OTRO USUARIO, VALIDAR ROL DEL USUARIO QUE REALIZA LA OPERACIÓN PARA CAMBIAR EL ROL
             } else {
                 switch (empleadoLogueado.getRol().getAuthority()) {
-                    case "ROLE_SYSADMIN":
+                    case "ROLE_SYSADMIN" -> {
                         empleadoEncontrado.setRol(roleService.findById(usuarioDTO.getRol()).orElseThrow());
                         empleadoEncontrado.setLocal(localService.findById(usuarioDTO.getLocal()).orElseThrow());
-                        break;
-                    // TODO: EN ANGULAR ESCONDO EL ROL Y LOCAL
-                    case "ROLE_ADMIN":
-                        // ADMIN SETEA EL ROL EMPLEADO Y SU LOCAL
+                    }
+                    case "ROLE_ADMIN" -> {
                         empleadoEncontrado.setRol(roleService.findById(3L).orElseThrow());
                         empleadoEncontrado.setLocal(empleadoLogueado.getLocal());
-                        break;
+                    }
+                }
+                // VALIDACIONES DE ROL Y LOCAL
+                if ("ROLE_EMPLEADO".equals(roleService.findById(usuarioDTO.getRol()).orElseThrow().getAuthority()) &&
+                        localService.findById(usuarioDTO.getLocal()).orElseThrow().getId() != 1) {
+                    empleadoEncontrado.setRol(roleService.findById(usuarioDTO.getRol()).orElseThrow());
+                    empleadoEncontrado.setLocal(localService.findById(usuarioDTO.getLocal()).orElseThrow());
+                } else if ("ROLE_USUARIO".equals(roleService.findById(usuarioDTO.getRol()).orElseThrow().getAuthority()) &&
+                        localService.findById(usuarioDTO.getLocal()).orElseThrow().getId() == 1) {
+                    empleadoEncontrado.setRol(roleService.findById(usuarioDTO.getRol()).orElseThrow());
+                    empleadoEncontrado.setLocal(localService.findById(usuarioDTO.getLocal()).orElseThrow());
+                } else if ("ROLE_ADMIN".equals(roleService.findById(usuarioDTO.getRol()).orElseThrow().getAuthority()) &&
+                        usuarioService.existsAdminInLocal(usuarioDTO.getLocal()).isPresent() &&
+                        localService.findById(usuarioDTO.getLocal()).orElseThrow().getId() != 1) {
+                    empleadoEncontrado.setRol(roleService.findById(usuarioDTO.getRol()).orElseThrow());
+                    empleadoEncontrado.setLocal(localService.findById(usuarioDTO.getLocal()).orElseThrow());
+                } else {
+                    response.put("mensaje", "Lo sentimos, el rol y/o local asignados son inválidos o no están disponibles" +
+                            " actualmente para este empleado");
+                    return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
                 }
             }
+            empleadoEncontrado.setUsuario(usuarioDTO.getUsuario()); // SOLO LECTURA?
             usuarioService.save(empleadoEncontrado);
         } catch (NoSuchElementException | DataIntegrityViolationException e) {
             response.put("mensaje", "Lo sentimos, hubo un error a la hora de actualizar el empleado");
@@ -712,19 +734,30 @@ public class UsuarioController {
         Usuario usuarioLogueado = usuarioService.findByEmail(userDetails.getUsername()).orElseThrow();
         Map<String, Object> response = new HashMap<>();
         try {
-            usuarioLogueado.setNombres(usuarioDTO.getNombres());
-            usuarioLogueado.setApellidoMaterno(usuarioDTO.getApellidoMaterno());
-            usuarioLogueado.setApellidoPaterno(usuarioDTO.getApellidoPaterno());
-            usuarioLogueado.setDni(usuarioDTO.getDni());
-            usuarioLogueado.setDireccion(usuarioDTO.getDireccion());
-            usuarioLogueado.setCelular(usuarioDTO.getCelular());
-            usuarioLogueado.setEmail(usuarioDTO.getEmail());
-            usuarioLogueado.setFotoUsuario(usuarioDTO.getFotoUsuario());
-            // PARA CAMBIAR EL USUARIO O EL ROL, ES NECESARIO AUTENTICARME DE NUEVO
-            // LA VARIABLE CAMBIOIMPORTANTE ME PERMITE SABER SI TENGO QUE CERRAR SESIÓN O NO DEBIDO A LOS CAMBIOS
-            response.put("cambioImportante", usuarioLogueado.getUsuario().equals(usuarioDTO.getUsuario()));
-            usuarioLogueado.setUsuario(usuarioDTO.getUsuario());
-            usuarioService.save(usuarioLogueado);
+            // VALIDO SI EL PERFIL ES SOLO Y UNICAMENTE MIO
+            if (usuarioDTO.getEmail().equals(usuarioLogueado.getEmail())) {
+                usuarioLogueado.setNombres(usuarioDTO.getNombres());
+                usuarioLogueado.setApellidoMaterno(usuarioDTO.getApellidoMaterno());
+                usuarioLogueado.setApellidoPaterno(usuarioDTO.getApellidoPaterno());
+                usuarioLogueado.setDni(usuarioDTO.getDni()); // SOLO LECTURA?
+                usuarioLogueado.setDireccion(usuarioDTO.getDireccion());
+                usuarioLogueado.setCelular(usuarioDTO.getCelular());
+                usuarioLogueado.setEmail(usuarioDTO.getEmail()); // SOLO LECTURA?
+                usuarioLogueado.setFotoUsuario(usuarioDTO.getFotoUsuario());
+                // PARA CAMBIAR EL USUARIO O EL ROL, ES NECESARIO AUTENTICARME DE NUEVO
+                // LA VARIABLE CAMBIOIMPORTANTE ME PERMITE SABER SI TENGO QUE CERRAR SESIÓN O NO DEBIDO A LOS CAMBIOS
+                response.put("cambioImportante", usuarioLogueado.getUsuario().equals(usuarioDTO.getUsuario()));
+                usuarioLogueado.setUsuario(usuarioDTO.getUsuario());
+                if (usuarioDTO.getRol() == null && usuarioDTO.getLocal() == null) {
+                    usuarioService.save(usuarioLogueado);
+                } else {
+                    response.put("mensaje", "Lo sentimos, no tienes acceso a este recurso");
+                    return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+                }
+            } else {
+                response.put("mensaje", "Lo sentimos, no tienes acceso a este recurso");
+                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+            }
         } catch (NoSuchElementException | DataIntegrityViolationException e) {
             response.put("mensaje", "Lo sentimos, hubo un error a la hora de actualizar el perfil");
             response.put("error", e.getMessage());
@@ -771,7 +804,7 @@ public class UsuarioController {
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
-    @ApiOperation(value = "Método de deshabilitación del usuario logueado en ese momento mediante el id", response = ResponseEntity.class)
+    @ApiOperation(value = "Método de deshabilitación del usuario mediante el id", response = ResponseEntity.class)
     @ApiResponses(value = {@ApiResponse(code = 200, message = "Usuario deshabilitado"),
             @ApiResponse(code = 201, message = " "), @ApiResponse(code = 401, message = " "),
             @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = "El usuario no existe"),
@@ -824,6 +857,43 @@ public class UsuarioController {
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
         response.put("mensaje", "Usuario deshabilitado");
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @ApiOperation(value = "Método de habilitación de un usuario mediante el id", response = ResponseEntity.class)
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Usuario habilitado"),
+            @ApiResponse(code = 201, message = " "), @ApiResponse(code = 401, message = " "),
+            @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = "El usuario no existe"),
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de habilitar el usuario. Inténtelo mas tarde")})
+    @PutMapping(value = "/usuarios/{id}/habilitar-cuenta", produces = "application/json")
+    @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN')")
+    public ResponseEntity<?> habilitarUsuario(@PathVariable String id) {
+        Map<String, Object> response = new HashMap<>();
+        Usuario usuarioEncontrado;
+        try {
+            if (id.matches("^\\d+$")) {
+                usuarioEncontrado = usuarioService.findById(Long.parseLong(id)).orElseThrow();
+            } else {
+                response.put("mensaje", "Lo sentimos, el id es inválido");
+                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+            }
+            if (usuarioEncontrado.isActivo()) {
+                response.put("mensaje", "Lo sentimos, la cuenta ya está habilitada");
+                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+            }
+            usuarioEncontrado.setActivo(true);
+            usuarioService.save(usuarioEncontrado);
+
+        } catch (NoSuchElementException e) {
+            response.put("mensaje", "Lo sentimos, el usuario no existe");
+            response.put("error", e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        } catch (DataIntegrityViolationException e) {
+            response.put("mensaje", "Lo sentimos, hubo un error a la hora de habilitar el usuario");
+            response.put("error", e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        response.put("mensaje", "Usuario habilitado");
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 

@@ -2,6 +2,7 @@ package com.biblioteca.backend.service;
 
 import java.util.List;
 import java.util.Optional;
+
 import com.biblioteca.backend.model.Local.Local;
 import com.biblioteca.backend.model.Rol;
 import com.biblioteca.backend.model.Usuario.Usuario;
@@ -116,6 +117,12 @@ public class UsuarioServiceImpl implements IUsuarioService {
     @Transactional(readOnly = true)
     public List<Usuario> findByRol(String authority) {
         return repository.findByRol(authority);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<Usuario> existsAdminInLocal(Long local) {
+        return repository.existsAdminInLocal(local);
     }
 
     @Override
