@@ -15,11 +15,11 @@ public class PrestamoDTO {
 
     private String observaciones;
 
-    private Usuario usuario;
+    private Long usuario;
 
-    private Usuario empleado;
+    private Long empleado;
 
-    private Libro libro;
+    private Long libro;
 
     public Long getId() {
         return id;
@@ -53,34 +53,34 @@ public class PrestamoDTO {
         this.observaciones = observaciones;
     }
 
-    public Usuario getUsuario() {
+    public Long getUsuario() {
         return usuario;
     }
 
-    public void setUsuario(Usuario usuario) {
+    public void setUsuario(Long usuario) {
         this.usuario = usuario;
     }
 
-    public Usuario getEmpleado() {
+    public Long getEmpleado() {
         return empleado;
     }
 
-    public void setEmpleado(Usuario empleado) {
+    public void setEmpleado(Long empleado) {
         this.empleado = empleado;
     }
 
-    public Libro getLibro() {
+    public Long getLibro() {
         return libro;
     }
 
-    public void setLibro(Libro libro) {
+    public void setLibro(Long libro) {
         this.libro = libro;
     }
 
     public PrestamoDTO() {
     }
 
-    public PrestamoDTO(Long id, LocalDateTime fechaDevolucion, boolean isActivo, String observaciones, Usuario usuario, Usuario empleado, Libro libro) {
+    public PrestamoDTO(Long id, LocalDateTime fechaDevolucion, boolean isActivo, String observaciones, Long usuario, Long empleado, Long libro) {
         this.id = id;
         this.fechaDevolucion = fechaDevolucion;
         this.isActivo = isActivo;

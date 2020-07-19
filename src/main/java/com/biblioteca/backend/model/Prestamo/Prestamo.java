@@ -3,6 +3,8 @@ package com.biblioteca.backend.model.Prestamo;
 import com.biblioteca.backend.model.Libro.Libro;
 import com.biblioteca.backend.model.Usuario.Usuario;
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import io.swagger.annotations.ApiModelProperty;
 
 import javax.persistence.*;
@@ -10,6 +12,10 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "tb_prestamo")
+// PARA MOSTRAR EMPLEADOS, USUARIOS Y LIBROS DURANTE UNA CONSULTA
+@JsonIdentityInfo(
+        generator = ObjectIdGenerators.PropertyGenerator.class,
+        property = "id")
 public class Prestamo {
 
     @Id
@@ -34,17 +40,17 @@ public class Prestamo {
     private String observaciones;
 
     // PRESTAMOS(*):USER(1)
-    @ManyToOne//(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "usuario_id")
     private Usuario usuario;
 
     // PRESTAMOS(*):EMPLEADO(1)
-    @ManyToOne//(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "empleado_id")
     private Usuario empleado;
 
     // PRESTAMOS(*):LIBRO(1)
-    @ManyToOne//(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "libro_id")
     private Libro libro;
 
@@ -88,7 +94,7 @@ public class Prestamo {
         this.observaciones = observaciones;
     }
 
-    @JsonBackReference
+    //@JsonBackReference
     public Usuario getUsuario() {
         return usuario;
     }
@@ -97,7 +103,7 @@ public class Prestamo {
         this.usuario = usuario;
     }
 
-    @JsonBackReference
+    //@JsonBackReference
     public Usuario getEmpleado() {
         return empleado;
     }
@@ -106,7 +112,7 @@ public class Prestamo {
         this.empleado = empleado;
     }
 
-    @JsonBackReference
+    //@JsonBackReference
     public Libro getLibro() {
         return libro;
     }

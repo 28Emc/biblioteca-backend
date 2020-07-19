@@ -4,6 +4,7 @@ import com.biblioteca.backend.model.Categoria.Categoria;
 import com.biblioteca.backend.model.Local.Local;
 import com.biblioteca.backend.model.Prestamo.Prestamo;
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import io.swagger.annotations.ApiModelProperty;
 import org.hibernate.annotations.Type;
@@ -185,7 +186,8 @@ public class Libro {
         this.local = local;
     }
 
-    @JsonManagedReference
+    //@JsonManagedReference
+    @JsonIgnore
     public List<Prestamo> getPrestamos() {
         return prestamos;
     }
