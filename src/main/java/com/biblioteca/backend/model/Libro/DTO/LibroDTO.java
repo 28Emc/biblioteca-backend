@@ -1,26 +1,33 @@
 package com.biblioteca.backend.model.Libro.DTO;
 
-import com.biblioteca.backend.model.Prestamo.Prestamo;
-
+import javax.validation.constraints.*;
 import java.time.LocalDateTime;
-import java.util.List;
 
 public class LibroDTO {
 
     private Long id;
 
+    @NotEmpty(message = "{notEmpty.libroDTO.isbn}")
     private String ISBN;
 
+    @NotEmpty(message = "{notEmpty.libroDTO.titulo}")
+    @Size(min = 1, max = 100, message = "{size.libroDTO.titulo}")
     private String titulo;
 
+    @NotEmpty(message = "{notEmpty.libroDTO.autor}")
+    @Size(min = 1, max = 100, message = "{size.libroDTO.autor}")
     private String autor;
 
     private String descripcion;
 
+    @NotNull(message = "{notNull.libroDTO.fechaPublicacion}")
     private LocalDateTime fechaPublicacion;
 
     private boolean isActivo;
 
+    @Min(value = 1)
+    @Max(value = 9999)
+    @NotNull(message = "{notNull.libroDTO.stock}")
     private Integer stock;
 
     private String fotoLibro;

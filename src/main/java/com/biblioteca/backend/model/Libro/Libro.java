@@ -230,28 +230,40 @@ public class Libro {
     public void prePersist() {
         isActivo = true;
         fechaRegistro = LocalDateTime.now();
-        /*if (isISBN13(getISBN()))
-            ISBN = getISBN();
-        else ISBN = "";*/
     }
 
     // ALGORITMO PARA DETERMINAR SI EL CODIGO ISBN DEL LIBRO ES VÁLIDO
-    public boolean isISBN13(String number) {
-        int sum = 0;
-        int multiple;
-        char ch;
-        int digit;
-        for (int i = 1; i < 13; i++) {
-            if (i % 2 == 0) {
-                multiple = 3;
-            } else {
-                multiple = 1;
-            }
-            ch = number.charAt(i - 1);
-            digit = Character.getNumericValue(ch);
-            sum += (multiple * digit);
+    public boolean validateIsbn13(String isbn) {
+        if (isbn == null) {
+            return false;
         }
-        return sum % 10 == 0;
+
+        //remove any hyphens
+        isbn = isbn.replaceAll("-", "");
+
+        //must be a 13 digit ISBN
+        if (isbn.length() != 13) {
+            return false;
+        }
+
+        try {
+            int tot = 0;
+            for (int i = 0; i < 12; i++) {
+                int digit = Integer.parseInt(isbn.substring(i, i + 1));
+                tot += (i % 2 == 0) ? digit * 1 : digit * 3;
+            }
+
+            //checksum must be 0-9. If calculated as 10 then = 0
+            int checksum = 10 - (tot % 10);
+            if (checksum == 10) {
+                checksum = 0;
+            }
+
+            return checksum == Integer.parseInt(isbn.substring(12));
+        } catch (NumberFormatException nfe) {
+            //to catch invalid ISBNs that have non-numeric characters in them
+            return false;
+        }
     }
 
     @PreUpdate

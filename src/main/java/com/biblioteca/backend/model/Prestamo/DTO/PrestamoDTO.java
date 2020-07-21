@@ -1,14 +1,15 @@
 package com.biblioteca.backend.model.Prestamo.DTO;
 
-import com.biblioteca.backend.model.Libro.Libro;
-import com.biblioteca.backend.model.Usuario.Usuario;
-
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
 
 public class PrestamoDTO {
 
     private Long id;
 
+    @NotNull(message = "{notNull.prestamoDTO.fechaDevolucion}")
     private LocalDateTime fechaDevolucion;
 
     private boolean isActivo;

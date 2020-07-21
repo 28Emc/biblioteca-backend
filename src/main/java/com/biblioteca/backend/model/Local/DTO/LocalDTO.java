@@ -1,11 +1,14 @@
 package com.biblioteca.backend.model.Local.DTO;
 
-import com.biblioteca.backend.model.Empresa;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Size;
 
 public class LocalDTO {
 
     private Long id;
 
+    @NotEmpty(message = "{notEmpty.localDTO.direccion}")
+    @Size(min = 6, max = 100, message = "{size.localDTO.direccion}")
     private String direccion;
 
     private String infoAdicional;

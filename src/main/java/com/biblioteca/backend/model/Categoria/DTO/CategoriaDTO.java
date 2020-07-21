@@ -1,14 +1,12 @@
 package com.biblioteca.backend.model.Categoria.DTO;
 
-import javax.persistence.Column;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
 
 public class CategoriaDTO {
 
-    /*@NotEmpty(message = "El nombre de la categoría es requerido")
-    @Size(min = 4, max = 30)
-    @Column(unique = true)*/
+    @NotEmpty(message = "{notEmpty.categoriaDTO.nombre}")
+    @Size(min = 4, max = 30, message = "{size.categoriaDTO.nombre}")
     private String nombre;
 
     public String getNombre() {
