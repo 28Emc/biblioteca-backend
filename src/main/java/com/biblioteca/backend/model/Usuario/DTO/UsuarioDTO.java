@@ -1,27 +1,49 @@
 package com.biblioteca.backend.model.Usuario.DTO;
 
-public class UsuarioDTO {
+import javax.validation.constraints.Email;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Size;
 
-    // AQUI VAN LAS VALIDACIONES DEL PAQUETE STARTER-VALIDATIONS
+public class UsuarioDTO {
 
     private Long id;
 
+    @NotEmpty(message = "{notEmpty.usuarioDTO.nombres}")
+    @Size(min = 5, max = 50, message = "{size.usuarioDTO.nombres}")
     private String nombres;
 
+    @NotEmpty(message = "{notEmpty.usuarioDTO.apellidoMaterno}")
+    @Size(min = 5, max = 50, message = "{size.usuarioDTO.apellidoMaterno}")
     private String apellidoMaterno;
 
+    @NotEmpty(message = "{notEmpty.usuarioDTO.apellidoPaterno}")
+    @Size(min = 5, max = 50, message = "{size.usuarioDTO.apellidoPaterno}")
     private String apellidoPaterno;
 
+    @NotEmpty(message = "{notEmpty.usuarioDTO.dni}")
+    @Size(min = 8, max = 8, message = "{size.usuarioDTO.dni}")
     private String dni;
 
+    @NotEmpty(message = "{notEmpty.usuarioDTO.direccion}")
+    @Size(min = 5, max = 100, message = "{size.usuarioDTO.direccion}")
     private String direccion;
 
+    @NotEmpty(message = "{notEmpty.usuarioDTO.celular}")
+    @Size(min = 9, max = 9, message = "{size.usuarioDTO.celular}")
     private String celular;
 
+    @NotEmpty(message = "{notEmpty.usuarioDTO.nombres}")
+    @Size(min = 5, max = 30, message = "{size.usuarioDTO.email}")
+    @Email(message = "{email.usuarioDTO.email}")
     private String email;
 
+    @NotEmpty(message = "{notEmpty.usuarioDTO.usuario}")
+    @Size(min = 5, max = 30, message = "{size.usuarioDTO.usuario}")
     private String usuario;
 
+    @NotEmpty(message = "{notEmpty.usuarioDTO.password}")
+    @Size(min = 5, max = 30, message = "{size.usuarioDTO.password}")
+    // TODO:APLICAR PATTERN DE CONTRASEÑA SEGURA
     private String password;
 
     private boolean isActivo;

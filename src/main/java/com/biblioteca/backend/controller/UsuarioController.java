@@ -1,7 +1,9 @@
 package com.biblioteca.backend.controller;
 
 import java.util.*;
+import java.util.stream.Collectors;
 import javax.mail.MessagingException;
+import javax.validation.Valid;
 
 import com.biblioteca.backend.model.Token;
 import com.biblioteca.backend.model.Usuario.DTO.UsuarioDTO;
@@ -18,6 +20,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import io.swagger.annotations.Api;
@@ -55,7 +58,8 @@ public class UsuarioController {
     @ApiResponses(value = {@ApiResponse(code = 200, message = " "),
             @ApiResponse(code = 302, message = "Usuarios encontrados"), @ApiResponse(code = 401, message = " "),
             @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = " "),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de buscar los usuarios. Inténtelo mas tarde")})
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de buscar los usuarios. " +
+                    "Inténtelo mas tarde")})
     @GetMapping(value = "/usuarios", produces = "application/json")
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
     public ResponseEntity<?> listarUsuarios() {
@@ -77,7 +81,8 @@ public class UsuarioController {
     @ApiResponses(value = {@ApiResponse(code = 200, message = " "),
             @ApiResponse(code = 302, message = "Usuario encontrado"), @ApiResponse(code = 401, message = " "),
             @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = " "),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de buscar el usuario. Inténtelo mas tarde")})
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de buscar el usuario. " +
+                    "Inténtelo mas tarde")})
     @GetMapping(value = "/usuarios/{id}", produces = "application/json")
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
     public ResponseEntity<?> buscarUsuario(@PathVariable String id) {
@@ -87,25 +92,270 @@ public class UsuarioController {
             if (id.matches("^\\d+$")) {
                 usuario = usuarioService.findById(Long.parseLong(id)).orElseThrow();
             } else {
-                response.put("mensaje", "Lo sentimos, el id es inválido");
+                response.put("mensaje", "El id es inválido");
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
             if (usuario.getId() == 1 || !usuario.getRol().getAuthority().equals("ROLE_USUARIO")) {
-                response.put("mensaje", "Lo sentimos, el usuario no existe");
+                response.put("mensaje", "El usuario no está disponible o no tiene el rol correcto");
                 return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
             }
         } catch (NoSuchElementException e) {
-            response.put("mensaje", "Lo sentimos, el usuario no existe");
-            response.put("error", e.getMessage());
+            response.put("mensaje", "El usuario no existe");
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (Exception e) {
             response.put("mensaje", "Lo sentimos, hubo un error a la hora de buscar el usuario");
-            response.put("error", e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+        // VER SI MANDO UN DTO EN VEZ DEL OBJETO USUARIO
         response.put("usuario", usuario);
         response.put("mensaje", "Usuario encontrado");
         return new ResponseEntity<>(response, HttpStatus.FOUND);
+    }
+
+    @ApiOperation(value = "Método de registro de usuarios dentro del sistema", response = ResponseEntity.class)
+    @ApiResponses(value = {@ApiResponse(code = 200, message = " "),
+            @ApiResponse(code = 201, message = "Usuario registrado"),
+            @ApiResponse(code = 400, message = "Lo sentimos, el correo ya està registrado con otro usuario"),
+            @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
+            @ApiResponse(code = 404, message = " "),
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de registrar el usuario. " +
+                    "Inténtelo mas tarde")})
+    @PostMapping(value = "/usuarios", produces = "application/json")
+    @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN')")
+    public ResponseEntity<?> crearUsuario(@Valid @RequestBody UsuarioDTO usuarioDTO, BindingResult result) {
+        Map<String, Object> response = new HashMap<>();
+        Optional<Usuario> usuarioEncontrado;
+
+        try {
+
+            if (result.hasErrors()) {
+                List<String> errores = result.getFieldErrors()
+                        .stream()
+                        .map(error -> error.getField() + " : " + error.getDefaultMessage())
+                        .collect(Collectors.toList());
+                response.put("mensaje", errores);
+                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+            }
+
+            usuarioEncontrado = usuarioService.findByEmail(usuarioDTO.getEmail());
+
+            if (usuarioEncontrado.isPresent()) {
+                response.put("mensaje", "El correo ya està registrado");
+                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+            } else {
+                Usuario usuario = new Usuario();
+                usuario.setNombres(usuarioDTO.getNombres());
+                usuario.setApellidoPaterno(usuarioDTO.getApellidoPaterno());
+                usuario.setApellidoMaterno(usuarioDTO.getApellidoMaterno());
+                usuario.setDni(usuarioDTO.getDni());
+                usuario.setDireccion(usuarioDTO.getDireccion());
+                usuario.setCelular(usuarioDTO.getCelular());
+                usuario.setEmail(usuarioDTO.getEmail());
+                usuario.setUsuario(usuarioDTO.getUsuario());
+                usuario.setPassword(encoder.encode(usuarioDTO.getPassword()));
+                usuario.setFotoUsuario(usuarioDTO.getFotoUsuario());
+                usuario.setActivo(true);
+                /*
+                    VALIDO QUE NO LE PASE NADA COMO PARAMETRO A ROL Y LOCAL
+                    EN ESE CASO LE ASIGNO ROL_USUARIO Y LOCAL 1
+                */
+                // TODO: EN ANGULAR, CUANDO EL ROL SEA ROLE_USUARIO, ESCONDO EL LOCAL
+                if (usuarioDTO.getRol() == null && usuarioDTO.getLocal() == null) {
+                    usuario.setRol(roleService.findById(4L).orElseThrow());
+                    usuario.setLocal(localService.findById(1L).orElseThrow());
+                } else {
+                    response.put("mensaje", "Rol o Local inválidos");
+                    return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+                }
+                usuarioService.save(usuario);
+            }
+
+        } catch (NoSuchElementException | DataIntegrityViolationException e) {
+            response.put("mensaje", "Lo sentimos, hubo un error a la hora de registrar el usuario");
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        response.put("mensaje", "Usuario registrado");
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
+
+    @ApiOperation(value = "Método de actualización de usuarios", response = ResponseEntity.class)
+    @ApiResponses(value = {@ApiResponse(code = 200, message = " "),
+            @ApiResponse(code = 201, message = "Usuario actualizado"), @ApiResponse(code = 401, message = " "),
+            @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = "El usuario no existe"),
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de actualizar el usuario. Inténtelo mas tarde")})
+    @PutMapping(value = "/usuarios/{id}", produces = "application/json")
+    @PreAuthorize("hasAnyRole('ROLE_SYSADMIN')")
+    public ResponseEntity<?> editarUsuario(@Valid @RequestBody UsuarioDTO usuarioDTO, BindingResult result,
+                                           @PathVariable String id, Authentication authentication) {
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        Usuario usuarioLogueado = usuarioService.findByEmail(userDetails.getUsername()).orElseThrow();
+        Map<String, Object> response = new HashMap<>();
+        Usuario usuarioEncontrado;
+
+        try {
+
+            if (result.hasErrors()) {
+                List<String> errores = result.getFieldErrors()
+                        .stream()
+                        .map(error -> error.getField() + " : " + error.getDefaultMessage())
+                        .collect(Collectors.toList());
+                response.put("mensaje", errores);
+                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+            }
+
+            if (id.matches("^\\d+$")) {
+                usuarioEncontrado = usuarioService.findById(Long.parseLong(id)).orElseThrow();
+            } else {
+                response.put("mensaje", "El id es inválido");
+                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+            }
+
+            usuarioEncontrado.setNombres(usuarioDTO.getNombres()); // SOLO LECTURA?
+            usuarioEncontrado.setApellidoMaterno(usuarioDTO.getApellidoMaterno()); // SOLO LECTURA?
+            usuarioEncontrado.setApellidoPaterno(usuarioDTO.getApellidoPaterno()); // SOLO LECTURA?
+            usuarioEncontrado.setDni(usuarioDTO.getDni()); // SOLO LECTURA?
+            usuarioEncontrado.setDireccion(usuarioDTO.getDireccion());
+            usuarioEncontrado.setCelular(usuarioDTO.getCelular()); // SOLO LECTURA?
+            usuarioEncontrado.setEmail(usuarioDTO.getEmail()); // SOLO LECTURA?
+            usuarioEncontrado.setFotoUsuario(usuarioDTO.getFotoUsuario());
+
+            // SI ES MI REGISTRO, SETEO MIS PROPIOS CAMPOS EN EL ROL Y LOCAL
+            if (usuarioEncontrado.getId().equals(usuarioLogueado.getId())) {
+                usuarioEncontrado.setRol(usuarioLogueado.getRol());
+                usuarioEncontrado.setLocal(usuarioLogueado.getLocal());
+                /* PARA QUE SYSADMIN PUEDA HACER QUE UN USUARIO SEA
+                    - EMPLEADO, VALIDO QUE LE PASE ROL CON ID 3 Y EL LOCAL NO TENGA ID 1
+                    - USUARIO, VALIDO QUE LE PASE ROL CON ID 4 Y EL LOCAL TENGA SOLAMENTE ID 1
+                    - ADMIN, VALIDO QUE EL ADMIN DEL LOCAL DESIGNADO NO EXISTA, Y EL LOCAL NO TENGA ID 1
+                */
+            } else if ("ROLE_EMPLEADO".equals(roleService.findById(usuarioDTO.getRol()).orElseThrow().getAuthority()) &&
+                    localService.findById(usuarioDTO.getLocal()).orElseThrow().getId() != 1) {
+                usuarioEncontrado.setRol(roleService.findById(usuarioDTO.getRol()).orElseThrow());
+                usuarioEncontrado.setLocal(localService.findById(usuarioDTO.getLocal()).orElseThrow());
+            } else if ("ROLE_USUARIO".equals(roleService.findById(usuarioDTO.getRol()).orElseThrow().getAuthority()) &&
+                    localService.findById(usuarioDTO.getLocal()).orElseThrow().getId() == 1) {
+                usuarioEncontrado.setRol(roleService.findById(usuarioDTO.getRol()).orElseThrow());
+                usuarioEncontrado.setLocal(localService.findById(usuarioDTO.getLocal()).orElseThrow());
+            } else if ("ROLE_ADMIN".equals(roleService.findById(usuarioDTO.getRol()).orElseThrow().getAuthority()) &&
+                    usuarioService.existsAdminInLocal(usuarioDTO.getLocal()).isPresent() &&
+                    localService.findById(usuarioDTO.getLocal()).orElseThrow().getId() != 1) {
+                usuarioEncontrado.setRol(roleService.findById(usuarioDTO.getRol()).orElseThrow());
+                usuarioEncontrado.setLocal(localService.findById(usuarioDTO.getLocal()).orElseThrow());
+            } else {
+                response.put("mensaje", "El rol y/o local asignados son inválidos o no están disponibles" +
+                        " actualmente para este usuario");
+                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+            }
+
+            usuarioEncontrado.setUsuario(usuarioDTO.getUsuario()); // SOLO LECTURA?
+            usuarioService.save(usuarioEncontrado);
+        } catch (NoSuchElementException | DataIntegrityViolationException e) {
+            response.put("mensaje", "Lo sentimos, hubo un error a la hora de actualizar el usuario");
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        response.put("mensaje", "Usuario actualizado");
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
+
+    @ApiOperation(value = "Método de deshabilitación del usuario mediante el id", response = ResponseEntity.class)
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Usuario deshabilitado"),
+            @ApiResponse(code = 201, message = " "), @ApiResponse(code = 401, message = " "),
+            @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = "El usuario no existe"),
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de deshabilitar el usuario. Inténtelo mas tarde")})
+    @PutMapping(value = "/usuarios/{id}/deshabilitar-cuenta", produces = "application/json")
+    @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_USER')")
+    public ResponseEntity<?> deshabilitarUsuario(@PathVariable String id, Authentication authentication) {
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        Usuario usuarioLogueado = usuarioService.findByEmail(userDetails.getUsername()).orElseThrow();
+        Map<String, Object> response = new HashMap<>();
+        Usuario usuarioEncontrado;
+
+        try {
+
+            if (id.matches("^\\d+$")) {
+                usuarioEncontrado = usuarioService.findById(Long.parseLong(id)).orElseThrow();
+            } else {
+                response.put("mensaje", "El id es inválido");
+                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+            }
+
+            if (usuarioLogueado.getRol().getAuthority().equals("ROLE_USER") &&
+                    !usuarioEncontrado.getId().equals(usuarioLogueado.getId())) {
+                response.put("mensaje", "No tienes acceso a este recurso");
+                return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
+            }
+
+            if (!usuarioEncontrado.isActivo()) {
+                response.put("mensaje", "La cuenta ya está deshabilitada");
+                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+            }
+
+            usuarioEncontrado.setActivo(false);
+            usuarioService.save(usuarioEncontrado);
+
+            Map<String, Object> model = new HashMap<>();
+            model.put("titulo", "Usuario Deshabilitado");
+            model.put("from", "Biblioteca2020 " + "<" + emailFrom + ">");
+            model.put("usuario", usuarioEncontrado.getUsuario());
+            model.put("to", usuarioEncontrado.getEmail());
+            model.put("subject", "Usuario Deshabilitado | Biblioteca2020");
+            emailService.enviarEmail(model);
+
+        } catch (NoSuchElementException e) {
+            response.put("mensaje", "El usuario no existe");
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        } catch (DataIntegrityViolationException e) {
+            response.put("mensaje", "Lo sentimos, hubo un error a la hora de deshabilitar el usuario");
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (MessagingException e) {
+            response.put("mensaje", "Lo sentimos, hubo un error a la hora de enviar el correo de confirmación");
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        response.put("mensaje", "Usuario deshabilitado");
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @ApiOperation(value = "Método de habilitación de un usuario mediante el id", response = ResponseEntity.class)
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Usuario habilitado"),
+            @ApiResponse(code = 201, message = " "), @ApiResponse(code = 401, message = " "),
+            @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = "El usuario no existe"),
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de habilitar el usuario. Inténtelo mas tarde")})
+    @PutMapping(value = "/usuarios/{id}/habilitar-cuenta", produces = "application/json")
+    @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN')")
+    public ResponseEntity<?> habilitarUsuario(@PathVariable String id) {
+        Map<String, Object> response = new HashMap<>();
+        Usuario usuarioEncontrado;
+
+        try {
+
+            if (id.matches("^\\d+$")) {
+                usuarioEncontrado = usuarioService.findById(Long.parseLong(id)).orElseThrow();
+            } else {
+                response.put("mensaje", "El id es inválido");
+                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+            }
+
+            if (usuarioEncontrado.isActivo()) {
+                response.put("mensaje", "La cuenta ya está habilitada");
+                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+            }
+
+            usuarioEncontrado.setActivo(true);
+            usuarioService.save(usuarioEncontrado);
+
+        } catch (NoSuchElementException e) {
+            response.put("mensaje", "El usuario no existe");
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        } catch (DataIntegrityViolationException e) {
+            response.put("mensaje", "Lo sentimos, hubo un error a la hora de habilitar el usuario");
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        response.put("mensaje", "Usuario habilitado");
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @ApiOperation(value = "Método de listado de empleados", response = ResponseEntity.class)
@@ -182,6 +432,133 @@ public class UsuarioController {
         response.put("empleado", empleado);
         response.put("mensaje", "Empleado encontrado");
         return new ResponseEntity<>(response, HttpStatus.FOUND);
+    }
+
+    @ApiOperation(value = "Método de registro de empleados dentro del sistema", response = ResponseEntity.class)
+    @ApiResponses(value = {@ApiResponse(code = 200, message = " "),
+            @ApiResponse(code = 201, message = "Empleado registrado"),
+            @ApiResponse(code = 400, message = "Lo sentimos, el correo ya està registrado con otro empleado"),
+            @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
+            @ApiResponse(code = 404, message = " "),
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de registrar el empleado. Inténtelo mas tarde")})
+    @PostMapping(value = "/empleados", produces = "application/json")
+    @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN')")
+    public ResponseEntity<?> crearEmpleado(@RequestBody UsuarioDTO usuarioDTO) {
+        Map<String, Object> response = new HashMap<>();
+        Optional<Usuario> empleadoEncontrado;
+        try {
+            empleadoEncontrado = usuarioService.findByEmail(usuarioDTO.getEmail());
+            if (empleadoEncontrado.isPresent()) {
+                response.put("mensaje", "Lo sentimos, el correo ya està registrado");
+                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+            } else {
+                Usuario empleado = new Usuario();
+                empleado.setNombres(usuarioDTO.getNombres());
+                empleado.setApellidoPaterno(usuarioDTO.getApellidoPaterno());
+                empleado.setApellidoMaterno(usuarioDTO.getApellidoMaterno());
+                empleado.setDni(usuarioDTO.getDni());
+                empleado.setDireccion(usuarioDTO.getDireccion());
+                empleado.setCelular(usuarioDTO.getCelular());
+                empleado.setEmail(usuarioDTO.getEmail());
+                empleado.setUsuario(usuarioDTO.getUsuario());
+                empleado.setPassword(encoder.encode(usuarioDTO.getPassword()));
+                empleado.setFotoUsuario(usuarioDTO.getFotoUsuario());
+                empleado.setActivo(true);
+                /*
+                    DESPUES VALIDO EL ROLE_EMPLEADO O ROLE_ADMIN NO TENGAN EL LOCAL CON ID 1
+                    PARA ASIGNARLE AL FINAL EL ROL Y EL LOCAL DESIGNADOS
+                */
+                if (!String.valueOf(usuarioDTO.getRol()).equals("4") && !String.valueOf(usuarioDTO.getLocal()).equals("1")) {
+                    empleado.setRol(roleService.findById(usuarioDTO.getRol()).orElseThrow());
+                    empleado.setLocal(localService.findById(usuarioDTO.getLocal()).orElseThrow());
+                } else {
+                    response.put("mensaje", "Lo sentimos, rol o local inválidos");
+                    return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+                }
+                usuarioService.save(empleado);
+            }
+        } catch (NoSuchElementException | DataIntegrityViolationException e) {
+            response.put("mensaje", "Lo sentimos, hubo un error a la hora de registrar el empleado");
+            response.put("error", e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        response.put("mensaje", "Empleado registrado");
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
+
+    @ApiOperation(value = "Método de actualización de empleados", response = ResponseEntity.class)
+    @ApiResponses(value = {@ApiResponse(code = 200, message = " "),
+            @ApiResponse(code = 201, message = "empleado actualizado"), @ApiResponse(code = 401, message = " "),
+            @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = "El empleado no existe"),
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de actualizar el empleado. Inténtelo mas tarde")})
+    @PutMapping(value = "/empleados/{id}", produces = "application/json")
+    @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN')")
+    public ResponseEntity<?> editarEmpleado(@RequestBody UsuarioDTO usuarioDTO, @PathVariable String id, Authentication authentication) {
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        Usuario empleadoLogueado = usuarioService.findByEmail(userDetails.getUsername()).orElseThrow();
+        Map<String, Object> response = new HashMap<>();
+        Usuario empleadoEncontrado;
+        try {
+            if (id.matches("^\\d+$")) {
+                empleadoEncontrado = usuarioService.findById(Long.parseLong(id)).orElseThrow();
+            } else {
+                response.put("mensaje", "Lo sentimos, el id es inválido");
+                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+            }
+            empleadoEncontrado.setNombres(usuarioDTO.getNombres()); // SOLO LECTURA?
+            empleadoEncontrado.setApellidoMaterno(usuarioDTO.getApellidoMaterno()); // SOLO LECTURA?
+            empleadoEncontrado.setApellidoPaterno(usuarioDTO.getApellidoPaterno()); // SOLO LECTURA?
+            empleadoEncontrado.setDni(usuarioDTO.getDni()); // SOLO LECTURA?
+            empleadoEncontrado.setDireccion(usuarioDTO.getDireccion());
+            empleadoEncontrado.setCelular(usuarioDTO.getCelular()); // SOLO LECTURA?
+            empleadoEncontrado.setEmail(usuarioDTO.getEmail()); // SOLO LECTURA?
+            empleadoEncontrado.setFotoUsuario(usuarioDTO.getFotoUsuario()); // SOLO LECTURA?
+            // VALIDO SI ESTOY ACTUALIZANDO MI PROPIO REGISTRO PRIMERO, PARA ESCONDER LOS ROLES Y LOCALES
+            if (empleadoEncontrado.getId().equals(empleadoLogueado.getId())) {
+                // TODO: EN ANGULAR ESCONDO EL ROL Y LOCAL
+                empleadoEncontrado.setRol(empleadoLogueado.getRol());
+                empleadoEncontrado.setLocal(empleadoLogueado.getLocal());
+                // SI ES OTRO USUARIO, VALIDAR ROL DEL USUARIO QUE REALIZA LA OPERACIÓN PARA CAMBIAR EL ROL
+            } else {
+                switch (empleadoLogueado.getRol().getAuthority()) {
+                    case "ROLE_SYSADMIN" -> {
+                        empleadoEncontrado.setRol(roleService.findById(usuarioDTO.getRol()).orElseThrow());
+                        empleadoEncontrado.setLocal(localService.findById(usuarioDTO.getLocal()).orElseThrow());
+                    }
+                    case "ROLE_ADMIN" -> {
+                        empleadoEncontrado.setRol(roleService.findById(3L).orElseThrow());
+                        empleadoEncontrado.setLocal(empleadoLogueado.getLocal());
+                    }
+                }
+                // VALIDACIONES DE ROL Y LOCAL
+                if ("ROLE_EMPLEADO".equals(roleService.findById(usuarioDTO.getRol()).orElseThrow().getAuthority()) &&
+                        localService.findById(usuarioDTO.getLocal()).orElseThrow().getId() != 1) {
+                    empleadoEncontrado.setRol(roleService.findById(usuarioDTO.getRol()).orElseThrow());
+                    empleadoEncontrado.setLocal(localService.findById(usuarioDTO.getLocal()).orElseThrow());
+                } else if ("ROLE_USUARIO".equals(roleService.findById(usuarioDTO.getRol()).orElseThrow().getAuthority()) &&
+                        localService.findById(usuarioDTO.getLocal()).orElseThrow().getId() == 1) {
+                    empleadoEncontrado.setRol(roleService.findById(usuarioDTO.getRol()).orElseThrow());
+                    empleadoEncontrado.setLocal(localService.findById(usuarioDTO.getLocal()).orElseThrow());
+                } else if ("ROLE_ADMIN".equals(roleService.findById(usuarioDTO.getRol()).orElseThrow().getAuthority()) &&
+                        usuarioService.existsAdminInLocal(usuarioDTO.getLocal()).isPresent() &&
+                        localService.findById(usuarioDTO.getLocal()).orElseThrow().getId() != 1) {
+                    empleadoEncontrado.setRol(roleService.findById(usuarioDTO.getRol()).orElseThrow());
+                    empleadoEncontrado.setLocal(localService.findById(usuarioDTO.getLocal()).orElseThrow());
+                } else {
+                    response.put("mensaje", "Lo sentimos, el rol y/o local asignados son inválidos o no están disponibles" +
+                            " actualmente para este empleado");
+                    return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+                }
+            }
+            empleadoEncontrado.setUsuario(usuarioDTO.getUsuario()); // SOLO LECTURA?
+            usuarioService.save(empleadoEncontrado);
+        } catch (NoSuchElementException | DataIntegrityViolationException e) {
+            response.put("mensaje", "Lo sentimos, hubo un error a la hora de actualizar el empleado");
+            response.put("error", e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        response.put("mensaje", "Empleado actualizado");
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     @ApiOperation(value = "Método de registro de usuarios (hecho para usuarios nuevos) con cuenta por activar", response = ResponseEntity.class)
@@ -476,252 +853,6 @@ public class UsuarioController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @ApiOperation(value = "Método de registro de usuarios dentro del sistema", response = ResponseEntity.class)
-    @ApiResponses(value = {@ApiResponse(code = 200, message = " "),
-            @ApiResponse(code = 201, message = "Usuario registrado"),
-            @ApiResponse(code = 400, message = "Lo sentimos, el correo ya està registrado con otro usuario"),
-            @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
-            @ApiResponse(code = 404, message = " "),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de registrar el usuario. Inténtelo mas tarde")})
-    @PostMapping(value = "/usuarios", produces = "application/json")
-    @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN')")
-    public ResponseEntity<?> crearUsuario(@RequestBody UsuarioDTO usuarioDTO) {
-        Map<String, Object> response = new HashMap<>();
-        Optional<Usuario> usuarioEncontrado;
-        try {
-            usuarioEncontrado = usuarioService.findByEmail(usuarioDTO.getEmail());
-            if (usuarioEncontrado.isPresent()) {
-                response.put("mensaje", "Lo sentimos, el correo ya està registrado");
-                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-            } else {
-                Usuario usuario = new Usuario();
-                usuario.setNombres(usuarioDTO.getNombres());
-                usuario.setApellidoPaterno(usuarioDTO.getApellidoPaterno());
-                usuario.setApellidoMaterno(usuarioDTO.getApellidoMaterno());
-                usuario.setDni(usuarioDTO.getDni());
-                usuario.setDireccion(usuarioDTO.getDireccion());
-                usuario.setCelular(usuarioDTO.getCelular());
-                usuario.setEmail(usuarioDTO.getEmail());
-                usuario.setUsuario(usuarioDTO.getUsuario());
-                usuario.setPassword(encoder.encode(usuarioDTO.getPassword()));
-                usuario.setFotoUsuario(usuarioDTO.getFotoUsuario());
-                usuario.setActivo(true);
-                /*
-                    VALIDO QUE NO LE PASE NADA COMO PARAMETRO A ROL Y LOCAL
-                    EN ESE CASO LE ASIGNO ROL_USUARIO Y LOCAL 1
-                */
-                // TODO: EN ANGULAR, CUANDO EL ROL SEA ROLE_USUARIO, ESCONDO EL LOCAL
-                if (usuarioDTO.getRol() == null && usuarioDTO.getLocal() == null) {
-                    usuario.setRol(roleService.findById(4L).orElseThrow());
-                    usuario.setLocal(localService.findById(1L).orElseThrow());
-                } else {
-                    response.put("mensaje", "Lo sentimos, rol o local inválidos");
-                    return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-                }
-                usuarioService.save(usuario);
-            }
-        } catch (NoSuchElementException | DataIntegrityViolationException e) {
-            response.put("mensaje", "Lo sentimos, hubo un error a la hora de registrar el usuario");
-            response.put("error", e.getMessage());
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-        response.put("mensaje", "Usuario registrado");
-        return new ResponseEntity<>(response, HttpStatus.CREATED);
-    }
-
-    @ApiOperation(value = "Método de registro de empleados dentro del sistema", response = ResponseEntity.class)
-    @ApiResponses(value = {@ApiResponse(code = 200, message = " "),
-            @ApiResponse(code = 201, message = "Empleado registrado"),
-            @ApiResponse(code = 400, message = "Lo sentimos, el correo ya està registrado con otro empleado"),
-            @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
-            @ApiResponse(code = 404, message = " "),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de registrar el empleado. Inténtelo mas tarde")})
-    @PostMapping(value = "/empleados", produces = "application/json")
-    @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN')")
-    public ResponseEntity<?> crearEmpleado(@RequestBody UsuarioDTO usuarioDTO) {
-        Map<String, Object> response = new HashMap<>();
-        Optional<Usuario> empleadoEncontrado;
-        try {
-            empleadoEncontrado = usuarioService.findByEmail(usuarioDTO.getEmail());
-            if (empleadoEncontrado.isPresent()) {
-                response.put("mensaje", "Lo sentimos, el correo ya està registrado");
-                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-            } else {
-                Usuario empleado = new Usuario();
-                empleado.setNombres(usuarioDTO.getNombres());
-                empleado.setApellidoPaterno(usuarioDTO.getApellidoPaterno());
-                empleado.setApellidoMaterno(usuarioDTO.getApellidoMaterno());
-                empleado.setDni(usuarioDTO.getDni());
-                empleado.setDireccion(usuarioDTO.getDireccion());
-                empleado.setCelular(usuarioDTO.getCelular());
-                empleado.setEmail(usuarioDTO.getEmail());
-                empleado.setUsuario(usuarioDTO.getUsuario());
-                empleado.setPassword(encoder.encode(usuarioDTO.getPassword()));
-                empleado.setFotoUsuario(usuarioDTO.getFotoUsuario());
-                empleado.setActivo(true);
-                /*
-                    DESPUES VALIDO EL ROLE_EMPLEADO O ROLE_ADMIN NO TENGAN EL LOCAL CON ID 1
-                    PARA ASIGNARLE AL FINAL EL ROL Y EL LOCAL DESIGNADOS
-                */
-                if (!String.valueOf(usuarioDTO.getRol()).equals("4") && !String.valueOf(usuarioDTO.getLocal()).equals("1")) {
-                    empleado.setRol(roleService.findById(usuarioDTO.getRol()).orElseThrow());
-                    empleado.setLocal(localService.findById(usuarioDTO.getLocal()).orElseThrow());
-                } else {
-                    response.put("mensaje", "Lo sentimos, rol o local inválidos");
-                    return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-                }
-                usuarioService.save(empleado);
-            }
-        } catch (NoSuchElementException | DataIntegrityViolationException e) {
-            response.put("mensaje", "Lo sentimos, hubo un error a la hora de registrar el empleado");
-            response.put("error", e.getMessage());
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-        response.put("mensaje", "Empleado registrado");
-        return new ResponseEntity<>(response, HttpStatus.CREATED);
-    }
-
-    @ApiOperation(value = "Método de actualización de usuarios", response = ResponseEntity.class)
-    @ApiResponses(value = {@ApiResponse(code = 200, message = " "),
-            @ApiResponse(code = 201, message = "Usuario actualizado"), @ApiResponse(code = 401, message = " "),
-            @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = "El usuario no existe"),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de actualizar el usuario. Inténtelo mas tarde")})
-    @PutMapping(value = "/usuarios/{id}", produces = "application/json")
-    @PreAuthorize("hasAnyRole('ROLE_SYSADMIN')")
-    public ResponseEntity<?> editarUsuario(@RequestBody UsuarioDTO usuarioDTO, @PathVariable String id, Authentication authentication) {
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        Usuario usuarioLogueado = usuarioService.findByEmail(userDetails.getUsername()).orElseThrow();
-        Map<String, Object> response = new HashMap<>();
-        Usuario usuarioEncontrado;
-        try {
-            if (id.matches("^\\d+$")) {
-                usuarioEncontrado = usuarioService.findById(Long.parseLong(id)).orElseThrow();
-            } else {
-                response.put("mensaje", "Lo sentimos, el id es inválido");
-                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-            }
-            usuarioEncontrado.setNombres(usuarioDTO.getNombres()); // SOLO LECTURA?
-            usuarioEncontrado.setApellidoMaterno(usuarioDTO.getApellidoMaterno()); // SOLO LECTURA?
-            usuarioEncontrado.setApellidoPaterno(usuarioDTO.getApellidoPaterno()); // SOLO LECTURA?
-            usuarioEncontrado.setDni(usuarioDTO.getDni()); // SOLO LECTURA?
-            usuarioEncontrado.setDireccion(usuarioDTO.getDireccion());
-            usuarioEncontrado.setCelular(usuarioDTO.getCelular()); // SOLO LECTURA?
-            usuarioEncontrado.setEmail(usuarioDTO.getEmail()); // SOLO LECTURA?
-            usuarioEncontrado.setFotoUsuario(usuarioDTO.getFotoUsuario());
-            // SI ES MI REGISTRO, SETEO MIS PROPIOS CAMPOS EN EL ROL Y LOCAL
-            if (usuarioEncontrado.getId().equals(usuarioLogueado.getId())) {
-                usuarioEncontrado.setRol(usuarioLogueado.getRol());
-                usuarioEncontrado.setLocal(usuarioLogueado.getLocal());
-                /* TODO: PARA QUE SYSADMIN PUEDA HACER QUE UN USUARIO SEA
-                    - EMPLEADO, VALIDO QUE LE PASE ROL CON ID 3 Y EL LOCAL NO TENGA ID 1
-                    - USUARIO, VALIDO QUE LE PASE ROL CON ID 4 Y EL LOCAL TENGA SOLAMENTE ID 1
-                    - ADMIN, VALIDO QUE EL ADMIN DEL LOCAL DESIGNADO NO EXISTA, Y EL LOCAL NO TENGA ID 1
-                */
-            } else if ("ROLE_EMPLEADO".equals(roleService.findById(usuarioDTO.getRol()).orElseThrow().getAuthority()) &&
-                    localService.findById(usuarioDTO.getLocal()).orElseThrow().getId() != 1) {
-                usuarioEncontrado.setRol(roleService.findById(usuarioDTO.getRol()).orElseThrow());
-                usuarioEncontrado.setLocal(localService.findById(usuarioDTO.getLocal()).orElseThrow());
-            } else if ("ROLE_USUARIO".equals(roleService.findById(usuarioDTO.getRol()).orElseThrow().getAuthority()) &&
-                    localService.findById(usuarioDTO.getLocal()).orElseThrow().getId() == 1) {
-                usuarioEncontrado.setRol(roleService.findById(usuarioDTO.getRol()).orElseThrow());
-                usuarioEncontrado.setLocal(localService.findById(usuarioDTO.getLocal()).orElseThrow());
-            } else if ("ROLE_ADMIN".equals(roleService.findById(usuarioDTO.getRol()).orElseThrow().getAuthority()) &&
-                    usuarioService.existsAdminInLocal(usuarioDTO.getLocal()).isPresent() &&
-                    localService.findById(usuarioDTO.getLocal()).orElseThrow().getId() != 1) {
-                usuarioEncontrado.setRol(roleService.findById(usuarioDTO.getRol()).orElseThrow());
-                usuarioEncontrado.setLocal(localService.findById(usuarioDTO.getLocal()).orElseThrow());
-            } else {
-                response.put("mensaje", "Lo sentimos, el rol y/o local asignados son inválidos o no están disponibles" +
-                        " actualmente para este usuario");
-                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-            }
-
-            usuarioEncontrado.setUsuario(usuarioDTO.getUsuario()); // SOLO LECTURA?
-            usuarioService.save(usuarioEncontrado);
-        } catch (NoSuchElementException | DataIntegrityViolationException e) {
-            response.put("mensaje", "Lo sentimos, hubo un error a la hora de actualizar el usuario");
-            response.put("error", e.getMessage());
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-        response.put("mensaje", "Usuario actualizado");
-        return new ResponseEntity<>(response, HttpStatus.CREATED);
-    }
-
-    @ApiOperation(value = "Método de actualización de empleados", response = ResponseEntity.class)
-    @ApiResponses(value = {@ApiResponse(code = 200, message = " "),
-            @ApiResponse(code = 201, message = "empleado actualizado"), @ApiResponse(code = 401, message = " "),
-            @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = "El empleado no existe"),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de actualizar el empleado. Inténtelo mas tarde")})
-    @PutMapping(value = "/empleados/{id}", produces = "application/json")
-    @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN')")
-    public ResponseEntity<?> editarEmpleado(@RequestBody UsuarioDTO usuarioDTO, @PathVariable String id, Authentication authentication) {
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        Usuario empleadoLogueado = usuarioService.findByEmail(userDetails.getUsername()).orElseThrow();
-        Map<String, Object> response = new HashMap<>();
-        Usuario empleadoEncontrado;
-        try {
-            if (id.matches("^\\d+$")) {
-                empleadoEncontrado = usuarioService.findById(Long.parseLong(id)).orElseThrow();
-            } else {
-                response.put("mensaje", "Lo sentimos, el id es inválido");
-                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-            }
-            empleadoEncontrado.setNombres(usuarioDTO.getNombres()); // SOLO LECTURA?
-            empleadoEncontrado.setApellidoMaterno(usuarioDTO.getApellidoMaterno()); // SOLO LECTURA?
-            empleadoEncontrado.setApellidoPaterno(usuarioDTO.getApellidoPaterno()); // SOLO LECTURA?
-            empleadoEncontrado.setDni(usuarioDTO.getDni()); // SOLO LECTURA?
-            empleadoEncontrado.setDireccion(usuarioDTO.getDireccion());
-            empleadoEncontrado.setCelular(usuarioDTO.getCelular()); // SOLO LECTURA?
-            empleadoEncontrado.setEmail(usuarioDTO.getEmail()); // SOLO LECTURA?
-            empleadoEncontrado.setFotoUsuario(usuarioDTO.getFotoUsuario()); // SOLO LECTURA?
-            // VALIDO SI ESTOY ACTUALIZANDO MI PROPIO REGISTRO PRIMERO, PARA ESCONDER LOS ROLES Y LOCALES
-            if (empleadoEncontrado.getId().equals(empleadoLogueado.getId())) {
-                // TODO: EN ANGULAR ESCONDO EL ROL Y LOCAL
-                empleadoEncontrado.setRol(empleadoLogueado.getRol());
-                empleadoEncontrado.setLocal(empleadoLogueado.getLocal());
-                // SI ES OTRO USUARIO, VALIDAR ROL DEL USUARIO QUE REALIZA LA OPERACIÓN PARA CAMBIAR EL ROL
-            } else {
-                switch (empleadoLogueado.getRol().getAuthority()) {
-                    case "ROLE_SYSADMIN" -> {
-                        empleadoEncontrado.setRol(roleService.findById(usuarioDTO.getRol()).orElseThrow());
-                        empleadoEncontrado.setLocal(localService.findById(usuarioDTO.getLocal()).orElseThrow());
-                    }
-                    case "ROLE_ADMIN" -> {
-                        empleadoEncontrado.setRol(roleService.findById(3L).orElseThrow());
-                        empleadoEncontrado.setLocal(empleadoLogueado.getLocal());
-                    }
-                }
-                // VALIDACIONES DE ROL Y LOCAL
-                if ("ROLE_EMPLEADO".equals(roleService.findById(usuarioDTO.getRol()).orElseThrow().getAuthority()) &&
-                        localService.findById(usuarioDTO.getLocal()).orElseThrow().getId() != 1) {
-                    empleadoEncontrado.setRol(roleService.findById(usuarioDTO.getRol()).orElseThrow());
-                    empleadoEncontrado.setLocal(localService.findById(usuarioDTO.getLocal()).orElseThrow());
-                } else if ("ROLE_USUARIO".equals(roleService.findById(usuarioDTO.getRol()).orElseThrow().getAuthority()) &&
-                        localService.findById(usuarioDTO.getLocal()).orElseThrow().getId() == 1) {
-                    empleadoEncontrado.setRol(roleService.findById(usuarioDTO.getRol()).orElseThrow());
-                    empleadoEncontrado.setLocal(localService.findById(usuarioDTO.getLocal()).orElseThrow());
-                } else if ("ROLE_ADMIN".equals(roleService.findById(usuarioDTO.getRol()).orElseThrow().getAuthority()) &&
-                        usuarioService.existsAdminInLocal(usuarioDTO.getLocal()).isPresent() &&
-                        localService.findById(usuarioDTO.getLocal()).orElseThrow().getId() != 1) {
-                    empleadoEncontrado.setRol(roleService.findById(usuarioDTO.getRol()).orElseThrow());
-                    empleadoEncontrado.setLocal(localService.findById(usuarioDTO.getLocal()).orElseThrow());
-                } else {
-                    response.put("mensaje", "Lo sentimos, el rol y/o local asignados son inválidos o no están disponibles" +
-                            " actualmente para este empleado");
-                    return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-                }
-            }
-            empleadoEncontrado.setUsuario(usuarioDTO.getUsuario()); // SOLO LECTURA?
-            usuarioService.save(empleadoEncontrado);
-        } catch (NoSuchElementException | DataIntegrityViolationException e) {
-            response.put("mensaje", "Lo sentimos, hubo un error a la hora de actualizar el empleado");
-            response.put("error", e.getMessage());
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-        response.put("mensaje", "Empleado actualizado");
-        return new ResponseEntity<>(response, HttpStatus.CREATED);
-    }
-
     @ApiOperation(value = "Método de actualización de perfil válido para todos los usuarios", response = ResponseEntity.class)
     @ApiResponses(value = {@ApiResponse(code = 200, message = " "),
             @ApiResponse(code = 201, message = "Perfil actualizado"), @ApiResponse(code = 401, message = " "),
@@ -802,99 +933,6 @@ public class UsuarioController {
         }
         response.put("mensaje", "Contraseña actualizada");
         return new ResponseEntity<>(response, HttpStatus.CREATED);
-    }
-
-    @ApiOperation(value = "Método de deshabilitación del usuario mediante el id", response = ResponseEntity.class)
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Usuario deshabilitado"),
-            @ApiResponse(code = 201, message = " "), @ApiResponse(code = 401, message = " "),
-            @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = "El usuario no existe"),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de deshabilitar el usuario. Inténtelo mas tarde")})
-    @PutMapping(value = "/usuarios/{id}/deshabilitar-cuenta", produces = "application/json")
-    @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_USER')")
-    public ResponseEntity<?> deshabilitarUsuario(@PathVariable String id, Authentication authentication) {
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        Usuario usuarioLogueado = usuarioService.findByEmail(userDetails.getUsername()).orElseThrow();
-        Map<String, Object> response = new HashMap<>();
-        Usuario usuarioEncontrado;
-        try {
-            if (id.matches("^\\d+$")) {
-                usuarioEncontrado = usuarioService.findById(Long.parseLong(id)).orElseThrow();
-            } else {
-                response.put("mensaje", "Lo sentimos, el id es inválido");
-                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-            }
-            if (usuarioLogueado.getRol().getAuthority().equals("ROLE_USER") &&
-                    !usuarioEncontrado.getId().equals(usuarioLogueado.getId())) {
-                response.put("mensaje", "Lo sentimos, no tienes acceso a este recurso");
-                return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
-            }
-            if (!usuarioEncontrado.isActivo()) {
-                response.put("mensaje", "Lo sentimos, la cuenta ya está deshabilitada");
-                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-            }
-            usuarioEncontrado.setActivo(false);
-            usuarioService.save(usuarioEncontrado);
-
-            Map<String, Object> model = new HashMap<>();
-            model.put("titulo", "Usuario Deshabilitado");
-            model.put("from", "Biblioteca2020 " + "<" + emailFrom + ">");
-            model.put("usuario", usuarioEncontrado.getUsuario());
-            model.put("to", usuarioEncontrado.getEmail());
-            model.put("subject", "Usuario Deshabilitado | Biblioteca2020");
-            emailService.enviarEmail(model);
-
-        } catch (NoSuchElementException e) {
-            response.put("mensaje", "Lo sentimos, el usuario no existe");
-            response.put("error", e.getMessage());
-            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-        } catch (DataIntegrityViolationException e) {
-            response.put("mensaje", "Lo sentimos, hubo un error a la hora de deshabilitar el usuario");
-            response.put("error", e.getMessage());
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
-        } catch (MessagingException e) {
-            response.put("mensaje", "Lo sentimos, hubo un error a la hora de enviar el correo de confirmación");
-            response.put("error", e.getMessage());
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-        response.put("mensaje", "Usuario deshabilitado");
-        return new ResponseEntity<>(response, HttpStatus.OK);
-    }
-
-    @ApiOperation(value = "Método de habilitación de un usuario mediante el id", response = ResponseEntity.class)
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Usuario habilitado"),
-            @ApiResponse(code = 201, message = " "), @ApiResponse(code = 401, message = " "),
-            @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = "El usuario no existe"),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de habilitar el usuario. Inténtelo mas tarde")})
-    @PutMapping(value = "/usuarios/{id}/habilitar-cuenta", produces = "application/json")
-    @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN')")
-    public ResponseEntity<?> habilitarUsuario(@PathVariable String id) {
-        Map<String, Object> response = new HashMap<>();
-        Usuario usuarioEncontrado;
-        try {
-            if (id.matches("^\\d+$")) {
-                usuarioEncontrado = usuarioService.findById(Long.parseLong(id)).orElseThrow();
-            } else {
-                response.put("mensaje", "Lo sentimos, el id es inválido");
-                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-            }
-            if (usuarioEncontrado.isActivo()) {
-                response.put("mensaje", "Lo sentimos, la cuenta ya está habilitada");
-                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-            }
-            usuarioEncontrado.setActivo(true);
-            usuarioService.save(usuarioEncontrado);
-
-        } catch (NoSuchElementException e) {
-            response.put("mensaje", "Lo sentimos, el usuario no existe");
-            response.put("error", e.getMessage());
-            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-        } catch (DataIntegrityViolationException e) {
-            response.put("mensaje", "Lo sentimos, hubo un error a la hora de habilitar el usuario");
-            response.put("error", e.getMessage());
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-        response.put("mensaje", "Usuario habilitado");
-        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     /*@ApiOperation(value = "Método de eliminación del usuario mediante el id", response = ResponseEntity.class)
