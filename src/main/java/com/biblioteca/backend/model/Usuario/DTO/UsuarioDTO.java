@@ -32,7 +32,7 @@ public class UsuarioDTO {
     @Size(min = 9, max = 9, message = "{size.usuarioDTO.celular}")
     private String celular;
 
-    @NotEmpty(message = "{notEmpty.usuarioDTO.nombres}")
+    @NotEmpty(message = "{notEmpty.usuarioDTO.email}")
     @Size(min = 5, max = 30, message = "{size.usuarioDTO.email}")
     @Email(message = "{email.usuarioDTO.email}")
     private String email;

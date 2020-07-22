@@ -1,17 +1,26 @@
 package com.biblioteca.backend.model.Usuario.DTO;
 
-public class AccountRecovery {
-    
-    private String nroDocumento;
+import javax.validation.constraints.Email;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Size;
 
+public class AccountRecovery {
+
+    @NotEmpty(message = "{notEmpty.accountRecoveryDTO.dni}")
+    @Size(min = 8, max = 8, message = "{size.accountRecoveryDTO.dni}")
+    private String dni;
+
+    @NotEmpty(message = "{notEmpty.accountRecoveryDTO.email}")
+    @Size(min = 5, max = 30, message = "{size.accountRecoveryDTO.email}")
+    @Email(message = "{email.accountRecoveryDTO.email}")
 	private String email;
 
-    public String getNroDocumento() {
-        return nroDocumento;
+    public String getDni() {
+        return dni;
     }
 
-    public void setNroDocumento(String nroDocumento) {
-        this.nroDocumento = nroDocumento;
+    public void setDni(String dni) {
+        this.dni = dni;
     }
 
     public String getEmail() {
@@ -25,8 +34,8 @@ public class AccountRecovery {
     public AccountRecovery() {
     }
 
-    public AccountRecovery(String nroDocumento, String email) {
-        this.nroDocumento = nroDocumento;
+    public AccountRecovery(String dni, String email) {
+        this.dni = dni;
         this.email = email;
     }
 }
