@@ -3,8 +3,8 @@ package com.biblioteca.backend.config.security;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import com.biblioteca.backend.model.Role;
-import com.biblioteca.backend.model.Usuario;
+import com.biblioteca.backend.model.Rol;
+import com.biblioteca.backend.model.Usuario.Usuario;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -15,7 +15,7 @@ public class CustomUserDetails implements UserDetails {
 
     private String username;
     private String password;
-    private Role role;
+    private Rol role;
     private boolean isActivo;
 
     public CustomUserDetails(Usuario usuario) {
@@ -27,7 +27,7 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        List<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>();
+        List<GrantedAuthority> authorities = new ArrayList<>();
         authorities.add(new SimpleGrantedAuthority(role.getAuthority()));
         return authorities;
     }

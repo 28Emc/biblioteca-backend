@@ -1,9 +1,15 @@
 package com.biblioteca.backend.service;
 
+import java.util.List;
 import java.util.Optional;
-import com.biblioteca.backend.model.Usuario;
+
+import com.biblioteca.backend.model.Local.Local;
+import com.biblioteca.backend.model.Rol;
+import com.biblioteca.backend.model.Usuario.Usuario;
+import com.biblioteca.backend.model.Usuario.DTO.ChangePassword;
 import com.biblioteca.backend.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,6 +18,27 @@ public class UsuarioServiceImpl implements IUsuarioService {
 
     @Autowired
     private UsuarioRepository repository;
+
+    @Autowired
+    private IRoleService roleService;
+
+    @Autowired
+    private ILocalService localService;
+
+    @Autowired
+    private BCryptPasswordEncoder passwordEncoder;
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Usuario> findAll() {
+        return repository.findAll();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<Usuario> findById(Long id) {
+        return repository.findById(id);
+    }
 
     @Override
     @Transactional(readOnly = true)
@@ -29,6 +56,79 @@ public class UsuarioServiceImpl implements IUsuarioService {
     @Transactional
     public Usuario save(Usuario usuario) {
         return repository.save(usuario);
+    }
+
+    @Override
+    @Transactional
+    public void delete(Long id) {
+        repository.deleteById(id);
+    }
+
+    @Override
+    public Usuario cambiarPassword(ChangePassword dtoPassword) throws Exception {
+        Usuario usuario = findById(dtoPassword.getId()).orElseThrow();
+
+        if (!passwordEncoder.matches(dtoPassword.getPasswordActual(), usuario.getPassword())) {
+            throw new Exception("La contraseña actual es incorrecta");
+        }
+
+        if (passwordEncoder.matches(dtoPassword.getNuevaPassword(), usuario.getPassword())) {
+            throw new Exception("La nueva contraseña debe ser diferente a la actual");
+        }
+
+        if (!dtoPassword.getNuevaPassword().equals(dtoPassword.getConfirmarPassword())) {
+            throw new Exception("Las contraseñas no coinciden");
+        }
+
+        String passwordHash = passwordEncoder.encode(dtoPassword.getNuevaPassword());
+        usuario.setPassword(passwordHash);
+
+        return repository.save(usuario);
+    }
+
+    @Override
+    public Usuario recuperarPassword(ChangePassword dtoPassword) throws Exception {
+        Usuario usuario = findById(dtoPassword.getId()).get();
+        if (passwordEncoder.matches(dtoPassword.getNuevaPassword(), usuario.getPassword())) {
+            throw new Exception("La nueva contraseña debe ser diferente a la actual");
+        }
+        if (!dtoPassword.getNuevaPassword().equals(dtoPassword.getConfirmarPassword())) {
+            throw new Exception("Las contraseñas no coinciden");
+        }
+        String passwordHash = passwordEncoder.encode(dtoPassword.getNuevaPassword());
+        usuario.setPassword(passwordHash);
+
+        return repository.save(usuario);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<Usuario> findByDniAndEmail(String dni, String email) {
+        return repository.findByDniAndEmail(dni, email);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Usuario> findByLocal(Long id) {
+        return repository.findByLocal(id);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Usuario> findByRol(String authority) {
+        return repository.findByRol(authority);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<Usuario> existsAdminInLocal(Long local) {
+        return repository.existsAdminInLocal(local);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Usuario> findByRoles() {
+        return repository.findByRoles();
     }
 
 }

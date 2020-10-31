@@ -1,9 +1,12 @@
 package com.biblioteca.backend.service;
 
 import java.util.Optional;
-import com.biblioteca.backend.model.Role;
+
+import com.biblioteca.backend.model.Rol;
 
 public interface IRoleService {
 
-    public Optional<Role> findById(Long id);
+    public Optional<Rol> findById(Long id);
+
+    public Optional<Rol> findByAuthority(String authority);
 }
