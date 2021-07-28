@@ -22,6 +22,16 @@ public class Libro {
     @ApiModelProperty(notes = "ID Autogenerado")
     private Long id;
 
+    // LIBRO(*):CATEGORIA(1)
+    @ManyToOne//(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_categoria")
+    private Categoria categoria;
+
+    // LIBRO(*):LOCAL(1)
+    @ManyToOne//(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_local")
+    private Local local;
+
     @Column(name = "isbn", nullable = false, unique = true)
     @ApiModelProperty(notes = "ISBN del libro", required = true, example = "9791234567896")
     private String ISBN;
@@ -42,6 +52,14 @@ public class Libro {
     @Transient
     private String descripcionMin;
 
+    @Column(length = 4, nullable = false)
+    @ApiModelProperty(notes = "Stock del libro", required = true, example = "500")
+    private Integer stock;
+
+    @Column(name = "foto_libro", nullable = false)
+    @ApiModelProperty(notes = "Foto portada del libro", required = true, example = "el-camino-de-los-reyes.png")
+    private String fotoLibro;
+
     @Column(name = "fecha_publicacion", nullable = false)
     @ApiModelProperty(notes = "Fecha de publicación del libro", required = true, example = "2020-05-25")
     private LocalDateTime fechaPublicacion;
@@ -54,32 +72,18 @@ public class Libro {
     @ApiModelProperty(notes = "Fecha de actualización del libro", example = "2020-06-01")
     private LocalDateTime fechaActualizacion;
 
+    @Column(name = "fecha_baja")
+    @ApiModelProperty(notes = "Fecha de baja del libro", example = "2020-06-01")
+    private LocalDateTime fechaBaja;
+
     @Column(name = "is_activo", nullable = false)
     @ApiModelProperty(notes = "Estado del libro", required = true, example = "true")
     private boolean isActivo;
-
-    @Column(length = 4, nullable = false)
-    @ApiModelProperty(notes = "Stock del libro", required = true, example = "500")
-    private Integer stock;
-
-    @Column(name = "foto_libro", nullable = false)
-    @ApiModelProperty(notes = "Foto portada del libro", required = true, example = "el-camino-de-los-reyes.png")
-    private String fotoLibro;
-
-    // LIBRO(*):LOCAL(1)
-    @ManyToOne//(fetch = FetchType.LAZY)
-    @JoinColumn(name = "local_id")
-    private Local local;
 
     // LIBRO(1):PRESTAMO(*)
     //@JsonIgnore
     @OneToMany(mappedBy = "libro"/*, fetch = FetchType.LAZY, cascade = CascadeType.ALL*/)
     private List<Prestamo> prestamos;
-
-    // LIBRO(*):CATEGORIA(1)
-    @ManyToOne//(fetch = FetchType.LAZY)
-    @JoinColumn(name = "categoria_id")
-    private Categoria categoria;
 
     public Long getId() {
         return id;
@@ -153,6 +157,14 @@ public class Libro {
         this.fechaActualizacion = fechaActualizacion;
     }
 
+    public LocalDateTime getFechaBaja() {
+        return fechaBaja;
+    }
+
+    public void setFechaBaja(LocalDateTime fechaBaja) {
+        this.fechaBaja = fechaBaja;
+    }
+
     public boolean isActivo() {
         return isActivo;
     }
@@ -208,22 +220,23 @@ public class Libro {
     public Libro() {
     }
 
-    public Libro(Long id, String ISBN, String titulo, String autor, String descripcion, String descripcionMin, LocalDateTime fechaPublicacion, LocalDateTime fechaRegistro, LocalDateTime fechaActualizacion, boolean isActivo, Integer stock, String fotoLibro, Local local, List<Prestamo> prestamos, Categoria categoria) {
+    public Libro(Long id, Categoria categoria, Local local, String ISBN, String titulo, String autor, String descripcion, String descripcionMin, Integer stock, String fotoLibro, LocalDateTime fechaPublicacion, LocalDateTime fechaRegistro, LocalDateTime fechaActualizacion, LocalDateTime fechaBaja, boolean isActivo, List<Prestamo> prestamos) {
         this.id = id;
+        this.categoria = categoria;
+        this.local = local;
         this.ISBN = ISBN;
         this.titulo = titulo;
         this.autor = autor;
         this.descripcion = descripcion;
         this.descripcionMin = descripcionMin;
+        this.stock = stock;
+        this.fotoLibro = fotoLibro;
         this.fechaPublicacion = fechaPublicacion;
         this.fechaRegistro = fechaRegistro;
         this.fechaActualizacion = fechaActualizacion;
+        this.fechaBaja = fechaBaja;
         this.isActivo = isActivo;
-        this.stock = stock;
-        this.fotoLibro = fotoLibro;
-        this.local = local;
         this.prestamos = prestamos;
-        this.categoria = categoria;
     }
 
     @PrePersist

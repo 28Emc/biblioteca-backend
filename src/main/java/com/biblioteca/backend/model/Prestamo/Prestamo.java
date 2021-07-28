@@ -23,36 +23,44 @@ public class Prestamo {
     @ApiModelProperty(notes = "ID Autogenerado")
     private Long id;
 
-    @Column(name = "fecha_despacho", nullable = false)
-    @ApiModelProperty(notes = "Fecha de despacho del préstamo", required = true, example = "2020-03-12")
-    private LocalDateTime fechaDespacho;
+    // PRESTAMOS(*):USER(1)
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "id_usuario")
+    private Usuario usuario;
+
+    // PRESTAMOS(*):EMPLEADO(1)
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "id_empleado")
+    private Usuario empleado;
+
+    // PRESTAMOS(*):LIBRO(1)
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "id_libro")
+    private Libro libro;
+
+    @Column(name = "fecha_registro", nullable = false)
+    @ApiModelProperty(notes = "Fecha de registro del préstamo", required = true, example = "2020-03-12")
+    private LocalDateTime fechaRegistro;
+
+    @Column(name = "fecha_prestamo", nullable = false)
+    @ApiModelProperty(notes = "Fecha de préstamo", required = true, example = "2020-03-12")
+    private LocalDateTime fechaPrestamo;
 
     @Column(name = "fecha_devolucion", nullable = false)
     @ApiModelProperty(notes = "Fecha de devolución del préstamo", required = true, example = "2020-03-12")
     private LocalDateTime fechaDevolucion;
 
-    @Column(name = "is_activo", nullable = false)
-    @ApiModelProperty(notes = "Estado del préstamo", required = true, example = "true")
-    private boolean isActivo;
+    @Column(name = "fecha_baja")
+    @ApiModelProperty(notes = "Fecha de baja del préstamo", example = "2020-03-12")
+    private LocalDateTime fechaBaja;
 
     @Column(nullable = false)
     @ApiModelProperty(notes = "Observaciones del préstamo", required = true, example = "El préstamo del libro A ha sido anulado por el empleado B el dia C")
     private String observaciones;
 
-    // PRESTAMOS(*):USER(1)
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "usuario_id")
-    private Usuario usuario;
-
-    // PRESTAMOS(*):EMPLEADO(1)
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "empleado_id")
-    private Usuario empleado;
-
-    // PRESTAMOS(*):LIBRO(1)
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "libro_id")
-    private Libro libro;
+    @Column(name = "is_activo", nullable = false)
+    @ApiModelProperty(notes = "Estado del préstamo", required = true, example = "true")
+    private boolean isActivo;
 
     public Long getId() {
         return id;
@@ -62,12 +70,20 @@ public class Prestamo {
         this.id = id;
     }
 
-    public LocalDateTime getFechaDespacho() {
-        return fechaDespacho;
+    public LocalDateTime getFechaRegistro() {
+        return fechaRegistro;
     }
 
-    public void setFechaDespacho(LocalDateTime fechaDespacho) {
-        this.fechaDespacho = fechaDespacho;
+    public void setFechaRegistro(LocalDateTime fechaRegistro) {
+        this.fechaRegistro = fechaRegistro;
+    }
+
+    public LocalDateTime getFechaPrestamo() {
+        return fechaPrestamo;
+    }
+
+    public void setFechaPrestamo(LocalDateTime fechaPrestamo) {
+        this.fechaPrestamo = fechaPrestamo;
     }
 
     public LocalDateTime getFechaDevolucion() {
@@ -76,6 +92,14 @@ public class Prestamo {
 
     public void setFechaDevolucion(LocalDateTime fechaDevolucion) {
         this.fechaDevolucion = fechaDevolucion;
+    }
+
+    public LocalDateTime getFechaBaja() {
+        return fechaBaja;
+    }
+
+    public void setFechaBaja(LocalDateTime fechaBaja) {
+        this.fechaBaja = fechaBaja;
     }
 
     public boolean isActivo() {
@@ -124,21 +148,23 @@ public class Prestamo {
     public Prestamo() {
     }
 
-    public Prestamo(Long id, LocalDateTime fechaDespacho, LocalDateTime fechaDevolucion, boolean isActivo, String observaciones, Usuario usuario, Usuario empleado, Libro libro) {
+    public Prestamo(Long id, Usuario usuario, Usuario empleado, Libro libro, LocalDateTime fechaRegistro, LocalDateTime fechaPrestamo, LocalDateTime fechaDevolucion, LocalDateTime fechaBaja, String observaciones, boolean isActivo) {
         this.id = id;
-        this.fechaDespacho = fechaDespacho;
-        this.fechaDevolucion = fechaDevolucion;
-        this.isActivo = isActivo;
-        this.observaciones = observaciones;
         this.usuario = usuario;
         this.empleado = empleado;
         this.libro = libro;
+        this.fechaRegistro = fechaRegistro;
+        this.fechaPrestamo = fechaPrestamo;
+        this.fechaDevolucion = fechaDevolucion;
+        this.fechaBaja = fechaBaja;
+        this.observaciones = observaciones;
+        this.isActivo = isActivo;
     }
 
     @PrePersist
     public void prePersist() {
         isActivo = false;
-        fechaDespacho = LocalDateTime.now();
+        fechaRegistro = LocalDateTime.now();
     }
 
 }

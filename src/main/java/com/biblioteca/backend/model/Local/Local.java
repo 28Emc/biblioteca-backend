@@ -21,13 +21,13 @@ public class Local {
     @ApiModelProperty(notes = "ID autogenerado")
     private Long id;
 
+    @ManyToOne
+    @JoinColumn(name = "id_empresa")
+    private Empresa empresa;
+
     @Column(nullable = false, unique = true)
     @ApiModelProperty(notes = "Dirección del local", required = true, example = "Av. Lima 123")
     private String direccion;
-
-    @Column(name = "info_adicional")
-    @ApiModelProperty(notes = "Información adicional del local", example = "Local central")
-    private String infoAdicional;
 
     @Column(name = "fecha_registro", nullable = false)
     @ApiModelProperty(notes = "Fecha de creación del local", required = true, example = "2020-05-25")
@@ -37,13 +37,13 @@ public class Local {
     @ApiModelProperty(notes = "Fecha de actualización del local", example = "2020-06-01")
     private LocalDateTime fechaActualizacion;
 
+    @Column(name = "fecha_baja")
+    @ApiModelProperty(notes = "Fecha de baja del local", example = "2020-06-01")
+    private LocalDateTime fechaBaja;
+
     @Column(name = "is_activo", nullable = false)
     @ApiModelProperty(notes = "Estado del local", required = true, example = "true")
     private boolean isActivo;
-
-    @ManyToOne
-    @JoinColumn(name = "empresa_id")
-    private Empresa empresa;
 
     // LOCAL(1):EMPLEADO(*)
     //@JsonIgnore
@@ -66,14 +66,6 @@ public class Local {
         this.direccion = direccion;
     }
 
-    public String getInfoAdicional() {
-        return infoAdicional;
-    }
-
-    public void setInfoAdicional(String infoAdicional) {
-        this.infoAdicional = infoAdicional;
-    }
-
     public LocalDateTime getFechaRegistro() {
         return fechaRegistro;
     }
@@ -88,6 +80,14 @@ public class Local {
 
     public void setFechaActualizacion(LocalDateTime fechaActualizacion) {
         this.fechaActualizacion = fechaActualizacion;
+    }
+
+    public LocalDateTime getFechaBaja() {
+        return fechaBaja;
+    }
+
+    public void setFechaBaja(LocalDateTime fechaBaja) {
+        this.fechaBaja = fechaBaja;
     }
 
     public boolean isActivo() {
@@ -119,14 +119,14 @@ public class Local {
     public Local() {
     }
 
-    public Local(Long id, String direccion, String infoAdicional, LocalDateTime fechaRegistro, LocalDateTime fechaActualizacion, boolean isActivo, Empresa empresa, List<Usuario> usuarios) {
+    public Local(Long id, Empresa empresa, String direccion, LocalDateTime fechaRegistro, LocalDateTime fechaActualizacion, LocalDateTime fechaBaja, boolean isActivo, List<Usuario> usuarios) {
         this.id = id;
+        this.empresa = empresa;
         this.direccion = direccion;
-        this.infoAdicional = infoAdicional;
         this.fechaRegistro = fechaRegistro;
         this.fechaActualizacion = fechaActualizacion;
+        this.fechaBaja = fechaBaja;
         this.isActivo = isActivo;
-        this.empresa = empresa;
         this.usuarios = usuarios;
     }
 

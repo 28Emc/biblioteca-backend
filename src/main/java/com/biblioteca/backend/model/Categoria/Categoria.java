@@ -22,6 +22,10 @@ public class Categoria {
     @ApiModelProperty(notes = "Nombre de la categoría", required = true, example = "Fantasía")
     private String nombre;
 
+    @Column(unique = true, nullable = false)
+    @ApiModelProperty(notes = "Descripción de la categoría", required = true, example = "Libros de fantasía")
+    private String descripcion;
+
     @Column(name = "fecha_registro", nullable = false)
     @ApiModelProperty(notes = "Fecha de creación de la categoría", required = true, example = "2020-05-25")
     private LocalDateTime fechaRegistro;
@@ -29,6 +33,10 @@ public class Categoria {
     @Column(name = "fecha_actualizacion")
     @ApiModelProperty(notes = "Fecha de actualización de la categoría", example = "2020-06-01")
     private LocalDateTime fechaActualizacion;
+
+    @Column(name = "fecha_baja")
+    @ApiModelProperty(notes = "Fecha de baja de la categoría", example = "2020-06-01")
+    private LocalDateTime fechaBaja;
 
     @Column(name = "is_activo", nullable = false)
     @ApiModelProperty(notes = "Estado de la categoría", required = true, example = "true")
@@ -54,6 +62,14 @@ public class Categoria {
         this.nombre = nombre;
     }
 
+    public String getDescripcion() {
+        return descripcion;
+    }
+
+    public void setDescripcion(String descripcion) {
+        this.descripcion = descripcion;
+    }
+
     public LocalDateTime getFechaRegistro() {
         return fechaRegistro;
     }
@@ -68,6 +84,14 @@ public class Categoria {
 
     public void setFechaActualizacion(LocalDateTime fechaActualizacion) {
         this.fechaActualizacion = fechaActualizacion;
+    }
+
+    public LocalDateTime getFechaBaja() {
+        return fechaBaja;
+    }
+
+    public void setFechaBaja(LocalDateTime fechaBaja) {
+        this.fechaBaja = fechaBaja;
     }
 
     public boolean isActivo() {
@@ -90,11 +114,13 @@ public class Categoria {
     public Categoria() {
     }
 
-    public Categoria(Long id, String nombre, LocalDateTime fechaRegistro, LocalDateTime fechaActualizacion, boolean isActivo, List<Libro> libros) {
+    public Categoria(Long id, String nombre, String descripcion, LocalDateTime fechaRegistro, LocalDateTime fechaActualizacion, LocalDateTime fechaBaja, boolean isActivo, List<Libro> libros) {
         this.id = id;
         this.nombre = nombre;
+        this.descripcion = descripcion;
         this.fechaRegistro = fechaRegistro;
         this.fechaActualizacion = fechaActualizacion;
+        this.fechaBaja = fechaBaja;
         this.isActivo = isActivo;
         this.libros = libros;
     }

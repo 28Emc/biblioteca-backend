@@ -12,7 +12,6 @@ public class Rol {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    //@Column(name = "id")
     @ApiModelProperty(notes = "ID autogenerado")
     private Long id;
 

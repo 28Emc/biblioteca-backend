@@ -21,12 +21,20 @@ public class Token {
     @ApiModelProperty(notes = "Token de confirma de solicitud", required = true, example = "edrnb865ui4bf5u4bd2685gcbd56bf787b5fbfbf")
     private String token;
 
-    @Column(name = "fecha_creacion", nullable = false)
-    @ApiModelProperty(notes = "Fecha de creación de token", required = true, example = "2020-05-10")
-    private LocalDateTime fechaCreacion;
+    @Column(name = "fecha_registro", nullable = false)
+    @ApiModelProperty(notes = "Fecha de registro del token", required = true, example = "2020-05-10")
+    private LocalDateTime fechaRegistro;
+
+    @Column(name = "fecha_registro")
+    @ApiModelProperty(notes = "Fecha de actualización del token", example = "2020-05-10")
+    private LocalDateTime fechaActualizacion;
+
+    @Column(name = "fecha_registro")
+    @ApiModelProperty(notes = "Fecha de baja del token", example = "2020-05-10")
+    private LocalDateTime fechaBaja;
 
     @Column(name = "tipo_operacion", nullable = false)
-    @ApiModelProperty(notes = "Tipo de operación de solicitud de token", required = true, example = "ACTIVAR USER")
+    @ApiModelProperty(notes = "Tipo de operación de solicitud del token", required = true, example = "ACTIVAR USER")
     private String tipoOperacion;
 
     @OneToOne//(targetEntity = Usuario.class, fetch = FetchType.EAGER)
@@ -49,12 +57,28 @@ public class Token {
         this.token = token;
     }
 
-    public LocalDateTime getFechaCreacion() {
-        return fechaCreacion;
+    public LocalDateTime getFechaRegistro() {
+        return fechaRegistro;
     }
 
-    public void setFechaCreacion(LocalDateTime fechaCreacion) {
-        this.fechaCreacion = fechaCreacion;
+    public void setFechaRegistro(LocalDateTime fechaRegistro) {
+        this.fechaRegistro = fechaRegistro;
+    }
+
+    public LocalDateTime getFechaActualizacion() {
+        return fechaActualizacion;
+    }
+
+    public void setFechaActualizacion(LocalDateTime fechaActualizacion) {
+        this.fechaActualizacion = fechaActualizacion;
+    }
+
+    public LocalDateTime getFechaBaja() {
+        return fechaBaja;
+    }
+
+    public void setFechaBaja(LocalDateTime fechaBaja) {
+        this.fechaBaja = fechaBaja;
     }
 
     public String getTipoOperacion() {
@@ -79,7 +103,7 @@ public class Token {
 
     public Token(Usuario usuario, String tOperacion) {
         this.usuario = usuario;
-        fechaCreacion = LocalDateTime.now();
+        fechaRegistro = LocalDateTime.now();
         this.tipoOperacion = tOperacion;
         token = UUID.randomUUID().toString();
     }

@@ -20,7 +20,7 @@ public class JwtUtil {
     @Value("${jwt.secret-key}")
     private String SECRET_KEY;
     // TIEMPO DE EXPIRACIÓN DEL TOKEN (EN MILISEGUNDOS)
-    private int TOKEN_EXPIRATION_TIME = 1000 * 60 * 60 * 10;
+    private static final int TOKEN_EXPIRATION_TIME = 1000 * 60 * 60 * 10;
 
     // MÈTODO PARA OBTENER EL NOMBRE DEL USUARIO A PARTIR DEL TOKEN RECIBIDO
     public String extractUsername(String token) {

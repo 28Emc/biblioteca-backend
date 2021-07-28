@@ -16,21 +16,17 @@ public class Empresa {
     @ApiModelProperty(notes = "ID Autogenerado")
     private Long id;
 
-    @Column(name = "razon_social", length = 100, unique = true, nullable = false)
-    @ApiModelProperty(notes = "Razón social de la empresa", required = true, example = "Pepito S.A.C.")
-    private String razonSocial;
-
     @Column(length = 11, unique = true, nullable = false)
     @ApiModelProperty(notes = "RUC de la empresa", required = true, example = "10431143201")
     private String ruc;
 
+    @Column(name = "razon_social", length = 100, unique = true, nullable = false)
+    @ApiModelProperty(notes = "Razón social de la empresa", required = true, example = "Pepito S.A.C.")
+    private String razonSocial;
+
     @Column(nullable = false)
     @ApiModelProperty(notes = "Dirección de la empresa", required = true, example = "Av. Arequipa 456")
     private String direccion;
-
-    @Column(name = "is_activo", nullable = false)
-    @ApiModelProperty(notes = "Estado de la empresa", required = true, example = "true")
-    private boolean isActivo;
 
     // EMPRESA(1):LOCAL(*)
     //@JsonIgnore
@@ -69,13 +65,6 @@ public class Empresa {
         this.direccion = direccion;
     }
 
-    public boolean isActivo() {
-        return isActivo;
-    }
-
-    public void setActivo(boolean activo) {
-        isActivo = activo;
-    }
 
     @JsonManagedReference
     public List<Local> getLocales() {
@@ -89,12 +78,11 @@ public class Empresa {
     public Empresa() {
     }
 
-    public Empresa(Long id, String razonSocial, String ruc, String direccion, boolean isActivo, List<Local> locales) {
+    public Empresa(Long id, String razonSocial, String ruc, String direccion, List<Local> locales) {
         this.id = id;
         this.razonSocial = razonSocial;
         this.ruc = ruc;
         this.direccion = direccion;
-        this.isActivo = isActivo;
         this.locales = locales;
     }
 }
