@@ -12,7 +12,9 @@ public interface IPrestamoService {
 
     Optional<Prestamo> findById(Long id);
 
-    List<Prestamo> fetchWithLibroWithUsuarioWithEmpleado();
+    List<Prestamo> findAll();
+
+    /*List<Prestamo> fetchWithLibroWithUsuarioWithEmpleado();
 
     List<Prestamo> fetchByIdWithLibroWithUsuarioWithEmpleado(Long idLocal);
 
@@ -26,7 +28,7 @@ public interface IPrestamoService {
 
     List<Prestamo> fetchByIdWithLibroWithUsuarioWithEmpleadoPerUserAll(Long id);
 
-    List<Prestamo> fetchByIdWithLibroWithUsuarioWithEmpleadoPerUserPendientes(Long id);
+    List<Prestamo> fetchByIdWithLibroWithUsuarioWithEmpleadoPerUserPendientes(Long id);*/
 
     Prestamo save(Prestamo prestamo);
 

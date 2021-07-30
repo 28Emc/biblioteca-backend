@@ -1,8 +1,6 @@
-package com.biblioteca.backend.model;
+package com.biblioteca.backend.model.Empresa;
 
-import com.biblioteca.backend.model.Libro.Libro;
-import com.biblioteca.backend.model.Local.Local;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.biblioteca.backend.model.Sistema.Sistema;
 import io.swagger.annotations.ApiModelProperty;
 
 import javax.persistence.*;

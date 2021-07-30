@@ -2,8 +2,8 @@ package com.biblioteca.backend.service;
 
 import java.util.List;
 import java.util.Optional;
-import com.biblioteca.backend.model.Empresa;
-import com.biblioteca.backend.repository.EmpresaRepository;
+import com.biblioteca.backend.model.Empresa.Empresa;
+import com.biblioteca.backend.repository.security.EmpresaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,14 +28,8 @@ public class EmpresaServiceImpl implements IEmpresaService {
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<Empresa> findByRucAndIsActivo(String ruc, boolean isActivo) {
-        return repository.findByRucAndIsActivo(ruc, isActivo);
+    public Optional<Empresa> findByRuc(String ruc) {
+        return repository.findByRuc(ruc);
     }
-
-    /*
-     * @Override
-     * @Transactional(readOnly = true) public Optional<Empresa>
-     * fetchByIdWithLocales(Long id){ return repository.fetchByIdWithLocales(id); }
-     */
 
 }

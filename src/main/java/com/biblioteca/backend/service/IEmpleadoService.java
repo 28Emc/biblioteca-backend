@@ -1,6 +1,6 @@
 package com.biblioteca.backend.service;
 
-import com.biblioteca.backend.model.Empleado;
+import com.biblioteca.backend.model.Empleado.Empleado;
 import com.biblioteca.backend.model.Persona.DTO.PersonaDTO;
 import com.biblioteca.backend.model.Usuario.Usuario;
 

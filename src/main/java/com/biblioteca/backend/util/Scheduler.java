@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.TextStyle;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import com.biblioteca.backend.model.Libro.Libro;
 import com.biblioteca.backend.model.Prestamo.Prestamo;
@@ -54,7 +55,7 @@ public class Scheduler {
         final Calendar c = Calendar.getInstance();
         if (c.get(Calendar.DATE) == c.getActualMaximum(Calendar.DATE)) {
             // ESTABLECER DATASOURCE
-            List<Prestamo> prestamos = prestamoService.fetchWithLibroWithUsuarioWithEmpleado();
+            List<Prestamo> prestamos = prestamoService.findAll();
             if (prestamos.size() > 0) {
                 // FILTRAR SOLO LOS RESULTADOS DEL ULTIMO MES
                 // O MEJOR DICHO, DEJO SOLAMENTE LOS RESULTADOS DEL ULTIMO MES
@@ -67,7 +68,7 @@ public class Scheduler {
                 System.out.println("PRESTAMOS TOTALES - FECHA DEL ULTIMO DIA DEL MES ANTERIOR: "
                         + calUltimoDiaMes.getTime().toString().toUpperCase());
                 for (int i = 0; i < prestamos.size(); i++) {
-                    prestamos.removeIf(n -> n.getFechaDespacho().isBefore(LocalDateTime.ofInstant(calUltimoDiaMes.toInstant(), zid)));
+                    prestamos.removeIf(n -> n.getFechaPrestamo().isBefore(LocalDateTime.ofInstant(calUltimoDiaMes.toInstant(), zid)));
                     if (prestamos.size() == 0) {
                         System.out.println("PRESTAMOS TOTALES - NO HAY PRÉSTAMOS DE "
                                 + LocalDate.now().getMonth().getDisplayName(TextStyle.FULL, esp).toUpperCase() + " "
@@ -177,7 +178,7 @@ public class Scheduler {
                             dateFormat.format(new Date()) + "LIBROS - NO HAY LIBROS CON STOCK MENOR A LAS 20 UNIDADES");
                 } else
                     System.out.println(dateFormat.format(new Date())
-                        + "LIBROS - LIBROS CON STOCK MENOR A LAS 20 UNIDADES: " + libros.size());
+                            + "LIBROS - LIBROS CON STOCK MENOR A LAS 20 UNIDADES: " + libros.size());
                 if (libros.size() > 0) {
                     // CREAR EMAIL Y ENVIAR AL SYSADMIN
                     Map<String, Object> model = new HashMap<>();
@@ -190,7 +191,7 @@ public class Scheduler {
                 }
             } else
                 System.out.println(dateFormat.format(new Date()) + "LIBROS - NO HAY LIBROS CON STOCK MENOR A LAS "
-                    + stock + " UNIDADES.");
+                        + stock + " UNIDADES.");
         } catch (Exception ex) {
             System.out.println(ex.getMessage());
         }

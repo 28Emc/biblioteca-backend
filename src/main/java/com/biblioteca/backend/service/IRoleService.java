@@ -2,7 +2,7 @@ package com.biblioteca.backend.service;
 
 import java.util.Optional;
 
-import com.biblioteca.backend.model.Rol;
+import com.biblioteca.backend.model.Rol.Rol;
 
 public interface IRoleService {
 

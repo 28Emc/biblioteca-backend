@@ -1,4 +1,4 @@
-package com.biblioteca.backend.model;
+package com.biblioteca.backend.model.Rol;
 
 import com.biblioteca.backend.model.Usuario.Usuario;
 import com.fasterxml.jackson.annotation.JsonManagedReference;

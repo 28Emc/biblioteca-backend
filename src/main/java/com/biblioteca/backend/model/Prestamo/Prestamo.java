@@ -1,6 +1,6 @@
 package com.biblioteca.backend.model.Prestamo;
 
-import com.biblioteca.backend.model.Empleado;
+import com.biblioteca.backend.model.Empleado.Empleado;
 import com.biblioteca.backend.model.Libro.Libro;
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;

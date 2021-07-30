@@ -3,7 +3,7 @@ package com.biblioteca.backend.config.security;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import com.biblioteca.backend.model.Rol;
+import com.biblioteca.backend.model.Rol.Rol;
 import com.biblioteca.backend.model.Usuario.Usuario;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -19,7 +19,7 @@ public class CustomUserDetails implements UserDetails {
     private boolean isActivo;
 
     public CustomUserDetails(Usuario usuario) {
-        this.username = usuario.getEmail();
+        this.username = usuario.getUsuario();
         this.password = usuario.getPassword();
         this.role = usuario.getRol();
         this.isActivo = usuario.isActivo();

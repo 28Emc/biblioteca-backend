@@ -1,10 +1,6 @@
 package com.biblioteca.backend.controller;
 
-import com.biblioteca.backend.model.Categoria.Categoria;
-import com.biblioteca.backend.model.Categoria.DTO.CategoriaDTO;
-import com.biblioteca.backend.model.Empleado;
 import com.biblioteca.backend.model.Persona.DTO.PersonaDTO;
-import com.biblioteca.backend.model.Usuario.DTO.UsuarioDTO;
 import com.biblioteca.backend.model.Usuario.Usuario;
 import com.biblioteca.backend.service.IEmpleadoService;
 import com.biblioteca.backend.service.ILocalService;

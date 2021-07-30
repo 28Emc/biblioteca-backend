@@ -1,4 +1,4 @@
-package com.biblioteca.backend.model;
+package com.biblioteca.backend.model.Empleado;
 
 import com.biblioteca.backend.model.Local.Local;
 import com.biblioteca.backend.model.Prestamo.Prestamo;

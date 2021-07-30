@@ -2,8 +2,8 @@ package com.biblioteca.backend.service;
 
 import java.util.Optional;
 
-import com.biblioteca.backend.model.Rol;
-import com.biblioteca.backend.repository.RolRepository;
+import com.biblioteca.backend.model.Rol.Rol;
+import com.biblioteca.backend.repository.security.RolRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

@@ -1,8 +1,8 @@
 package com.biblioteca.backend.service;
 
 import java.util.Optional;
-import com.biblioteca.backend.model.Token;
-import com.biblioteca.backend.repository.TokenRepository;
+import com.biblioteca.backend.model.Token.Token;
+import com.biblioteca.backend.repository.security.TokenRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

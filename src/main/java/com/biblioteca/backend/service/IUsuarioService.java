@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import com.biblioteca.backend.model.Persona.DTO.PersonaDTO;
+import com.biblioteca.backend.model.Persona.Persona;
 import com.biblioteca.backend.model.Usuario.DTO.ChangePassword;
 import com.biblioteca.backend.model.Usuario.Usuario;
 
@@ -13,7 +14,7 @@ public interface IUsuarioService {
 
     Optional<Usuario> findById(Long id) throws Exception;
 
-    List<Usuario> findByIdPersona(Long idPersona) throws Exception;
+    List<Usuario> findByPersona(Persona persona) throws Exception;
 
     Optional<Usuario> findByUsuario(String usuario);
 
@@ -23,7 +24,7 @@ public interface IUsuarioService {
 
     List<Usuario> findByRol(String authority);
 
-    Optional<Usuario> existsAdminInLocal(Long local);
+    //Optional<Usuario> existsAdminInLocal(Long local);
 
     Usuario save(PersonaDTO personaDTO) throws Exception;
 

@@ -1,4 +1,4 @@
-package com.biblioteca.backend.model;
+package com.biblioteca.backend.model.Token;
 
 import com.biblioteca.backend.model.Usuario.Usuario;
 import com.fasterxml.jackson.annotation.JsonBackReference;
@@ -25,11 +25,11 @@ public class Token {
     @ApiModelProperty(notes = "Fecha de registro del token", required = true, example = "2020-05-10")
     private LocalDateTime fechaRegistro;
 
-    @Column(name = "fecha_registro")
+    @Column(name = "fecha_actualizacion")
     @ApiModelProperty(notes = "Fecha de actualización del token", example = "2020-05-10")
     private LocalDateTime fechaActualizacion;
 
-    @Column(name = "fecha_registro")
+    @Column(name = "fecha_baja")
     @ApiModelProperty(notes = "Fecha de baja del token", example = "2020-05-10")
     private LocalDateTime fechaBaja;
 

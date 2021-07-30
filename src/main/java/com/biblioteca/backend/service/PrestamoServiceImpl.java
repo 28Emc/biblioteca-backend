@@ -1,18 +1,12 @@
 package com.biblioteca.backend.service;
 
-import java.time.Instant;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.format.TextStyle;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Optional;
 import com.biblioteca.backend.model.Prestamo.Prestamo;
-import com.biblioteca.backend.model.Usuario.Usuario;
-import com.biblioteca.backend.repository.PrestamoRespository;
+import com.biblioteca.backend.repository.core.PrestamoRespository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,10 +30,15 @@ public class PrestamoServiceImpl implements IPrestamoService {
 	}
 
 	@Override
+	public List<Prestamo> findAll() {
+		return repository.findAll();
+	}
+
+	/*@Override
 	@Transactional(readOnly = true)
 	public List<Prestamo> fetchByIdWithLibroWithUsuarioWithEmpleadoPerEmpleado(Long idEmpleado) {
 		return repository.fetchByIdWithLibroWithUsuarioWithEmpleadoPerEmpleado(idEmpleado);
-	}
+	}*/
 
 	@Override
 	public String mostrarFechaAmigable(LocalDateTime fecha) {
@@ -62,7 +61,7 @@ public class PrestamoServiceImpl implements IPrestamoService {
 		return diaFinal + ", " + diaNum + " de " + mesFinal + " " + anio;
 	}
 
-	@Override
+	/*@Override
 	@Transactional(readOnly = true)
 	public List<Prestamo> fetchByIdWithLibroWithUsuarioWithEmpleadoPerUser(Long id) {
 		return repository.fetchByIdWithLibroWithUsuarioWithEmpleadoPerUser(id);
@@ -78,7 +77,7 @@ public class PrestamoServiceImpl implements IPrestamoService {
 	@Transactional(readOnly = true)
 	public List<Prestamo> fetchByIdWithLibroWithUsuarioWithEmpleadoPerUserPendientes(Long id) {
 		return repository.fetchByIdWithLibroWithUsuarioWithEmpleadoPerUserPendientes(id);
-	}
+	}*/
 
 	@Override
 	@Transactional
@@ -86,7 +85,7 @@ public class PrestamoServiceImpl implements IPrestamoService {
 		repository.deleteById(id);
 	}
 
-	@Override
+	/*@Override
 	@Transactional(readOnly = true)
 	public List<Prestamo> fetchByIdWithLibroWithUsuarioWithEmpleadoPerUserAll(Long id) {
 		return repository.fetchByIdWithLibroWithUsuarioWithEmpleadoPerUserAll(id);
@@ -102,7 +101,7 @@ public class PrestamoServiceImpl implements IPrestamoService {
 	@Transactional(readOnly = true)
 	public List<Prestamo> fetchWithLibroWithUsuarioWithEmpleado() {
 		return repository.fetchWithLibroWithUsuarioWithEmpleado();
-	}
+	}*/
 
 	/*
 	 * @Override
@@ -112,10 +111,10 @@ public class PrestamoServiceImpl implements IPrestamoService {
 	 * repository.fetchWithLibroWithUsuarioWithEmpleado(idLibro); }
 	 */
 
-	@Override
+	/*@Override
 	@Transactional(readOnly = true)
 	public List<Prestamo> fetchByIdWithLibroWithUsuarioWithEmpleadoPerLibroAndLocal(Long idLibro, Long idLocal) {
 		return repository.fetchByIdWithLibroWithUsuarioWithEmpleadoPerLibroAndLocal(idLibro, idLocal);
-	}
+	}*/
 
 }

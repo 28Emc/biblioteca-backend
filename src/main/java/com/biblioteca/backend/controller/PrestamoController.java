@@ -61,7 +61,7 @@ public class PrestamoController {
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de buscar los préstamos." +
                     " Inténtelo mas tarde")})
     @GetMapping(value = "/prestamos", produces = "application/json")
-    @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_EMPLEADO')")
     public ResponseEntity<?> listarPrestamos(Authentication authentication) {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         Usuario usuarioLogueado = usuarioService.findByUsuario(userDetails.getUsername()).orElseThrow();
@@ -69,20 +69,7 @@ public class PrestamoController {
         List<Prestamo> prestamos = new ArrayList<>();
 
         try {
-            switch (usuarioLogueado.getRol().getAuthority()) {
-                case "ROLE_SYSADMIN":
-                    // MUESTRO TODOS LOS PRÉSTAMOS
-                    prestamos = prestamoService.fetchWithLibroWithUsuarioWithEmpleado();
-                    break;
-                case "ROLE_ADMIN":
-                case "ROLE_EMPLEADO":
-                    // MUESTRO LOS PRÉSTAMOS GESTIONADOS EN EL LOCAL DEL ADMIN
-                    // Y PARA LOS EMPLEADOS ES LO MISMO
-                    /* TODO: REVISAR
-                    Long idLocalEmp = usuarioLogueado.getLocal().getId();
-                    prestamos = prestamoService.fetchByIdWithLibroWithUsuarioWithEmpleado(idLocalEmp);*/
-                    break;
-            }
+            prestamos = prestamoService.findAll();
 
             if (prestamos.size() == 0) {
                 response.put("mensaje", "No hay préstamos");
@@ -105,7 +92,7 @@ public class PrestamoController {
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de buscar los préstamos." +
                     " Inténtelo mas tarde")})
     @GetMapping(value = "/prestamos/historial", produces = "application/json")
-    @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO', 'ROLE_USUARIO')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_EMPLEADO', 'ROLE_USUARIO')")
     public ResponseEntity<?> historialUsuario(Authentication authentication) {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         Usuario usuarioLogueado = usuarioService.findByUsuario(userDetails.getUsername()).orElseThrow();
@@ -113,7 +100,12 @@ public class PrestamoController {
         List<Prestamo> prestamos;
 
         try {
-            prestamos = prestamoService.fetchByIdWithLibroWithUsuarioWithEmpleadoPerUser(usuarioLogueado.getId());
+            prestamos = prestamoService
+                    .findAll()
+                    .stream()
+                    .filter(prestamo -> prestamo.getIdUsuario().equals(usuarioLogueado.getId()) &&
+                            !prestamo.getEstado().equals("E1"))
+                    .collect(Collectors.toList());
 
             if (prestamos.size() == 0) {
                 response.put("mensaje", "Historial vacío");
@@ -136,7 +128,7 @@ public class PrestamoController {
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de buscar los préstamos." +
                     " Inténtelo mas tarde")})
     @GetMapping(value = "/prestamos/pendientes", produces = "application/json")
-    @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO', 'ROLE_USUARIO')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_EMPLEADO', 'ROLE_USUARIO')")
     public ResponseEntity<?> historialUsuarioPendientes(Authentication authentication) {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         Usuario usuarioLogueado = usuarioService.findByUsuario(userDetails.getUsername()).orElseThrow();
@@ -145,7 +137,11 @@ public class PrestamoController {
 
         try {
             prestamos = prestamoService
-                    .fetchByIdWithLibroWithUsuarioWithEmpleadoPerUserPendientes(usuarioLogueado.getId());
+                    .findAll()
+                    .stream()
+                    .filter(prestamo -> prestamo.getIdUsuario().equals(usuarioLogueado.getId()) &&
+                            prestamo.getEstado().equals("E1"))
+                    .collect(Collectors.toList());
 
             if (prestamos.size() == 0) {
                 response.put("mensaje", "No hay préstamos pendientes");

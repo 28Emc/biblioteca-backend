@@ -4,17 +4,17 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import com.biblioteca.backend.model.Empleado;
+import com.biblioteca.backend.model.Empleado.Empleado;
 import com.biblioteca.backend.model.Local.Local;
 import com.biblioteca.backend.model.Persona.DTO.PersonaDTO;
 import com.biblioteca.backend.model.Persona.Persona;
-import com.biblioteca.backend.model.Rol;
-import com.biblioteca.backend.model.Token;
+import com.biblioteca.backend.model.Rol.Rol;
+import com.biblioteca.backend.model.Token.Token;
 import com.biblioteca.backend.model.Usuario.Usuario;
 import com.biblioteca.backend.model.Usuario.DTO.ChangePassword;
-import com.biblioteca.backend.repository.EmpleadoRepository;
-import com.biblioteca.backend.repository.PersonaRepository;
-import com.biblioteca.backend.repository.UsuarioRepository;
+import com.biblioteca.backend.repository.core.EmpleadoRepository;
+import com.biblioteca.backend.repository.security.PersonaRepository;
+import com.biblioteca.backend.repository.security.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -60,14 +60,16 @@ public class UsuarioServiceImpl implements IUsuarioService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<Usuario> findByIdPersona(Long idPersona) throws Exception {
-        return usuarioRepository.findByIdPersona(idPersona);
+    public List<Usuario> findByPersona(Persona persona) throws Exception {
+        Persona personaFound = personaRepository.findById(persona.getId()).orElseThrow(() ->
+                new Exception("La persona no existe"));
+        return usuarioRepository.findByPersona(personaFound);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Optional<Usuario> findByUsuario(String usuario) {
-        return usuarioRepository.findByEmail(usuario);
+        return usuarioRepository.findByUsuario(usuario);
     }
 
     @Override
@@ -75,7 +77,7 @@ public class UsuarioServiceImpl implements IUsuarioService {
     public Usuario findByNroDocumentoAndUsuario(String nroDocumento, String usuario) throws Exception {
         Persona personaFound = personaRepository.findByNroDocumento(nroDocumento).orElseThrow(() ->
                 new Exception("La persona con ese documento no existe"));
-        return findByIdPersona(personaFound.getId())
+        return findByPersona(personaFound)
                 .stream()
                 .filter(usuarioItem -> usuarioItem.getUsuario().equals(usuario))
                 .findFirst()
@@ -94,11 +96,11 @@ public class UsuarioServiceImpl implements IUsuarioService {
         return usuarioRepository.findByRol(authority);
     }
 
-    @Override
+    /*@Override
     @Transactional(readOnly = true)
     public Optional<Usuario> existsAdminInLocal(Long local) {
         return usuarioRepository.existsAdminInLocal(local);
-    }
+    }*/
 
     @Override
     @Transactional(rollbackFor = Exception.class)

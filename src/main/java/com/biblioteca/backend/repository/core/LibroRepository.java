@@ -1,4 +1,4 @@
-package com.biblioteca.backend.repository;
+package com.biblioteca.backend.repository.core;
 
 import java.util.List;
 import java.util.Optional;
@@ -6,7 +6,9 @@ import java.util.Optional;
 import com.biblioteca.backend.model.Libro.Libro;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
 
+@Repository
 public interface LibroRepository extends JpaRepository<Libro, Long> {
 
     // USADO
@@ -62,7 +64,7 @@ public interface LibroRepository extends JpaRepository<Libro, Long> {
     @Query("select l from Libro l join fetch l.local lo where lo.id=?1")
     public List<Libro> fetchByIdWithLocales(Long idLocal);
 
-    @Query("select l from Libro l join fetch l.local lo join fetch lo.usuarios em where lo.id=?1 and em.id=?2")
-    public List<Libro> fetchByIdWithLocalesAndEmpleado(Long idLocal, Long idEmpleado);
+    /*@Query("select l from Libro l join fetch l.local lo join fetch lo.usuarios em where lo.id=?1 and em.id=?2")
+    public List<Libro> fetchByIdWithLocalesAndEmpleado(Long idLocal, Long idEmpleado);*/
 
 }

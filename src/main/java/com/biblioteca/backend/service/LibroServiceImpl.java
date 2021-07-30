@@ -8,7 +8,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import com.biblioteca.backend.model.Libro.Libro;
-import com.biblioteca.backend.repository.LibroRepository;
+import com.biblioteca.backend.repository.core.LibroRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -57,11 +57,11 @@ public class LibroServiceImpl implements ILibroService {
         return repository.findByTituloLikeIgnoreCaseAndLocalAndIsActivo("%" + term + "%", id, isActivo);
     }
 
-    @Override
+    /*@Override
     @Transactional(readOnly = true)
     public List<Libro> fetchByIdWithLocalesAndEmpleado(Long idLocal, Long idEmpleado) {
         return repository.fetchByIdWithLocalesAndEmpleado(idLocal, idEmpleado);
-    }
+    }*/
 
     @Override
     @Transactional(readOnly = true)

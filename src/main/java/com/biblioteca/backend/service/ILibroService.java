@@ -55,7 +55,7 @@ public interface ILibroService {
 
     public List<Libro> fetchByIdWithLocales(Long idLocal);
 
-    public List<Libro> fetchByIdWithLocalesAndEmpleado(Long idLocal, Long idEmpleado);
+    //public List<Libro> fetchByIdWithLocalesAndEmpleado(Long idLocal, Long idEmpleado);
 
     // USADO
     public List<Libro> findByCategoria(String categoria);

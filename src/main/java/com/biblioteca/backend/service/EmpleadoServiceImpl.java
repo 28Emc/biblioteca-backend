@@ -1,15 +1,15 @@
 package com.biblioteca.backend.service;
 
-import com.biblioteca.backend.model.Empleado;
+import com.biblioteca.backend.model.Empleado.Empleado;
 import com.biblioteca.backend.model.Local.Local;
 import com.biblioteca.backend.model.Persona.DTO.PersonaDTO;
 import com.biblioteca.backend.model.Persona.Persona;
-import com.biblioteca.backend.model.Rol;
+import com.biblioteca.backend.model.Rol.Rol;
 import com.biblioteca.backend.model.Usuario.Usuario;
-import com.biblioteca.backend.repository.EmpleadoRepository;
-import com.biblioteca.backend.repository.LocalRepository;
-import com.biblioteca.backend.repository.PersonaRepository;
-import com.biblioteca.backend.repository.RolRepository;
+import com.biblioteca.backend.repository.core.EmpleadoRepository;
+import com.biblioteca.backend.repository.core.LocalRepository;
+import com.biblioteca.backend.repository.security.PersonaRepository;
+import com.biblioteca.backend.repository.security.RolRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

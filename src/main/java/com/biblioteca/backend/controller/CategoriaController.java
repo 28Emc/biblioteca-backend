@@ -96,19 +96,20 @@ public class CategoriaController {
     @GetMapping(value = "/categorias/{id}", produces = "application/json")
     //@PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
     @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
-    public ResponseEntity<?> buscarCategoria(@PathVariable Long id) {
+    public ResponseEntity<?> buscarCategoria(@PathVariable String id) {
         Map<String, Object> response = new HashMap<>();
         Categoria categoria;
 
         try {
 
-            categoria = categoriaService.findById(id).get();
+            categoria = categoriaService.findById(Long.valueOf(id)).get();
 
         } catch (NoSuchElementException e) {
             response.put("message", "La categoría no existe");
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (Exception e) {
             response.put("message", "Lo sentimos, hubo un error a la hora de buscar la categoría");
+            response.put("error", e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
@@ -147,7 +148,9 @@ public class CategoriaController {
             categoriaService.save(categoriaDTO);
 
         } catch (Exception e) {
-            response.put("message", e.getMessage());
+            response.put("message", "Lo sentimos, hubo un error a la hora de registrar la categoría");
+            response.put("error", e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
         response.put("message", "Categoría registrada");
@@ -164,7 +167,7 @@ public class CategoriaController {
     //@PreAuthorize("hasAnyRole('ROLE_SYSADMIN')")
     @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
     public ResponseEntity<?> editarCategoria(@Valid @RequestBody CategoriaDTO categoriaDTO, BindingResult result,
-                                             @PathVariable Long id) throws Exception {
+                                             @PathVariable String id) throws Exception {
         Map<String, Object> response = new HashMap<>();
 
         try {
@@ -178,9 +181,11 @@ public class CategoriaController {
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
 
-            categoriaService.update(id, categoriaDTO);
+            categoriaService.update(Long.valueOf(id), categoriaDTO);
         } catch (Exception e) {
-            response.put("message", e.getMessage());
+            response.put("message", "Lo sentimos, hubo un error a la hora de editar la categoría");
+            response.put("error", e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
         response.put("message", "Categoría actualizada");
@@ -196,11 +201,11 @@ public class CategoriaController {
     @PutMapping(value = "/categorias/{id}/off", produces = "application/json")
     //@PreAuthorize("hasAnyRole('ROLE_SYSADMIN')")
     @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
-    public ResponseEntity<?> deshabilitarCategoria(@PathVariable Long id) throws Exception {
+    public ResponseEntity<?> deshabilitarCategoria(@PathVariable String id) throws Exception {
         Map<String, Object> response = new HashMap<>();
 
         try {
-            categoriaService.changeCategoriaState(id, false);
+            categoriaService.changeCategoriaState(Long.valueOf(id), false);
         } catch (Exception e) {
             response.put("message", e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -218,11 +223,11 @@ public class CategoriaController {
                     "Inténtelo mas tarde")})
     @PutMapping(value = "/categorias/{id}/on", produces = "application/json")
     @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
-    public ResponseEntity<?> habilitarCategoria(@PathVariable Long id) {
+    public ResponseEntity<?> habilitarCategoria(@PathVariable String id) {
         Map<String, Object> response = new HashMap<>();
 
         try {
-            categoriaService.changeCategoriaState(id, true);
+            categoriaService.changeCategoriaState(Long.valueOf(id), true);
         } catch (Exception e) {
             response.put("message", e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);

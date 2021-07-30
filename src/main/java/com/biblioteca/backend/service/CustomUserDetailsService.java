@@ -3,7 +3,7 @@ package com.biblioteca.backend.service;
 import java.util.Optional;
 import com.biblioteca.backend.config.security.CustomUserDetails;
 import com.biblioteca.backend.model.Usuario.Usuario;
-import com.biblioteca.backend.repository.UsuarioRepository;
+import com.biblioteca.backend.repository.security.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -19,7 +19,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        Optional<Usuario> usuario = usuarioRepository.findByEmail(username);
+        Optional<Usuario> usuario = usuarioRepository.findByUsuario(username);
 
         usuario.orElseThrow(() -> new UsernameNotFoundException("Usuario " + username + " no encontrado!"));
 

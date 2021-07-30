@@ -2,9 +2,9 @@ package com.biblioteca.backend.service;
 
 import java.util.List;
 import java.util.Optional;
-import com.biblioteca.backend.model.Empresa;
+import com.biblioteca.backend.model.Empresa.Empresa;
 import com.biblioteca.backend.model.Local.Local;
-import com.biblioteca.backend.repository.LocalRepository;
+import com.biblioteca.backend.repository.core.LocalRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,8 +35,8 @@ public class LocalServiceImpl implements ILocalService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<Local> findByEmpresa(Empresa empresa) {
-        return repository.findByEmpresa(empresa);
+    public List<Local> findByIdEmpresa(Long idEmpresa) {
+        return repository.findByIdEmpresa(idEmpresa);
     }
 
     @Override
@@ -51,10 +51,10 @@ public class LocalServiceImpl implements ILocalService {
         return repository.existsByDireccion(direccion);
     }
 
-    @Override
+    /*@Override
     @Transactional(readOnly = true)
     public Optional<Local> fetchByIdWithEmpresaAndUsuario(Long idEmpresa, Long idUsuario) {
         return repository.fetchByIdWithEmpresaAndUsuario(idEmpresa, idUsuario);
-    }
+    }*/
 
 }

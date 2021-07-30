@@ -1,7 +1,7 @@
 package com.biblioteca.backend.controller;
 
 import com.biblioteca.backend.model.Persona.DTO.PersonaDTO;
-import com.biblioteca.backend.model.Token;
+import com.biblioteca.backend.model.Token.Token;
 import com.biblioteca.backend.model.Usuario.DTO.AccountRecovery;
 import com.biblioteca.backend.model.Usuario.DTO.ChangePassword;
 import com.biblioteca.backend.model.Usuario.Usuario;

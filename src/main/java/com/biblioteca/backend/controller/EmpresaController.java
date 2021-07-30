@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
-import com.biblioteca.backend.model.Empresa;
+import com.biblioteca.backend.model.Empresa.Empresa;
 import com.biblioteca.backend.service.IEmpresaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -63,7 +63,7 @@ public class EmpresaController {
         try {
             // EL RUC DEBE TENER SOLO 11 DÍGITOS POSITIVOS, SI NO ES INVÁLIDO
             if (ruc.matches("^\\d{11}$")) {
-                empresa = empresaService.findByRucAndIsActivo(ruc, true).orElseThrow();
+                empresa = empresaService.findByRuc(ruc).orElseThrow();
             } else {
                 response.put("mensaje", "Lo sentimos, el ruc es inválido");
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);

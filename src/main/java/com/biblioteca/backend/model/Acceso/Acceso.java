@@ -1,6 +1,6 @@
 package com.biblioteca.backend.model.Acceso;
 
-import com.biblioteca.backend.model.Sistema;
+import com.biblioteca.backend.model.Sistema.Sistema;
 import com.biblioteca.backend.model.Usuario.Usuario;
 import io.swagger.annotations.ApiModelProperty;
 

@@ -1,6 +1,5 @@
 package com.biblioteca.backend.service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -8,8 +7,8 @@ import java.util.stream.Collectors;
 import com.biblioteca.backend.model.Categoria.Categoria;
 import com.biblioteca.backend.model.Categoria.DTO.CategoriaDTO;
 import com.biblioteca.backend.model.Libro.Libro;
-import com.biblioteca.backend.repository.CategoriaRepository;
-import com.biblioteca.backend.repository.LibroRepository;
+import com.biblioteca.backend.repository.core.CategoriaRepository;
+import com.biblioteca.backend.repository.core.LibroRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -77,8 +76,6 @@ public class CategoriaServiceImpl implements ICategoriaService {
 
         Categoria categoriaFound = findById(id).orElseThrow(() -> new Exception("La categoría no existe"));
 
-        if (!categoriaFound.isActivo()) throw new Exception("La categoría ya está deshabilitada");
-
         List<Libro> libros = libroRepository.findByCategoria(categoriaFound.getNombre());
         List<Libro> librosFiltered = libros
                 .stream()
@@ -94,7 +91,7 @@ public class CategoriaServiceImpl implements ICategoriaService {
             });
         }
 
-        categoriaFound.setActivo(false);
+        categoriaFound.setActivo(tipoOperacion);
         categoriaRepository.save(categoriaFound);
     }
 

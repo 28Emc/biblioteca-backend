@@ -1,8 +1,8 @@
 package com.biblioteca.backend.model.Usuario;
 
 import com.biblioteca.backend.model.Persona.Persona;
-import com.biblioteca.backend.model.Rol;
-import com.biblioteca.backend.model.Token;
+import com.biblioteca.backend.model.Rol.Rol;
+import com.biblioteca.backend.model.Token.Token;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import io.swagger.annotations.ApiModelProperty;
 

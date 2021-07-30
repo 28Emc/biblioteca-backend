@@ -1,4 +1,4 @@
-package com.biblioteca.backend.repository;
+package com.biblioteca.backend.repository.security;
 
 import com.biblioteca.backend.model.Persona.Persona;
 import org.springframework.data.jpa.repository.JpaRepository;

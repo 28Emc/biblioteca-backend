@@ -2,16 +2,14 @@ package com.biblioteca.backend.service;
 
 import java.util.List;
 import java.util.Optional;
-import com.biblioteca.backend.model.Empresa;
+import com.biblioteca.backend.model.Empresa.Empresa;
 
 public interface IEmpresaService {
 
-    public List<Empresa> findAll();
+    List<Empresa> findAll();
 
-    public Optional<Empresa> findById(Long id);
+    Optional<Empresa> findById(Long id);
 
-    public Optional<Empresa> findByRucAndIsActivo(String ruc, boolean isActivo);
-
-    // public Optional<Empresa> fetchByIdWithLocales(Long id);
+    Optional<Empresa> findByRuc(String ruc);
 
 }

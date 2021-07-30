@@ -3,6 +3,7 @@ package com.biblioteca.backend.controller;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import com.biblioteca.backend.model.Categoria.Categoria;
 import com.biblioteca.backend.model.Libro.Libro;
@@ -33,7 +34,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 
-@CrossOrigin(origins = { "*", "http://localhost:4200" })
+@CrossOrigin(origins = {"*", "http://localhost:4200"})
 @RestController
 @Api(value = "reportes", description = "Métodos de generación de reportes en PDF y XLSX (Excel)")
 public class ReporteController {
@@ -54,12 +55,12 @@ public class ReporteController {
     // ######################## PDF ########################
     // GENERAR REPORTE PDF DE PRESTAMOS TOTALES
     @ApiOperation(value = "Generación de reporte en formato pdf de préstamos totales", response = ResponseEntity.class)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
+    @ApiResponses(value = {@ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
             @ApiResponse(code = 302, message = " "),
             @ApiResponse(code = 400, message = "No tienes acceso a este recurso"),
             @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
             @ApiResponse(code = 404, message = " "),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde") })
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde")})
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
     @GetMapping(value = "/reportes/pdf/prestamos-totales", produces = MediaType.APPLICATION_PDF_VALUE)
     public ResponseEntity<?> generarPdfPrestamosTotal(Authentication authentication) {
@@ -70,15 +71,15 @@ public class ReporteController {
             List<Prestamo> prestamos = null;
             switch (usuarioLogueado.getRol().getAuthority().toString()) {
                 case "ROLE_ADMIN":
-                    prestamos = prestamoService.fetchWithLibroWithUsuarioWithEmpleado();
-                    break;
-                /*case "ROLE_ADMIN":
                     prestamos = prestamoService
-                            .fetchByIdWithLibroWithUsuarioWithEmpleado(usuarioLogueado.getLocal().getId());
-                    break;*/
+                            .findAll();
+                    break;
                 case "ROLE_EMPLEADO":
                     prestamos = prestamoService
-                            .fetchByIdWithLibroWithUsuarioWithEmpleadoPerEmpleado(usuarioLogueado.getId());
+                            .findAll()
+                            .stream()
+                            .filter(prestamo -> prestamo.getIdUsuario().equals(usuarioLogueado.getId()))
+                            .collect(Collectors.toList());
                     break;
             }
             ByteArrayInputStream bis;
@@ -101,12 +102,12 @@ public class ReporteController {
 
     // GENERAR REPORTE PDF DE PRESTAMOS PENDIENTES
     @ApiOperation(value = "Generación de reporte en formato pdf de préstamos pendientes", response = ResponseEntity.class)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
+    @ApiResponses(value = {@ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
             @ApiResponse(code = 302, message = " "),
             @ApiResponse(code = 400, message = "No tienes acceso a este recurso"),
             @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
             @ApiResponse(code = 404, message = " "),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde") })
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde")})
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
     @GetMapping(value = "/reportes/pdf/prestamos-pendientes", produces = MediaType.APPLICATION_PDF_VALUE)
     public ResponseEntity<?> generarPdfPrestamosPendientes(Authentication authentication) {
@@ -117,15 +118,19 @@ public class ReporteController {
             List<Prestamo> prestamosTotales = null;
             switch (usuarioLogueado.getRol().getAuthority()) {
                 case "ROLE_ADMIN":
-                    prestamosTotales = prestamoService.fetchWithLibroWithUsuarioWithEmpleado();
-                    break;
-                /*case "ROLE_ADMIN":
                     prestamosTotales = prestamoService
-                            .fetchByIdWithLibroWithUsuarioWithEmpleado(usuarioLogueado.getLocal().getId());
-                    break;*/
+                            .findAll()
+                            .stream()
+                            .filter(prestamo -> prestamo.getEstado().equals("E1"))
+                            .collect(Collectors.toList());
+                    break;
                 case "ROLE_EMPLEADO":
                     prestamosTotales = prestamoService
-                            .fetchByIdWithLibroWithUsuarioWithEmpleadoPerEmpleado(usuarioLogueado.getId());
+                            .findAll()
+                            .stream()
+                            .filter(prestamo -> prestamo.getIdUsuario().equals(usuarioLogueado.getId()) &&
+                                    prestamo.getEstado().equals("E1"))
+                            .collect(Collectors.toList());
                     break;
             }
             // FILTRO SOLAMENTE LOS PRESTAMOS PENDIENTES
@@ -152,13 +157,13 @@ public class ReporteController {
 
     // GENERAR REPORTE PDF DE PRESTAMOS COMPLETADOS
     @ApiOperation(value = "Generación de reporte en formato pdf de préstamos terminados o anulados", response = ResponseEntity.class)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
+    @ApiResponses(value = {@ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
             @ApiResponse(code = 302, message = " "),
             @ApiResponse(code = 400, message = "No tienes acceso a este recurso"),
             @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
             @ApiResponse(code = 404, message = " "),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde") })
-    @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde")})
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_EMPLEADO')")
     @GetMapping(value = "/reportes/pdf/prestamos-completados", produces = MediaType.APPLICATION_PDF_VALUE)
     public ResponseEntity<?> generarPdfPrestamosCompletados(Authentication authentication) {
         Map<String, Object> response = new HashMap<>();
@@ -168,15 +173,19 @@ public class ReporteController {
             List<Prestamo> prestamosTotales = null;
             switch (usuarioLogueado.getRol().getAuthority()) {
                 case "ROLE_ADMIN":
-                    prestamosTotales = prestamoService.fetchWithLibroWithUsuarioWithEmpleado();
-                    break;
-                /*case "ROLE_ADMIN":
                     prestamosTotales = prestamoService
-                            .fetchByIdWithLibroWithUsuarioWithEmpleado(usuarioLogueado.getLocal().getId());
-                    break;*/
+                            .findAll()
+                            .stream()
+                            .filter(prestamo -> prestamo.getEstado().equals("E3"))
+                            .collect(Collectors.toList());
+                    break;
                 case "ROLE_EMPLEADO":
                     prestamosTotales = prestamoService
-                            .fetchByIdWithLibroWithUsuarioWithEmpleadoPerEmpleado(usuarioLogueado.getId());
+                            .findAll()
+                            .stream()
+                            .filter(prestamo -> prestamo.getIdUsuario().equals(usuarioLogueado.getId()) &&
+                                    prestamo.getEstado().equals("E3"))
+                            .collect(Collectors.toList());
                     break;
             }
             // FILTRO SOLAMENTE LOS PRESTAMOS COMPLETADOS
@@ -203,19 +212,22 @@ public class ReporteController {
 
     // GENERAR REPORTE PDF DE PRESTAMOS POR EMPLEADO
     @ApiOperation(value = "Generación de reporte en formato pdf de préstamos por id empleado", response = ResponseEntity.class)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
+    @ApiResponses(value = {@ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
             @ApiResponse(code = 302, message = " "),
             @ApiResponse(code = 400, message = "No tienes acceso a este recurso"),
             @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
             @ApiResponse(code = 404, message = " "),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde") })
-    @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN')")
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde")})
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
     @GetMapping(value = "/reportes/pdf/prestamos-por-empleado/{id}", produces = MediaType.APPLICATION_PDF_VALUE)
-    public ResponseEntity<?> generarPdfPrestamosPorEmpleado(@PathVariable("id") String id) {
+    public ResponseEntity<?> generarPdfPrestamosPorEmpleado(@PathVariable("id") Long id) {
         Map<String, Object> response = new HashMap<>();
         try {
-            List<Prestamo> prestamos = null;
-            prestamos = prestamoService.fetchByIdWithLibroWithUsuarioWithEmpleadoPerEmpleado(Long.parseLong(id));
+            List<Prestamo> prestamos = prestamoService
+                    .findAll()
+                    .stream()
+                    .filter(prestamo -> prestamo.getEmpleado().getId().equals(id))
+                    .collect(Collectors.toList());
             ByteArrayInputStream bis;
             var headers = new HttpHeaders();
             if (prestamos.size() != 0) {
@@ -236,19 +248,22 @@ public class ReporteController {
 
     // GENERAR REPORTE PDF DE PRESTAMOS POR USUARIO
     @ApiOperation(value = "Generación de reporte en formato pdf de préstamos por id usuario", response = ResponseEntity.class)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
+    @ApiResponses(value = {@ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
             @ApiResponse(code = 302, message = " "),
             @ApiResponse(code = 400, message = "No tienes acceso a este recurso"),
             @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
             @ApiResponse(code = 404, message = " "),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde") })
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde")})
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
     @GetMapping(value = "/reportes/pdf/prestamos-por-usuario/{id}", produces = MediaType.APPLICATION_PDF_VALUE)
-    public ResponseEntity<?> generarPdfPrestamosPorUsuario(@PathVariable("id") String id) {
+    public ResponseEntity<?> generarPdfPrestamosPorUsuario(@PathVariable("id") Long id) {
         Map<String, Object> response = new HashMap<>();
         try {
-            List<Prestamo> prestamos = null;
-            prestamos = prestamoService.fetchByIdWithLibroWithUsuarioWithEmpleadoPerUserAll(Long.parseLong(id));
+            List<Prestamo> prestamos = prestamoService
+                    .findAll()
+                    .stream()
+                    .filter(prestamo -> prestamo.getIdUsuario().equals(id))
+                    .collect(Collectors.toList());
             ByteArrayInputStream bis;
             var headers = new HttpHeaders();
             if (prestamos.size() != 0) {
@@ -269,21 +284,24 @@ public class ReporteController {
 
     // GENERAR REPORTE PDF DE PRESTAMOS POR LIBRO
     @ApiOperation(value = "Generación de reporte en formato pdf de préstamos por id libro", response = ResponseEntity.class)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
+    @ApiResponses(value = {@ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
             @ApiResponse(code = 302, message = " "),
             @ApiResponse(code = 400, message = "No tienes acceso a este recurso"),
             @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
             @ApiResponse(code = 404, message = " "),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde") })
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde")})
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_EMPLEADO')")
-    @GetMapping(value = { "/reportes/pdf/prestamos-por-libro/{id}",
-            "/reportes/pdf/prestamos-por-libro/{id}" }, produces = MediaType.APPLICATION_PDF_VALUE)
-    public ResponseEntity<?> generarPdfPrestamosPorLibro(@PathVariable(value = "id", required = false) String id,
-            Authentication authentication) {
+    @GetMapping(value = {"/reportes/pdf/prestamos-por-libro/{id}",
+            "/reportes/pdf/prestamos-por-libro/{id}"}, produces = MediaType.APPLICATION_PDF_VALUE)
+    public ResponseEntity<?> generarPdfPrestamosPorLibro(@PathVariable(value = "id", required = false) Long id,
+                                                         Authentication authentication) {
         Map<String, Object> response = new HashMap<>();
         try {
-            List<Prestamo> prestamos = null;
-            prestamos = prestamoService.fetchByIdWithLibroWithUsuarioWithEmpleadoPerLibro(Long.parseLong(id));
+            List<Prestamo> prestamos = prestamoService
+                    .findAll()
+                    .stream()
+                    .filter(prestamo -> prestamo.getLibro().getId().equals(id))
+                    .collect(Collectors.toList());
             ByteArrayInputStream bis;
             var headers = new HttpHeaders();
             if (prestamos.size() != 0) {
@@ -305,13 +323,13 @@ public class ReporteController {
     // ######################## EXCEL ########################
     // GENERAR REPORTE EXCEL PRESTAMOS TOTALES
     @ApiOperation(value = "Generación de reporte en formato xlsx de préstamos totales", response = ResponseEntity.class)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
+    @ApiResponses(value = {@ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
             @ApiResponse(code = 302, message = " "),
             @ApiResponse(code = 400, message = "No tienes acceso a este recurso"),
             @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
             @ApiResponse(code = 404, message = " "),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde") })
-    @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde")})
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_EMPLEADO')")
     @GetMapping(value = "/reportes/xlsx/prestamos-totales")
     public ResponseEntity<?> repPrestamosTotales(Authentication authentication) {
         Map<String, Object> response = new HashMap<>();
@@ -321,15 +339,14 @@ public class ReporteController {
             List<Prestamo> prestamos = null;
             switch (usuarioLogueado.getRol().getAuthority().toString()) {
                 case "ROLE_ADMIN":
-                    prestamos = prestamoService.fetchWithLibroWithUsuarioWithEmpleado();
+                    prestamos = prestamoService.findAll();
                     break;
-                /*case "ROLE_ADMIN":
-                    prestamos = prestamoService
-                            .fetchByIdWithLibroWithUsuarioWithEmpleado(usuarioLogueado.getLocal().getId());
-                    break;*/
                 case "ROLE_EMPLEADO":
                     prestamos = prestamoService
-                            .fetchByIdWithLibroWithUsuarioWithEmpleadoPerEmpleado(usuarioLogueado.getId());
+                            .findAll()
+                            .stream()
+                            .filter(prestamo -> prestamo.getEmpleado().getId().equals(usuarioLogueado.getId()))
+                            .collect(Collectors.toList());
                     break;
             }
             ByteArrayInputStream in;
@@ -351,13 +368,13 @@ public class ReporteController {
 
     // GENERAR REPORTE EXCEL PRESTAMOS PENDIENTES
     @ApiOperation(value = "Generación de reporte en formato xlsx de préstamos pendientes", response = ResponseEntity.class)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
+    @ApiResponses(value = {@ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
             @ApiResponse(code = 302, message = " "),
             @ApiResponse(code = 400, message = "No tienes acceso a este recurso"),
             @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
             @ApiResponse(code = 404, message = " "),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde") })
-    @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde")})
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_EMPLEADO')")
     @GetMapping(value = "/reportes/xlsx/prestamos-pendientes")
     public ResponseEntity<?> repPrestamosPendientes(Authentication authentication) {
         Map<String, Object> response = new HashMap<>();
@@ -367,15 +384,19 @@ public class ReporteController {
             List<Prestamo> prestamos = null;
             switch (usuarioLogueado.getRol().getAuthority().toString()) {
                 case "ROLE_ADMIN":
-                    prestamos = prestamoService.fetchWithLibroWithUsuarioWithEmpleado();
-                    break;
-                /*case "ROLE_ADMIN":
                     prestamos = prestamoService
-                            .fetchByIdWithLibroWithUsuarioWithEmpleado(usuarioLogueado.getLocal().getId());
-                    break;*/
+                            .findAll()
+                            .stream()
+                            .filter(prestamo -> prestamo.getEstado().equals("E1"))
+                            .collect(Collectors.toList());
+                    break;
                 case "ROLE_EMPLEADO":
                     prestamos = prestamoService
-                            .fetchByIdWithLibroWithUsuarioWithEmpleadoPerEmpleado(usuarioLogueado.getId());
+                            .findAll()
+                            .stream()
+                            .filter(prestamo -> prestamo.getEstado().equals("E1") &&
+                                    prestamo.getEmpleado().getId().equals(usuarioLogueado.getId()))
+                            .collect(Collectors.toList());
                     break;
             }
             // FILTRO SOLAMENTE LOS PRESTAMOS PENDIENTES
@@ -401,12 +422,12 @@ public class ReporteController {
 
     // GENERAR REPORTE EXCEL PRESTAMOS COMPLETADOS
     @ApiOperation(value = "Generación de reporte en formato xlsx de préstamos completados o anulados", response = ResponseEntity.class)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
+    @ApiResponses(value = {@ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
             @ApiResponse(code = 302, message = " "),
             @ApiResponse(code = 400, message = "No tienes acceso a este recurso"),
             @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
             @ApiResponse(code = 404, message = " "),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde") })
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde")})
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
     @GetMapping(value = "/reportes/xlsx/prestamos-completados")
     public ResponseEntity<?> repPrestamosCompletados(Authentication authentication) {
@@ -416,16 +437,20 @@ public class ReporteController {
             Usuario usuarioLogueado = usuarioService.findByUsuario(userDetails.getUsername()).get();
             List<Prestamo> prestamos = null;
             switch (usuarioLogueado.getRol().getAuthority().toString()) {
-                case "[ROLE_ADMIN]":
-                    prestamos = prestamoService.fetchWithLibroWithUsuarioWithEmpleado();
+                case "ROLE_ADMIN":
+                    prestamos = prestamoService
+                            .findAll()
+                            .stream()
+                            .filter(prestamo -> prestamo.getEstado().equals("E3"))
+                            .collect(Collectors.toList());
                     break;
-                /*case "[ROLE_ADMIN]":
+                case "ROLE_EMPLEADO":
                     prestamos = prestamoService
-                            .fetchByIdWithLibroWithUsuarioWithEmpleado(usuarioLogueado.getLocal().getId());
-                    break;*/
-                case "[ROLE_EMPLEADO]":
-                    prestamos = prestamoService
-                            .fetchByIdWithLibroWithUsuarioWithEmpleadoPerEmpleado(usuarioLogueado.getId());
+                            .findAll()
+                            .stream()
+                            .filter(prestamo -> prestamo.getEstado().equals("E1") &&
+                                    prestamo.getEmpleado().getId().equals(usuarioLogueado.getId()))
+                            .collect(Collectors.toList());
                     break;
             }
             // FILTRO SOLAMENTE LOS PRESTAMOS PENDIENTES
@@ -451,21 +476,25 @@ public class ReporteController {
 
     // GENERAR REPORTE EXCEL PRESTAMOS POR EMPLEADO
     @ApiOperation(value = "Generación de reporte en formato xlsx de préstamos filtrados por id empleado", response = ResponseEntity.class)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
+    @ApiResponses(value = {@ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
             @ApiResponse(code = 302, message = " "),
             @ApiResponse(code = 400, message = "No tienes acceso a este recurso"),
             @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
             @ApiResponse(code = 404, message = " "),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde") })
-    @PreAuthorize("hasAnyRole('ROLE_SYSADMIN','ROLE_ADMIN')")
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde")})
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
     @GetMapping(value = "/reportes/xlsx/prestamos-por-empleado/{id}")
-    public ResponseEntity<?> repPrestamosPorEmpleado(@PathVariable("id") String id) {
+    public ResponseEntity<?> repPrestamosPorEmpleado(@PathVariable("id") Long id) {
         Map<String, Object> response = new HashMap<>();
         try {
             List<Prestamo> prestamos = null;
             ByteArrayInputStream in;
             var headers = new HttpHeaders();
-            prestamos = prestamoService.fetchByIdWithLibroWithUsuarioWithEmpleadoPerEmpleado(Long.parseLong(id));
+            prestamos = prestamoService
+                    .findAll()
+                    .stream()
+                    .filter(prestamo -> prestamo.getEmpleado().getId().equals(id))
+                    .collect(Collectors.toList());
             if (prestamos.size() != 0 || id == null) {
                 in = GenerarReporteExcel.generarExcelPrestamos("Reporte de préstamos por empleado", prestamos);
                 headers.add("Content-Disposition", "attachment; filename=listado-prestamos-por-empleado.xlsx");
@@ -483,19 +512,23 @@ public class ReporteController {
 
     // GENERAR REPORTE EXCEL PRESTAMOS POR USUARIO
     @ApiOperation(value = "Generación de reporte en formato xlsx de préstamos filtrados por id usuario", response = ResponseEntity.class)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
+    @ApiResponses(value = {@ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
             @ApiResponse(code = 302, message = " "),
             @ApiResponse(code = 400, message = "No tienes acceso a este recurso"),
             @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
             @ApiResponse(code = 404, message = " "),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde") })
-    @PreAuthorize("hasAnyRole('ROLE_SYSADMIN','ROLE_ADMIN', 'ROLE_EMPLEADO')")
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde")})
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_EMPLEADO')")
     @GetMapping(value = "/reportes/xlsx/prestamos-por-usuario/{id}")
-    public ResponseEntity<?> repPrestamosPorUsuario(@PathVariable("id") String id) {
+    public ResponseEntity<?> repPrestamosPorUsuario(@PathVariable("id") Long id) {
         Map<String, Object> response = new HashMap<>();
         List<Prestamo> prestamos = null;
         try {
-            prestamos = prestamoService.fetchByIdWithLibroWithUsuarioWithEmpleadoPerUserAll(Long.parseLong(id));
+            prestamos = prestamoService
+                    .findAll()
+                    .stream()
+                    .filter(prestamo -> prestamo.getIdUsuario().equals(id))
+                    .collect(Collectors.toList());
             ByteArrayInputStream in;
             var headers = new HttpHeaders();
             if (prestamos.size() != 0) {
@@ -515,55 +548,23 @@ public class ReporteController {
 
     // GENERAR REPORTE EXCEL PRESTAMOS POR LIBRO
     @ApiOperation(value = "Generación de reporte en formato xlsx de préstamos filtrados por id libro", response = ResponseEntity.class)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
+    @ApiResponses(value = {@ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
             @ApiResponse(code = 302, message = " "),
             @ApiResponse(code = 400, message = "No tienes acceso a este recurso"),
             @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
             @ApiResponse(code = 404, message = " "),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde") })
-    @PreAuthorize("hasAnyRole('ROLE_SYSADMIN','ROLE_ADMIN', 'ROLE_EMPLEADO')")
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde")})
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_EMPLEADO')")
     @GetMapping(value = "/reportes/xlsx/prestamos-por-libro/{id}")
-    public ResponseEntity<?> repPrestamosPorLibro(@PathVariable("id") String id) {
+    public ResponseEntity<?> repPrestamosPorLibro(@PathVariable("id") Long id) {
         Map<String, Object> response = new HashMap<>();
         try {
             List<Prestamo> prestamos = null;
-            prestamos = prestamoService.fetchByIdWithLibroWithUsuarioWithEmpleadoPerLibro(Long.parseLong(id));
-            ByteArrayInputStream in;
-            var headers = new HttpHeaders();
-            if (prestamos.size() != 0) {
-                in = GenerarReporteExcel.generarExcelPrestamos("Reporte de préstamos por libro", prestamos);
-                headers.add("Content-Disposition", "attachment; filename=listado-prestamos-por-libro.xlsx");
-                return ResponseEntity.ok().headers(headers).body(new InputStreamResource(in));
-            } else {
-                response.put("message", "Lo sentimos, no tienes acceso a este recurso");
-                return new ResponseEntity<Map<String, Object>>(response, HttpStatus.BAD_REQUEST);
-            }
-        } catch (IOException | NullPointerException e) {
-            response.put("message", "Lo sentimos, hubo un error a la hora de generar el reporte");
-            response.put("error", e.getMessage());
-            return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    // GENERAR REPORTE EXCEL PRESTAMOS POR LIBRO SYSADMIN
-    @ApiOperation(value = "Generación de reporte en formato xlsx de préstamos filtrados por id libro y id local (VÁLIDO SOLO PARA SYSADMIN)", response = ResponseEntity.class)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
-            @ApiResponse(code = 302, message = " "),
-            @ApiResponse(code = 400, message = "No tienes acceso a este recurso"),
-            @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
-            @ApiResponse(code = 404, message = " "),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde") })
-    @PreAuthorize("hasAnyRole('ROLE_SYSADMIN','ROLE_ADMIN', 'ROLE_EMPLEADO')")
-    @GetMapping(value = "/reportes/prestamos-por-libro/{id}", params = "format=xlsx")
-    public ResponseEntity<?> repPrestamosPorLibroSysadmin(
-            @RequestParam(value = "titulo_libro", required = false) String titulo_libro,
-            @PathVariable("id") String id) {
-        Map<String, Object> response = new HashMap<>();
-        try {
-            // BUSCAR LOS REPORTES POR TITULO LIBRO Y ID LOCAL
-            Libro libro = libroService.findByTituloAndLocal(titulo_libro, Long.parseLong(id)).get();
-            List<Prestamo> prestamos = prestamoService
-                    .fetchByIdWithLibroWithUsuarioWithEmpleadoPerLibroAndLocal(libro.getId(), Long.parseLong(id));
+            prestamos = prestamoService
+                    .findAll()
+                    .stream()
+                    .filter(prestamo -> prestamo.getLibro().getId().equals(id))
+                    .collect(Collectors.toList());
             ByteArrayInputStream in;
             var headers = new HttpHeaders();
             if (prestamos.size() != 0) {
@@ -585,12 +586,12 @@ public class ReporteController {
     // ######################## PDF ########################
     // GENERAR REPORTE PDF USUARIOS TOTALES
     @ApiOperation(value = "Generación de reporte en formato pdf de usuarios totales", response = ResponseEntity.class)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
+    @ApiResponses(value = {@ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
             @ApiResponse(code = 302, message = " "),
             @ApiResponse(code = 400, message = "No tienes acceso a este recurso"),
             @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
             @ApiResponse(code = 404, message = " "),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde") })
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde")})
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
     @GetMapping(value = "/reportes/pdf/usuarios-totales", produces = MediaType.APPLICATION_PDF_VALUE)
     public ResponseEntity<?> generarPdfUsuariosTotal() {
@@ -618,12 +619,12 @@ public class ReporteController {
 
     // GENERAR REPORTE PDF USUARIOS POR ESTADO
     @ApiOperation(value = "Generación de reporte en formato pdf de usuarios por su estado", response = ResponseEntity.class)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
+    @ApiResponses(value = {@ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
             @ApiResponse(code = 302, message = " "),
             @ApiResponse(code = 400, message = "Solo puede escoger entre disponibles y no disponibles"),
             @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
             @ApiResponse(code = 404, message = "El reporte no existe"),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde") })
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde")})
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
     @GetMapping(value = "/reportes/pdf/usuarios-por-estado/{estado}", produces = MediaType.APPLICATION_PDF_VALUE)
     public ResponseEntity<?> generarPdfUsuariosPorEstado(@PathVariable("estado") String estado) {
@@ -673,12 +674,12 @@ public class ReporteController {
     // ######################## EXCEL ########################
     // GENERAR REPORTE EXCEL USUARIOS TOTALES
     @ApiOperation(value = "Generación de reporte en formato xlsx de usuarios totales", response = ResponseEntity.class)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
+    @ApiResponses(value = {@ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
             @ApiResponse(code = 302, message = " "),
             @ApiResponse(code = 400, message = "No tienes acceso a ete recurso"),
             @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
             @ApiResponse(code = 404, message = " "),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde") })
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde")})
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
     @GetMapping(value = "/reportes/xlsx/usuarios-totales")
     public ResponseEntity<?> generarExcelUsuariosTotal() {
@@ -705,12 +706,12 @@ public class ReporteController {
 
     // GENERAR REPORTE EXCEL USUARIOS POR ESTADO
     @ApiOperation(value = "Generación de reporte en formato xlsx de usuarios por su estado", response = ResponseEntity.class)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
+    @ApiResponses(value = {@ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
             @ApiResponse(code = 302, message = " "),
             @ApiResponse(code = 400, message = "Solo puede escoger entre disponibles y no disponibles"),
             @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
             @ApiResponse(code = 404, message = "El reporte no existe"),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde") })
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde")})
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
     @GetMapping(value = "/reportes/xlsx/usuarios-por-estado/{estado}")
     public ResponseEntity<?> repUsuariosPorEstado(@PathVariable("estado") String estado) {
@@ -758,17 +759,17 @@ public class ReporteController {
     // ######################## PDF ########################
     // GENERAR REPORTE PDF LIBROS UNICOS
     @ApiOperation(value = "Generación de reporte en formato pdf de libros totales", response = ResponseEntity.class)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
+    @ApiResponses(value = {@ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
             @ApiResponse(code = 302, message = " "),
             @ApiResponse(code = 400, message = "No tiene acceso a este recurso"),
             @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
             @ApiResponse(code = 404, message = " "),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde") })
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde")})
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
-    @GetMapping(value = { "/locales/{idLocal}/libros/reportes/pdf/libros-unicos",
-            "/locales/libros/reportes/pdf/libros-unicos" }, produces = MediaType.APPLICATION_PDF_VALUE)
+    @GetMapping(value = {"/locales/{idLocal}/libros/reportes/pdf/libros-unicos",
+            "/locales/libros/reportes/pdf/libros-unicos"}, produces = MediaType.APPLICATION_PDF_VALUE)
     public ResponseEntity<?> generarPdfLibrosUnicos(@PathVariable(value = "idLocal") Optional<Long> idLocal,
-            Authentication authentication) {
+                                                    Authentication authentication) {
         Map<String, Object> response = new HashMap<>();
         try {
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
@@ -797,17 +798,17 @@ public class ReporteController {
 
     // GENERAR REPORTE PDF LIBROS POR CATEGORÍA
     @ApiOperation(value = "Generación de reporte en formato pdf de libros por id categoría", response = ResponseEntity.class)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
+    @ApiResponses(value = {@ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
             @ApiResponse(code = 302, message = " "),
             @ApiResponse(code = 400, message = "No tienes acceso a este recurso"),
             @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
             @ApiResponse(code = 404, message = " "),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde") })
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde")})
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
-    @GetMapping(value = { "/locales/{idLocal}/libros/reportes/pdf/libros-por-categoria/{id_categoria}",
-            "/locales/libros/reportes/pdf/libros-por-categoria/{id_categoria}" }, produces = MediaType.APPLICATION_PDF_VALUE)
+    @GetMapping(value = {"/locales/{idLocal}/libros/reportes/pdf/libros-por-categoria/{id_categoria}",
+            "/locales/libros/reportes/pdf/libros-por-categoria/{id_categoria}"}, produces = MediaType.APPLICATION_PDF_VALUE)
     public ResponseEntity<?> generarPdfLibrosPorCategoria(@PathVariable(value = "idLocal") Optional<Long> idLocal,
-            @PathVariable(name = "id_categoria", required = false) Long id, Authentication authentication) throws Exception {
+                                                          @PathVariable(name = "id_categoria", required = false) Long id, Authentication authentication) throws Exception {
         Map<String, Object> response = new HashMap<>();
         try {
             String rol = "";
@@ -837,17 +838,17 @@ public class ReporteController {
 
     // GENERAR REPORTE PDF LIBROS POR ESTADO
     @ApiOperation(value = "Generación de reporte en formato pdf de libros por su estado", response = ResponseEntity.class)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
+    @ApiResponses(value = {@ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
             @ApiResponse(code = 302, message = " "),
             @ApiResponse(code = 400, message = "Solo puede escoger entre disponibles y no disponibles"),
             @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
             @ApiResponse(code = 404, message = "El reporte no existe"),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde") })
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde")})
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
-    @GetMapping(value = { "/locales/{idLocal}/libros/reportes/pdf/libros-por-estado/{estado}",
-            "/locales/libros/reportes/pdf/libros-por-estado/{estado}" }, produces = MediaType.APPLICATION_PDF_VALUE)
+    @GetMapping(value = {"/locales/{idLocal}/libros/reportes/pdf/libros-por-estado/{estado}",
+            "/locales/libros/reportes/pdf/libros-por-estado/{estado}"}, produces = MediaType.APPLICATION_PDF_VALUE)
     public ResponseEntity<?> generarPdfLibrosPorEstado(@PathVariable(value = "idLocal") Optional<Long> idLocal,
-            @PathVariable("estado") String estado, Authentication authentication) {
+                                                       @PathVariable("estado") String estado, Authentication authentication) {
         Map<String, Object> response = new HashMap<>();
         try {
             ByteArrayInputStream bis;
@@ -888,17 +889,17 @@ public class ReporteController {
     // ######################## EXCEL ########################
     // GENERAR REPORTE EXCEL LIBROS UNICOS
     @ApiOperation(value = "Generación de reporte en formato xlsx de libros totales", response = ResponseEntity.class)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
+    @ApiResponses(value = {@ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
             @ApiResponse(code = 302, message = " "),
             @ApiResponse(code = 400, message = "No tienes acceso a este recurso"),
             @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
             @ApiResponse(code = 404, message = " "),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde") })
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde")})
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
-    @GetMapping(value = { "/locales/{idLocal}/libros/reportes/xlsx/libros-unicos",
-            "/locales/libros/reportes/xlsx/libros-unicos" })
+    @GetMapping(value = {"/locales/{idLocal}/libros/reportes/xlsx/libros-unicos",
+            "/locales/libros/reportes/xlsx/libros-unicos"})
     public ResponseEntity<?> generarExcelLibrosUnicos(@PathVariable(value = "idLocal") Optional<Long> idLocal,
-            Authentication authentication) {
+                                                      Authentication authentication) {
         Map<String, Object> response = new HashMap<>();
         try {
             String rol = "";
@@ -925,17 +926,17 @@ public class ReporteController {
 
     // GENERAR REPORTE EXCEL LIBROS POR CATEGORÍA
     @ApiOperation(value = "Generación de reporte en formato xlsx de libros por id categoría", response = ResponseEntity.class)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
+    @ApiResponses(value = {@ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
             @ApiResponse(code = 302, message = " "),
             @ApiResponse(code = 400, message = "No tienes acceso a este recurso"),
             @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
             @ApiResponse(code = 404, message = " "),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde") })
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde")})
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
-    @GetMapping(value = { "/locales/{idLocal}/libros/reportes/xlsx/libros-por-categoria/{id}",
-            "/locales/libros/reportes/xlsx/libros-por-categoria/{id}" })
+    @GetMapping(value = {"/locales/{idLocal}/libros/reportes/xlsx/libros-por-categoria/{id}",
+            "/locales/libros/reportes/xlsx/libros-por-categoria/{id}"})
     public ResponseEntity<?> repLibrosPorCategoria(@PathVariable(value = "idLocal") Optional<Long> idLocal,
-            @PathVariable("id") String id, Authentication authentication) throws Exception {
+                                                   @PathVariable("id") String id, Authentication authentication) throws Exception {
         Map<String, Object> response = new HashMap<>();
         try {
             String rol = "";
@@ -963,17 +964,17 @@ public class ReporteController {
 
     // GENERAR REPORTE EXCEL LIBROS POR ESTADO
     @ApiOperation(value = "Generación de reporte en formato xlsx de libros por su estado", response = ResponseEntity.class)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
+    @ApiResponses(value = {@ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
             @ApiResponse(code = 302, message = " "),
             @ApiResponse(code = 400, message = "Solo puede escoger entre disponibles y no disponibles"),
             @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
             @ApiResponse(code = 404, message = "El reporte no existe"),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde") })
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde")})
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
-    @GetMapping(value = { "/locales/{idLocal}/libros/reportes/xlsx/libros-por-estado/{estado}",
-            "/locales/libros/reportes/xlsx/libros-por-estado/{estado}" })
+    @GetMapping(value = {"/locales/{idLocal}/libros/reportes/xlsx/libros-por-estado/{estado}",
+            "/locales/libros/reportes/xlsx/libros-por-estado/{estado}"})
     public ResponseEntity<?> repLibrosPorEstado(@PathVariable(value = "idLocal") Optional<Long> idLocal,
-            @PathVariable("estado") String estado, Authentication authentication) {
+                                                @PathVariable("estado") String estado, Authentication authentication) {
         Map<String, Object> response = new HashMap<>();
         try {
             List<Libro> libros = new ArrayList<>();
@@ -1014,12 +1015,12 @@ public class ReporteController {
     // ######################## PDF ########################
     // GENERAR REPORTE PDF DE EMPLEADOS TOTALES
     @ApiOperation(value = "Generación de reporte en formato pdf de empleados totales", response = ResponseEntity.class)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
+    @ApiResponses(value = {@ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
             @ApiResponse(code = 302, message = " "),
             @ApiResponse(code = 400, message = "No tienes acceso a este recurso"),
             @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
             @ApiResponse(code = 404, message = " "),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde") })
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde")})
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN')")
     @GetMapping(value = "/reportes/pdf/empleados-totales", produces = MediaType.APPLICATION_PDF_VALUE)
     public ResponseEntity<?> generarPdfEmpleadosTotal(Authentication authentication) {
@@ -1052,16 +1053,16 @@ public class ReporteController {
 
     // GENERAR REPORTE PDF DE EMPLEADOS POR ESTADO
     @ApiOperation(value = "Generación de reporte en formato pdf de empleados por su estado", response = ResponseEntity.class)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
+    @ApiResponses(value = {@ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
             @ApiResponse(code = 302, message = " "),
             @ApiResponse(code = 400, message = "Solamente puedes escoger entre disponibles y no disponibles"),
             @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
             @ApiResponse(code = 404, message = " "),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde") })
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde")})
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN')")
     @GetMapping(value = "/reportes/pdf/empleados-por-estado/{estado}", produces = MediaType.APPLICATION_PDF_VALUE)
     public ResponseEntity<?> generarPdfLibrosPorEstado(@PathVariable("estado") String estado,
-            Authentication authentication) {
+                                                       Authentication authentication) {
         Map<String, Object> response = new HashMap<>();
         try {
             ByteArrayInputStream bis;
@@ -1144,12 +1145,12 @@ public class ReporteController {
     // ######################## EXCEL ########################
     // GENERAR REPORTE EXCEL DE EMPLEADOS TOTALES
     @ApiOperation(value = "Generación de reporte en formato pdf de empleados totales", response = ResponseEntity.class)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
+    @ApiResponses(value = {@ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
             @ApiResponse(code = 302, message = " "),
             @ApiResponse(code = 400, message = "No tienes acceso a este recurso"),
             @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
             @ApiResponse(code = 404, message = " "),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde") })
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde")})
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN')")
     @GetMapping(value = "/reportes/xlsx/empleados-totales")
     public ResponseEntity<?> generarExcelEmpleadosTotal(Authentication authentication) {
@@ -1181,16 +1182,16 @@ public class ReporteController {
 
     // GENERAR REPORTE EXCEL DE EMPLEADOS POR ESTADO
     @ApiOperation(value = "Generación de reporte en formato pdf de empleados por su estado", response = ResponseEntity.class)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
+    @ApiResponses(value = {@ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
             @ApiResponse(code = 302, message = " "),
             @ApiResponse(code = 400, message = "Solamente puedes escoger entre disponibles y no disponibles"),
             @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
             @ApiResponse(code = 404, message = " "),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde") })
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde")})
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN')")
     @GetMapping(value = "/reportes/xlsx/empleados-por-estado/{estado}")
     public ResponseEntity<?> repEmpleadosPorEstado(@PathVariable("estado") String estado,
-            Authentication authentication) {
+                                                   Authentication authentication) {
         Map<String, Object> response = new HashMap<>();
         try {
             ByteArrayInputStream in;

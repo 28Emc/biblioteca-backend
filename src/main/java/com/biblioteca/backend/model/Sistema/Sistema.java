@@ -1,5 +1,6 @@
-package com.biblioteca.backend.model;
+package com.biblioteca.backend.model.Sistema;
 
+import com.biblioteca.backend.model.Empresa.Empresa;
 import io.swagger.annotations.ApiModelProperty;
 
 import javax.persistence.*;

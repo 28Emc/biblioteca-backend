@@ -1,7 +1,7 @@
 package com.biblioteca.backend.service;
 
 import java.util.Optional;
-import com.biblioteca.backend.model.Token;
+import com.biblioteca.backend.model.Token.Token;
 
 public interface ITokenService {
 
