@@ -1,9 +1,11 @@
-package com.biblioteca.backend.model;
+package com.biblioteca.backend.model.Persona;
 
+import com.biblioteca.backend.model.Usuario.Usuario;
 import io.swagger.annotations.ApiModelProperty;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "tb_persona")
@@ -17,22 +19,23 @@ public class Persona {
     @ApiModelProperty(notes = "Nombre de la persona", required = true, example = "pepito")
     private String nombre;
 
-    @Column(name = "apellido_paterno")
+    @Column(name = "apellido_paterno", nullable = false)
     @ApiModelProperty(notes = "Apellido paterno de la persona", required = true, example = "paredes")
     private String apellidoPaterno;
 
-    @Column(name = "apellido_materno")
+    @Column(name = "apellido_materno", nullable = false)
     @ApiModelProperty(notes = "Apellido materno de la persona", required = true, example = "rojas")
     private String apellidoMaterno;
 
-    @Column(name = "tipo_documento")
+    @Column(name = "tipo_documento", nullable = false)
     @ApiModelProperty(notes = "Tipo de documento de identidad", required = true, example = "DNI")
     private String tipoDocumento;
 
-    @Column(name = "nro_documento")
+    @Column(name = "nro_documento", nullable = false)
     @ApiModelProperty(notes = "Número del documento de identidad", required = true, example = "47111025")
     private String nroDocumento;
 
+    @Column(nullable = false)
     @ApiModelProperty(notes = "Sexo de la persona", required = true, example = "M")
     private String sexo;
 
@@ -42,7 +45,7 @@ public class Persona {
     @ApiModelProperty(notes = "Número de celular de la persona", example = "983489303")
     private String celular;
 
-    @Column(name = "fecha_registro")
+    @Column(name = "fecha_registro", nullable = false)
     @ApiModelProperty(notes = "Fecha de registro de la persona", required = true, example = "2021-07-27T18:10:09")
     private LocalDateTime fechaRegistro;
 
@@ -53,6 +56,10 @@ public class Persona {
     @Column(name = "fecha_baja")
     @ApiModelProperty(notes = "Fecha de baja de la persona", example = "2021-07-27T18:10:09")
     private LocalDateTime fechaBaja;
+
+    //@JsonIgnore
+    @OneToMany(mappedBy = "persona")
+    private List<Usuario> usuarios;
 
     public Persona() {
     }
@@ -166,5 +173,15 @@ public class Persona {
 
     public void setFechaBaja(LocalDateTime fechaBaja) {
         this.fechaBaja = fechaBaja;
+    }
+
+    @PrePersist
+    public void prePersist() {
+        fechaRegistro = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        fechaActualizacion = LocalDateTime.now();
     }
 }

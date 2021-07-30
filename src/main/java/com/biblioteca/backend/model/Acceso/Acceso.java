@@ -1,5 +1,7 @@
-package com.biblioteca.backend.model;
+package com.biblioteca.backend.model.Acceso;
 
+import com.biblioteca.backend.model.Sistema;
+import com.biblioteca.backend.model.Usuario.Usuario;
 import io.swagger.annotations.ApiModelProperty;
 
 import javax.persistence.*;
@@ -13,13 +15,15 @@ public class Acceso {
     @ApiModelProperty(notes = "ID autogenerado")
     private int id;
 
-    @Column(name = "id_sistema")
-    @ApiModelProperty(notes = "ID de sistema", required = true, example = "1")
-    private Long idSistema;
+    // ACCESO(*):SISTEMA(1)
+    @ManyToOne//(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_sistema")
+    private Sistema sistema;
 
-    @Column(name = "id_usuario")
-    @ApiModelProperty(notes = "ID de usuario", required = true, example = "1")
-    private Long idUsuario;
+    // ACCESO(*):USUARIO(1)
+    @ManyToOne//(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_usuario")
+    private Usuario usuario;
 
     @Column(name = "ruta_inicial")
     @ApiModelProperty(notes = "Ruta inicial", required = true, example = "/dashboard")
@@ -28,10 +32,10 @@ public class Acceso {
     public Acceso() {
     }
 
-    public Acceso(int id, Long idSistema, Long idUsuario, String rutaInicial) {
+    public Acceso(int id, Sistema sistema, Usuario usuario, String rutaInicial) {
         this.id = id;
-        this.idSistema = idSistema;
-        this.idUsuario = idUsuario;
+        this.sistema = sistema;
+        this.usuario = usuario;
         this.rutaInicial = rutaInicial;
     }
 
@@ -43,20 +47,20 @@ public class Acceso {
         this.id = id;
     }
 
-    public Long getIdSistema() {
-        return idSistema;
+    public Sistema getSistema() {
+        return sistema;
     }
 
-    public void setIdSistema(Long idSistema) {
-        this.idSistema = idSistema;
+    public void setSistema(Sistema sistema) {
+        this.sistema = sistema;
     }
 
-    public Long getIdUsuario() {
-        return idUsuario;
+    public Usuario getUsuario() {
+        return usuario;
     }
 
-    public void setIdUsuario(Long idUsuario) {
-        this.idUsuario = idUsuario;
+    public void setUsuario(Usuario usuario) {
+        this.usuario = usuario;
     }
 
     public String getRutaInicial() {

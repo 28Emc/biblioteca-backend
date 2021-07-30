@@ -37,8 +37,8 @@ public class Token {
     @ApiModelProperty(notes = "Tipo de operación de solicitud del token", required = true, example = "ACTIVAR USER")
     private String tipoOperacion;
 
-    @OneToOne//(targetEntity = Usuario.class, fetch = FetchType.EAGER)
-    @JoinColumn(nullable = false, name = "usuario_id")
+    @ManyToOne//(targetEntity = Usuario.class, fetch = FetchType.EAGER)
+    @JoinColumn(name = "id_usuario")
     private Usuario usuario;
 
     public Long getId() {

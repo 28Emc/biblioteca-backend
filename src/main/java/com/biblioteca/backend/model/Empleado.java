@@ -1,10 +1,12 @@
 package com.biblioteca.backend.model;
 
 import com.biblioteca.backend.model.Local.Local;
+import com.biblioteca.backend.model.Prestamo.Prestamo;
 import io.swagger.annotations.ApiModelProperty;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "tb_empleado")
@@ -35,7 +37,17 @@ public class Empleado {
     @ApiModelProperty(notes = "Fecha de baja del empleado", example = "2020-06-01")
     private LocalDateTime fechaBaja;
 
+    // EMPLEADO(1):PRESTAMO(*)
+    //@JsonIgnore
+    @OneToMany(mappedBy = "empleado"/*, fetch = FetchType.LAZY, cascade = CascadeType.ALL*/)
+    private List<Prestamo> prestamos;
+
     public Empleado() {
+    }
+
+    public Empleado(Long idUsuario, Local local) {
+        this.idUsuario = idUsuario;
+        this.local = local;
     }
 
     public Empleado(Long id, Long idUsuario, Local local, LocalDateTime fechaRegistro, LocalDateTime fechaActualizacion, LocalDateTime fechaBaja) {
@@ -93,5 +105,23 @@ public class Empleado {
 
     public void setFechaBaja(LocalDateTime fechaBaja) {
         this.fechaBaja = fechaBaja;
+    }
+
+    public List<Prestamo> getPrestamos() {
+        return prestamos;
+    }
+
+    public void setPrestamos(List<Prestamo> prestamos) {
+        this.prestamos = prestamos;
+    }
+
+    @PrePersist
+    public void prePersist() {
+        fechaRegistro = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        fechaActualizacion = LocalDateTime.now();
     }
 }

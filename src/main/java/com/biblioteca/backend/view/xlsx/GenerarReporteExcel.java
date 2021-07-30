@@ -71,6 +71,7 @@ public class GenerarReporteExcel {
             // CUERPO
             rowNum = 1; // NRO. DE FILA QUE VA JUSTO DEBAJO DE LA CABECERA
             // RECORRO MI LISTA DE PRESTAMOS PARA RELLENAR CADA CELDA DE LA FILA
+            /* TODO: REVISAR
             for (Prestamo prestamoItem : prestamos) {
                 Row fila = sheet.createRow(rowNum++);
                 fila.createCell(0).setCellValue(prestamoItem.getId());
@@ -96,7 +97,7 @@ public class GenerarReporteExcel {
                 } else {
                     fila.createCell(8).setCellValue("Libro sin devolver (" + prestamoItem.isActivo() + ")");
                 }
-            }
+            }*/
             // AJUSTO EL ANCHO DE CADA CELDA PARA MOSTRAR MEJOR LA DATA
             // NOTA: ESTA ITERACIÓN PUEDE CAUSAR BAJO RENDIMIENTO A LA HORA DE ABRIR EL
             // ARCHIVO
@@ -146,6 +147,7 @@ public class GenerarReporteExcel {
                 }
             }
             rowNum = 1;
+            /* TODO: REVISAR
             for (Usuario usuarioItem : usuarios) {
                 Row fila = sheet.createRow(rowNum++);
                 fila.createCell(0).setCellValue(usuarioItem.getId());
@@ -163,7 +165,7 @@ public class GenerarReporteExcel {
                 } else {
                     fila.createCell(10).setCellValue("Inactivo");
                 }
-            }
+            }*/
 
             for (int i = 0; i < listCabecera.size(); i++) {
                 sheet.autoSizeColumn(i);

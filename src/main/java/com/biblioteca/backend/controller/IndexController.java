@@ -1,11 +1,9 @@
 package com.biblioteca.backend.controller;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import com.biblioteca.backend.config.security.JwtUtil;
-import com.biblioteca.backend.model.Libro.Libro;
 import com.biblioteca.backend.model.Usuario.Usuario;
 import com.biblioteca.backend.model.Usuario.DTO.AuthenticationRequest;
 import com.biblioteca.backend.model.Usuario.DTO.AuthenticationResponse;
@@ -15,15 +13,12 @@ import com.biblioteca.backend.service.IUsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -70,7 +65,7 @@ public class IndexController {
             // ... SI TIENE ÈXITO, AGREGO LOS DATOS DEL USUARIO AL OBJETO DEL TIPO
             // USERDETAILS ...
             final UserDetails userDetails = userDetailsService.loadUserByUsername(authenticationRequest.getUsername());
-            Usuario usuario = usuarioService.findByEmail(userDetails.getUsername()).orElseThrow();
+            Usuario usuario = usuarioService.findByUsuario(userDetails.getUsername()).orElseThrow();
             // ... GENERO EL TOKEN A PARTIR DEL USERDETAILS ...
             final String jwt = jwtUtil.generateToken(userDetails);
             // .. Y RETORNO EL TOKEN ...

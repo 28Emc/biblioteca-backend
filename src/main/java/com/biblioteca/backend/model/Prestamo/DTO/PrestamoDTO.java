@@ -1,26 +1,32 @@
 package com.biblioteca.backend.model.Prestamo.DTO;
 
-import javax.validation.constraints.NotEmpty;
+import javax.persistence.Column;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
 
 public class PrestamoDTO {
 
     private Long id;
 
-    @NotNull(message = "{notNull.prestamoDTO.fechaDevolucion}")
-    private LocalDateTime fechaDevolucion;
+    @Column(name = "id_usuario")
+    @NotNull(message = "{notNull.prestamoDTO.idUsuario}")
+    private Long idUsuario;
 
-    private boolean isActivo;
+    @Column(name = "id_empleado")
+    @NotNull(message = "{notNull.prestamoDTO.idEmpresa}")
+    private Long idEmpleado;
+
+    @Column(name = "id_libro")
+    @NotNull(message = "{notNull.prestamoDTO.idLibro}")
+    private Long idLibro;
+
+    @NotNull(message = "{notNull.prestamoDTO.fechaDevolucion}")
+    @Column(name = "fecha_devolucion")
+    private LocalDateTime fechaDevolucion;
 
     private String observaciones;
 
-    private Long usuario;
-
-    private Long empleado;
-
-    private Long libro;
+    private boolean estado;
 
     public Long getId() {
         return id;
@@ -28,6 +34,30 @@ public class PrestamoDTO {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Long getIdUsuario() {
+        return idUsuario;
+    }
+
+    public void setIdUsuario(Long idUsuario) {
+        this.idUsuario = idUsuario;
+    }
+
+    public Long getIdEmpleado() {
+        return idEmpleado;
+    }
+
+    public void setIdEmpleado(Long idEmpleado) {
+        this.idEmpleado = idEmpleado;
+    }
+
+    public Long getIdLibro() {
+        return idLibro;
+    }
+
+    public void setIdLibro(Long idLibro) {
+        this.idLibro = idLibro;
     }
 
     public LocalDateTime getFechaDevolucion() {
@@ -38,14 +68,6 @@ public class PrestamoDTO {
         this.fechaDevolucion = fechaDevolucion;
     }
 
-    public boolean isActivo() {
-        return isActivo;
-    }
-
-    public void setActivo(boolean activo) {
-        isActivo = activo;
-    }
-
     public String getObservaciones() {
         return observaciones;
     }
@@ -54,40 +76,33 @@ public class PrestamoDTO {
         this.observaciones = observaciones;
     }
 
-    public Long getUsuario() {
-        return usuario;
+    public boolean isEstado() {
+        return estado;
     }
 
-    public void setUsuario(Long usuario) {
-        this.usuario = usuario;
-    }
-
-    public Long getEmpleado() {
-        return empleado;
-    }
-
-    public void setEmpleado(Long empleado) {
-        this.empleado = empleado;
-    }
-
-    public Long getLibro() {
-        return libro;
-    }
-
-    public void setLibro(Long libro) {
-        this.libro = libro;
+    public void setEstado(boolean estado) {
+        this.estado = estado;
     }
 
     public PrestamoDTO() {
     }
 
-    public PrestamoDTO(Long id, LocalDateTime fechaDevolucion, boolean isActivo, String observaciones, Long usuario, Long empleado, Long libro) {
-        this.id = id;
+    public PrestamoDTO(Long idUsuario, Long idEmpleado, Long idLibro, LocalDateTime fechaDevolucion, String observaciones, boolean estado) {
+        this.idUsuario = idUsuario;
+        this.idEmpleado = idEmpleado;
+        this.idLibro = idLibro;
         this.fechaDevolucion = fechaDevolucion;
-        this.isActivo = isActivo;
         this.observaciones = observaciones;
-        this.usuario = usuario;
-        this.empleado = empleado;
-        this.libro = libro;
+        this.estado = estado;
+    }
+
+    public PrestamoDTO(Long id, Long idUsuario, Long idEmpleado, Long idLibro, LocalDateTime fechaDevolucion, String observaciones, boolean estado) {
+        this.id = id;
+        this.idUsuario = idUsuario;
+        this.idEmpleado = idEmpleado;
+        this.idLibro = idLibro;
+        this.fechaDevolucion = fechaDevolucion;
+        this.observaciones = observaciones;
+        this.estado = estado;
     }
 }

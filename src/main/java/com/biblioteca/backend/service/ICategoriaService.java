@@ -3,17 +3,21 @@ package com.biblioteca.backend.service;
 import java.util.List;
 import java.util.Optional;
 import com.biblioteca.backend.model.Categoria.Categoria;
+import com.biblioteca.backend.model.Categoria.DTO.CategoriaDTO;
 
 public interface ICategoriaService {
 
-    public List<Categoria> findAll();
+    List<Categoria> findAll();
 
-    public Optional<Categoria> findById(Long id);
+    Optional<Categoria> findById(Long id) throws Exception;
 
-    public Optional<Categoria> findByNombre(String categoria);
+    Optional<Categoria> findByNombre(String categoria);
 
-    public List<Categoria> findByNombreLikeIgnoreCase(String categoria);
+    List<Categoria> findByNombreLikeIgnoreCase(String categoria);
 
-    public Categoria save(Categoria categoria);
+    void save(CategoriaDTO categoriaDTO) throws Exception;
 
+    void update(Long id, CategoriaDTO categoriaDTO) throws Exception;
+
+    void changeCategoriaState(Long id, boolean tipoOperacion) throws Exception;
 }

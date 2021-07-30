@@ -5,7 +5,6 @@ import com.biblioteca.backend.model.Local.Local;
 import com.biblioteca.backend.model.Prestamo.Prestamo;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import io.swagger.annotations.ApiModelProperty;
 import org.hibernate.annotations.Type;
 
@@ -32,7 +31,7 @@ public class Libro {
     @JoinColumn(name = "id_local")
     private Local local;
 
-    @Column(name = "isbn", nullable = false, unique = true)
+    @Column(name = "isbn", nullable = false)
     @ApiModelProperty(notes = "ISBN del libro", required = true, example = "9791234567896")
     private String ISBN;
 
@@ -49,10 +48,7 @@ public class Libro {
     @ApiModelProperty(notes = "Descripción del libro", example = "Libro que hace parte de una trilogía")
     private String descripcion;
 
-    @Transient
-    private String descripcionMin;
-
-    @Column(length = 4, nullable = false)
+    @Column(nullable = false)
     @ApiModelProperty(notes = "Stock del libro", required = true, example = "500")
     private Integer stock;
 
@@ -60,8 +56,8 @@ public class Libro {
     @ApiModelProperty(notes = "Foto portada del libro", required = true, example = "el-camino-de-los-reyes.png")
     private String fotoLibro;
 
-    @Column(name = "fecha_publicacion", nullable = false)
-    @ApiModelProperty(notes = "Fecha de publicación del libro", required = true, example = "2020-05-25")
+    @Column(name = "fecha_publicacion")
+    @ApiModelProperty(notes = "Fecha de publicación del libro", example = "2020-05-25")
     private LocalDateTime fechaPublicacion;
 
     @Column(name = "fecha_registro", nullable = false)
@@ -123,14 +119,6 @@ public class Libro {
 
     public void setDescripcion(String descripcion) {
         this.descripcion = descripcion;
-    }
-
-    public String getDescripcionMin() {
-        return descripcionMin;
-    }
-
-    public void setDescripcionMin(String descripcionMin) {
-        this.descripcionMin = descripcionMin;
     }
 
     public LocalDateTime getFechaPublicacion() {
@@ -220,7 +208,7 @@ public class Libro {
     public Libro() {
     }
 
-    public Libro(Long id, Categoria categoria, Local local, String ISBN, String titulo, String autor, String descripcion, String descripcionMin, Integer stock, String fotoLibro, LocalDateTime fechaPublicacion, LocalDateTime fechaRegistro, LocalDateTime fechaActualizacion, LocalDateTime fechaBaja, boolean isActivo, List<Prestamo> prestamos) {
+    public Libro(Long id, Categoria categoria, Local local, String ISBN, String titulo, String autor, String descripcion, Integer stock, String fotoLibro, LocalDateTime fechaPublicacion, LocalDateTime fechaRegistro, LocalDateTime fechaActualizacion, LocalDateTime fechaBaja, boolean isActivo, List<Prestamo> prestamos) {
         this.id = id;
         this.categoria = categoria;
         this.local = local;
@@ -228,7 +216,6 @@ public class Libro {
         this.titulo = titulo;
         this.autor = autor;
         this.descripcion = descripcion;
-        this.descripcionMin = descripcionMin;
         this.stock = stock;
         this.fotoLibro = fotoLibro;
         this.fechaPublicacion = fechaPublicacion;
@@ -245,43 +232,35 @@ public class Libro {
         fechaRegistro = LocalDateTime.now();
     }
 
-    // ALGORITMO PARA DETERMINAR SI EL CODIGO ISBN DEL LIBRO ES VÁLIDO
-    public boolean validateIsbn13(String isbn) {
-        if (isbn == null) {
-            return false;
-        }
+    @PreUpdate
+    public void preUpdate() {
+        fechaActualizacion = LocalDateTime.now();
+    }
 
-        //remove any hyphens
+    /**
+     * ALGORITMO PARA DETERMINAR SI EL CODIGO ISBN DEL LIBRO ES VÁLIDO
+     */
+    public boolean validateIsbn13(String isbn) {
+        if (isbn == null) return false;
+
         isbn = isbn.replaceAll("-", "");
 
-        //must be a 13 digit ISBN
-        if (isbn.length() != 13) {
-            return false;
-        }
+        if (isbn.length() != 13) return false;
 
         try {
             int tot = 0;
             for (int i = 0; i < 12; i++) {
                 int digit = Integer.parseInt(isbn.substring(i, i + 1));
-                tot += (i % 2 == 0) ? digit * 1 : digit * 3;
+                tot += (i % 2 == 0) ? digit : digit * 3;
             }
 
-            //checksum must be 0-9. If calculated as 10 then = 0
             int checksum = 10 - (tot % 10);
-            if (checksum == 10) {
-                checksum = 0;
-            }
+            if (checksum == 10) checksum = 0;
 
             return checksum == Integer.parseInt(isbn.substring(12));
         } catch (NumberFormatException nfe) {
-            //to catch invalid ISBNs that have non-numeric characters in them
             return false;
         }
-    }
-
-    @PreUpdate
-    public void preUpdate() {
-        fechaActualizacion = LocalDateTime.now();
     }
 
 }

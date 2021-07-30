@@ -2,10 +2,8 @@ package com.biblioteca.backend.controller;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+
 import com.biblioteca.backend.model.Categoria.Categoria;
 import com.biblioteca.backend.model.Libro.Libro;
 import com.biblioteca.backend.model.Prestamo.Prestamo;
@@ -68,16 +66,16 @@ public class ReporteController {
         Map<String, Object> response = new HashMap<>();
         try {
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            Usuario usuarioLogueado = usuarioService.findByEmail(userDetails.getUsername()).get();
+            Usuario usuarioLogueado = usuarioService.findByUsuario(userDetails.getUsername()).get();
             List<Prestamo> prestamos = null;
             switch (usuarioLogueado.getRol().getAuthority().toString()) {
-                case "ROLE_SYSADMIN":
+                case "ROLE_ADMIN":
                     prestamos = prestamoService.fetchWithLibroWithUsuarioWithEmpleado();
                     break;
-                case "ROLE_ADMIN":
+                /*case "ROLE_ADMIN":
                     prestamos = prestamoService
                             .fetchByIdWithLibroWithUsuarioWithEmpleado(usuarioLogueado.getLocal().getId());
-                    break;
+                    break;*/
                 case "ROLE_EMPLEADO":
                     prestamos = prestamoService
                             .fetchByIdWithLibroWithUsuarioWithEmpleadoPerEmpleado(usuarioLogueado.getId());
@@ -91,11 +89,11 @@ public class ReporteController {
                 return ResponseEntity.ok().headers(headers).contentType(MediaType.APPLICATION_PDF)
                         .body(new InputStreamResource(bis));
             } else {
-                response.put("mensaje", "Lo sentimos, no tienes acceso a este recurso");
+                response.put("message", "Lo sentimos, no tienes acceso a este recurso");
                 return new ResponseEntity<Map<String, Object>>(response, HttpStatus.BAD_REQUEST);
             }
         } catch (IOException | NullPointerException e) {
-            response.put("mensaje", "Lo sentimos, hubo un error a la hora de generar el reporte");
+            response.put("message", "Lo sentimos, hubo un error a la hora de generar el reporte");
             response.put("error", e.getMessage());
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -115,16 +113,16 @@ public class ReporteController {
         Map<String, Object> response = new HashMap<>();
         try {
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            Usuario usuarioLogueado = usuarioService.findByEmail(userDetails.getUsername()).get();
+            Usuario usuarioLogueado = usuarioService.findByUsuario(userDetails.getUsername()).get();
             List<Prestamo> prestamosTotales = null;
-            switch (usuarioLogueado.getRol().getAuthority().toString()) {
-                case "ROLE_SYSADMIN":
+            switch (usuarioLogueado.getRol().getAuthority()) {
+                case "ROLE_ADMIN":
                     prestamosTotales = prestamoService.fetchWithLibroWithUsuarioWithEmpleado();
                     break;
-                case "ROLE_ADMIN":
+                /*case "ROLE_ADMIN":
                     prestamosTotales = prestamoService
                             .fetchByIdWithLibroWithUsuarioWithEmpleado(usuarioLogueado.getLocal().getId());
-                    break;
+                    break;*/
                 case "ROLE_EMPLEADO":
                     prestamosTotales = prestamoService
                             .fetchByIdWithLibroWithUsuarioWithEmpleadoPerEmpleado(usuarioLogueado.getId());
@@ -132,7 +130,7 @@ public class ReporteController {
             }
             // FILTRO SOLAMENTE LOS PRESTAMOS PENDIENTES
             for (int i = 0; i < prestamosTotales.size(); i++) {
-                prestamosTotales.removeIf(n -> n.isActivo());
+                prestamosTotales.removeIf(n -> n.getEstado().equals("E1"));
             }
             ByteArrayInputStream bis;
             var headers = new HttpHeaders();
@@ -142,11 +140,11 @@ public class ReporteController {
                 return ResponseEntity.ok().headers(headers).contentType(MediaType.APPLICATION_PDF)
                         .body(new InputStreamResource(bis));
             } else {
-                response.put("mensaje", "Lo sentimos, no tienes acceso a este recurso");
+                response.put("message", "Lo sentimos, no tienes acceso a este recurso");
                 return new ResponseEntity<Map<String, Object>>(response, HttpStatus.BAD_REQUEST);
             }
         } catch (IOException | NullPointerException e) {
-            response.put("mensaje", "Lo sentimos, hubo un error a la hora de generar el reporte");
+            response.put("message", "Lo sentimos, hubo un error a la hora de generar el reporte");
             response.put("error", e.getMessage());
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -166,16 +164,16 @@ public class ReporteController {
         Map<String, Object> response = new HashMap<>();
         try {
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            Usuario usuarioLogueado = usuarioService.findByEmail(userDetails.getUsername()).get();
+            Usuario usuarioLogueado = usuarioService.findByUsuario(userDetails.getUsername()).get();
             List<Prestamo> prestamosTotales = null;
-            switch (usuarioLogueado.getRol().getAuthority().toString()) {
-                case "ROLE_SYSADMIN":
+            switch (usuarioLogueado.getRol().getAuthority()) {
+                case "ROLE_ADMIN":
                     prestamosTotales = prestamoService.fetchWithLibroWithUsuarioWithEmpleado();
                     break;
-                case "ROLE_ADMIN":
+                /*case "ROLE_ADMIN":
                     prestamosTotales = prestamoService
                             .fetchByIdWithLibroWithUsuarioWithEmpleado(usuarioLogueado.getLocal().getId());
-                    break;
+                    break;*/
                 case "ROLE_EMPLEADO":
                     prestamosTotales = prestamoService
                             .fetchByIdWithLibroWithUsuarioWithEmpleadoPerEmpleado(usuarioLogueado.getId());
@@ -183,7 +181,7 @@ public class ReporteController {
             }
             // FILTRO SOLAMENTE LOS PRESTAMOS COMPLETADOS
             for (int i = 0; i < prestamosTotales.size(); i++) {
-                prestamosTotales.removeIf(n -> !n.isActivo());
+                prestamosTotales.removeIf(n -> !n.getEstado().equals("E3"));
             }
             ByteArrayInputStream bis;
             var headers = new HttpHeaders();
@@ -193,11 +191,11 @@ public class ReporteController {
                 return ResponseEntity.ok().headers(headers).contentType(MediaType.APPLICATION_PDF)
                         .body(new InputStreamResource(bis));
             } else {
-                response.put("mensaje", "Lo sentimos, no tienes acceso a este recurso");
+                response.put("message", "Lo sentimos, no tienes acceso a este recurso");
                 return new ResponseEntity<Map<String, Object>>(response, HttpStatus.BAD_REQUEST);
             }
         } catch (IOException | NullPointerException e) {
-            response.put("mensaje", "Lo sentimos, hubo un error a la hora de generar el reporte");
+            response.put("message", "Lo sentimos, hubo un error a la hora de generar el reporte");
             response.put("error", e.getMessage());
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -226,11 +224,11 @@ public class ReporteController {
                 return ResponseEntity.ok().headers(headers).contentType(MediaType.APPLICATION_PDF)
                         .body(new InputStreamResource(bis));
             } else {
-                response.put("mensaje", "Lo sentimos, no tienes acceso a este recurso");
+                response.put("message", "Lo sentimos, no tienes acceso a este recurso");
                 return new ResponseEntity<Map<String, Object>>(response, HttpStatus.BAD_REQUEST);
             }
         } catch (IOException | NullPointerException e) {
-            response.put("mensaje", "Lo sentimos, hubo un error a la hora de generar el reporte");
+            response.put("message", "Lo sentimos, hubo un error a la hora de generar el reporte");
             response.put("error", e.getMessage());
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -259,11 +257,11 @@ public class ReporteController {
                 return ResponseEntity.ok().headers(headers).contentType(MediaType.APPLICATION_PDF)
                         .body(new InputStreamResource(bis));
             } else {
-                response.put("mensaje", "Lo sentimos, no tienes acceso a este recurso");
+                response.put("message", "Lo sentimos, no tienes acceso a este recurso");
                 return new ResponseEntity<Map<String, Object>>(response, HttpStatus.BAD_REQUEST);
             }
         } catch (IOException | NullPointerException e) {
-            response.put("mensaje", "Lo sentimos, hubo un error a la hora de generar el reporte");
+            response.put("message", "Lo sentimos, hubo un error a la hora de generar el reporte");
             response.put("error", e.getMessage());
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -294,11 +292,11 @@ public class ReporteController {
                 return ResponseEntity.ok().headers(headers).contentType(MediaType.APPLICATION_PDF)
                         .body(new InputStreamResource(bis));
             } else {
-                response.put("mensaje", "Lo sentimos, no tienes acceso a este recurso");
+                response.put("message", "Lo sentimos, no tienes acceso a este recurso");
                 return new ResponseEntity<Map<String, Object>>(response, HttpStatus.BAD_REQUEST);
             }
         } catch (IOException | NullPointerException e) {
-            response.put("mensaje", "Lo sentimos, hubo un error a la hora de generar el reporte");
+            response.put("message", "Lo sentimos, hubo un error a la hora de generar el reporte");
             response.put("error", e.getMessage());
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -319,16 +317,16 @@ public class ReporteController {
         Map<String, Object> response = new HashMap<>();
         try {
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            Usuario usuarioLogueado = usuarioService.findByEmail(userDetails.getUsername()).get();
+            Usuario usuarioLogueado = usuarioService.findByUsuario(userDetails.getUsername()).get();
             List<Prestamo> prestamos = null;
             switch (usuarioLogueado.getRol().getAuthority().toString()) {
-                case "ROLE_SYSADMIN":
+                case "ROLE_ADMIN":
                     prestamos = prestamoService.fetchWithLibroWithUsuarioWithEmpleado();
                     break;
-                case "ROLE_ADMIN":
+                /*case "ROLE_ADMIN":
                     prestamos = prestamoService
                             .fetchByIdWithLibroWithUsuarioWithEmpleado(usuarioLogueado.getLocal().getId());
-                    break;
+                    break;*/
                 case "ROLE_EMPLEADO":
                     prestamos = prestamoService
                             .fetchByIdWithLibroWithUsuarioWithEmpleadoPerEmpleado(usuarioLogueado.getId());
@@ -341,11 +339,11 @@ public class ReporteController {
                 headers.add("Content-Disposition", "attachment; filename=listado-prestamos-totales.xlsx");
                 return ResponseEntity.ok().headers(headers).body(new InputStreamResource(in));
             } else {
-                response.put("mensaje", "Lo sentimos, no tienes acceso a este recurso");
+                response.put("message", "Lo sentimos, no tienes acceso a este recurso");
                 return new ResponseEntity<Map<String, Object>>(response, HttpStatus.BAD_REQUEST);
             }
         } catch (IOException | NullPointerException e) {
-            response.put("mensaje", "Lo sentimos, hubo un error a la hora de generar el reporte");
+            response.put("message", "Lo sentimos, hubo un error a la hora de generar el reporte");
             response.put("error", e.getMessage());
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -365,16 +363,16 @@ public class ReporteController {
         Map<String, Object> response = new HashMap<>();
         try {
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            Usuario usuarioLogueado = usuarioService.findByEmail(userDetails.getUsername()).get();
+            Usuario usuarioLogueado = usuarioService.findByUsuario(userDetails.getUsername()).get();
             List<Prestamo> prestamos = null;
             switch (usuarioLogueado.getRol().getAuthority().toString()) {
-                case "ROLE_SYSADMIN":
+                case "ROLE_ADMIN":
                     prestamos = prestamoService.fetchWithLibroWithUsuarioWithEmpleado();
                     break;
-                case "ROLE_ADMIN":
+                /*case "ROLE_ADMIN":
                     prestamos = prestamoService
                             .fetchByIdWithLibroWithUsuarioWithEmpleado(usuarioLogueado.getLocal().getId());
-                    break;
+                    break;*/
                 case "ROLE_EMPLEADO":
                     prestamos = prestamoService
                             .fetchByIdWithLibroWithUsuarioWithEmpleadoPerEmpleado(usuarioLogueado.getId());
@@ -382,7 +380,7 @@ public class ReporteController {
             }
             // FILTRO SOLAMENTE LOS PRESTAMOS PENDIENTES
             for (int i = 0; i < prestamos.size(); i++) {
-                prestamos.removeIf(n -> n.isActivo());
+                prestamos.removeIf(n -> n.getEstado().equals("E1"));
             }
             ByteArrayInputStream in;
             var headers = new HttpHeaders();
@@ -391,11 +389,11 @@ public class ReporteController {
                 headers.add("Content-Disposition", "attachment; filename=listado-prestamos-pendientes.xlsx");
                 return ResponseEntity.ok().headers(headers).body(new InputStreamResource(in));
             } else {
-                response.put("mensaje", "Lo sentimos, no tienes acceso a este recurso");
+                response.put("message", "Lo sentimos, no tienes acceso a este recurso");
                 return new ResponseEntity<Map<String, Object>>(response, HttpStatus.BAD_REQUEST);
             }
         } catch (IOException | NullPointerException e) {
-            response.put("mensaje", "Lo sentimos, hubo un error a la hora de generar el reporte");
+            response.put("message", "Lo sentimos, hubo un error a la hora de generar el reporte");
             response.put("error", e.getMessage());
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -415,16 +413,16 @@ public class ReporteController {
         Map<String, Object> response = new HashMap<>();
         try {
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            Usuario usuarioLogueado = usuarioService.findByEmail(userDetails.getUsername()).get();
+            Usuario usuarioLogueado = usuarioService.findByUsuario(userDetails.getUsername()).get();
             List<Prestamo> prestamos = null;
             switch (usuarioLogueado.getRol().getAuthority().toString()) {
-                case "[ROLE_SYSADMIN]":
+                case "[ROLE_ADMIN]":
                     prestamos = prestamoService.fetchWithLibroWithUsuarioWithEmpleado();
                     break;
-                case "[ROLE_ADMIN]":
+                /*case "[ROLE_ADMIN]":
                     prestamos = prestamoService
                             .fetchByIdWithLibroWithUsuarioWithEmpleado(usuarioLogueado.getLocal().getId());
-                    break;
+                    break;*/
                 case "[ROLE_EMPLEADO]":
                     prestamos = prestamoService
                             .fetchByIdWithLibroWithUsuarioWithEmpleadoPerEmpleado(usuarioLogueado.getId());
@@ -432,7 +430,7 @@ public class ReporteController {
             }
             // FILTRO SOLAMENTE LOS PRESTAMOS PENDIENTES
             for (int i = 0; i < prestamos.size(); i++) {
-                prestamos.removeIf(n -> !n.isActivo());
+                prestamos.removeIf(n -> !n.getEstado().equals("E1"));
             }
             ByteArrayInputStream in;
             var headers = new HttpHeaders();
@@ -441,11 +439,11 @@ public class ReporteController {
                 headers.add("Content-Disposition", "attachment; filename=listado-prestamos-completados.xlsx");
                 return ResponseEntity.ok().headers(headers).body(new InputStreamResource(in));
             } else {
-                response.put("mensaje", "Lo sentimos, no tienes acceso a este recurso");
+                response.put("message", "Lo sentimos, no tienes acceso a este recurso");
                 return new ResponseEntity<Map<String, Object>>(response, HttpStatus.BAD_REQUEST);
             }
         } catch (IOException | NullPointerException e) {
-            response.put("mensaje", "Lo sentimos, hubo un error a la hora de generar el reporte");
+            response.put("message", "Lo sentimos, hubo un error a la hora de generar el reporte");
             response.put("error", e.getMessage());
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -473,11 +471,11 @@ public class ReporteController {
                 headers.add("Content-Disposition", "attachment; filename=listado-prestamos-por-empleado.xlsx");
                 return ResponseEntity.ok().headers(headers).body(new InputStreamResource(in));
             } else {
-                response.put("mensaje", "Lo sentimos, no tienes acceso a este recurso");
+                response.put("message", "Lo sentimos, no tienes acceso a este recurso");
                 return new ResponseEntity<Map<String, Object>>(response, HttpStatus.BAD_REQUEST);
             }
         } catch (IOException | NullPointerException e) {
-            response.put("mensaje", "Lo sentimos, hubo un error a la hora de generar el reporte");
+            response.put("message", "Lo sentimos, hubo un error a la hora de generar el reporte");
             response.put("error", e.getMessage());
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -505,11 +503,11 @@ public class ReporteController {
                 headers.add("Content-Disposition", "attachment; filename=listado-prestamos-por-usuario.xlsx");
                 return ResponseEntity.ok().headers(headers).body(new InputStreamResource(in));
             } else {
-                response.put("mensaje", "Lo sentimos, no tienes acceso a este recurso");
+                response.put("message", "Lo sentimos, no tienes acceso a este recurso");
                 return new ResponseEntity<Map<String, Object>>(response, HttpStatus.BAD_REQUEST);
             }
         } catch (IOException | NullPointerException e) {
-            response.put("mensaje", "Lo sentimos, hubo un error a la hora de generar el reporte");
+            response.put("message", "Lo sentimos, hubo un error a la hora de generar el reporte");
             response.put("error", e.getMessage());
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -537,11 +535,11 @@ public class ReporteController {
                 headers.add("Content-Disposition", "attachment; filename=listado-prestamos-por-libro.xlsx");
                 return ResponseEntity.ok().headers(headers).body(new InputStreamResource(in));
             } else {
-                response.put("mensaje", "Lo sentimos, no tienes acceso a este recurso");
+                response.put("message", "Lo sentimos, no tienes acceso a este recurso");
                 return new ResponseEntity<Map<String, Object>>(response, HttpStatus.BAD_REQUEST);
             }
         } catch (IOException | NullPointerException e) {
-            response.put("mensaje", "Lo sentimos, hubo un error a la hora de generar el reporte");
+            response.put("message", "Lo sentimos, hubo un error a la hora de generar el reporte");
             response.put("error", e.getMessage());
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -573,11 +571,11 @@ public class ReporteController {
                 headers.add("Content-Disposition", "attachment; filename=listado-prestamos-por-libro.xlsx");
                 return ResponseEntity.ok().headers(headers).body(new InputStreamResource(in));
             } else {
-                response.put("mensaje", "Lo sentimos, no tienes acceso a este recurso");
+                response.put("message", "Lo sentimos, no tienes acceso a este recurso");
                 return new ResponseEntity<Map<String, Object>>(response, HttpStatus.BAD_REQUEST);
             }
         } catch (IOException | NullPointerException e) {
-            response.put("mensaje", "Lo sentimos, hubo un error a la hora de generar el reporte");
+            response.put("message", "Lo sentimos, hubo un error a la hora de generar el reporte");
             response.put("error", e.getMessage());
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -608,11 +606,11 @@ public class ReporteController {
                 return ResponseEntity.ok().headers(headers).contentType(MediaType.APPLICATION_PDF)
                         .body(new InputStreamResource(bis));
             } else {
-                response.put("mensaje", "Lo sentimos, no tienes acceso a este recurso");
+                response.put("message", "Lo sentimos, no tienes acceso a este recurso");
                 return new ResponseEntity<Map<String, Object>>(response, HttpStatus.BAD_REQUEST);
             }
         } catch (IOException | NullPointerException e) {
-            response.put("mensaje", "Lo sentimos, hubo un error a la hora de generar el reporte");
+            response.put("message", "Lo sentimos, hubo un error a la hora de generar el reporte");
             response.put("error", e.getMessage());
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -653,7 +651,7 @@ public class ReporteController {
                 titulo = "listado-usuarios-no-disponibles";
                 tituloPdf = "Reporte de usuarios no disponibles";
             } else if (!estado.equals("true") || estado.equals("false")) {
-                response.put("mensaje", "Lo sentimos, solo puede escoger entre disponibles y no disponibles");
+                response.put("message", "Lo sentimos, solo puede escoger entre disponibles y no disponibles");
                 return new ResponseEntity<Map<String, Object>>(response, HttpStatus.BAD_REQUEST);
             }
             if (usuarios.size() != 0) {
@@ -662,11 +660,11 @@ public class ReporteController {
                 return ResponseEntity.ok().headers(headers).contentType(MediaType.APPLICATION_PDF)
                         .body(new InputStreamResource(bis));
             } else {
-                response.put("mensaje", "Lo sentimos, el reporte solicitado no existe");
+                response.put("message", "Lo sentimos, el reporte solicitado no existe");
                 return new ResponseEntity<Map<String, Object>>(response, HttpStatus.NOT_FOUND);
             }
         } catch (IllegalArgumentException | IOException | NullPointerException e) {
-            response.put("mensaje", "Lo sentimos, hubo un error a la hora de generar el reporte");
+            response.put("message", "Lo sentimos, hubo un error a la hora de generar el reporte");
             response.put("error", e.getMessage());
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -695,11 +693,11 @@ public class ReporteController {
                 headers.add("Content-Disposition", "attachment; filename=listado-usuarios-totales.xlsx");
                 return ResponseEntity.ok().headers(headers).body(new InputStreamResource(bis));
             } else {
-                response.put("mensaje", "Lo sentimos, no tienes acceso a este recurso");
+                response.put("message", "Lo sentimos, no tienes acceso a este recurso");
                 return new ResponseEntity<Map<String, Object>>(response, HttpStatus.BAD_REQUEST);
             }
         } catch (IOException | NullPointerException e) {
-            response.put("mensaje", "Lo sentimos, hubo un error a la hora de generar el reporte");
+            response.put("message", "Lo sentimos, hubo un error a la hora de generar el reporte");
             response.put("error", e.getMessage());
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -738,7 +736,7 @@ public class ReporteController {
                 titulo = "listado-usuarios-no-disponibles";
                 tituloExcel = "Reporte de usuarios no disponibles";
             } else if (!estado.equals("true") || estado.equals("false")) {
-                response.put("mensaje", "Lo sentimos, solo puede escoger entre disponibles y no disponibles");
+                response.put("message", "Lo sentimos, solo puede escoger entre disponibles y no disponibles");
                 return new ResponseEntity<Map<String, Object>>(response, HttpStatus.BAD_REQUEST);
             }
             if (usuarios.size() != 0) {
@@ -746,11 +744,11 @@ public class ReporteController {
                 headers.add("Content-Disposition", "attachment; filename=" + titulo + ".xlsx");
                 return ResponseEntity.ok().headers(headers).body(new InputStreamResource(in));
             } else {
-                response.put("mensaje", "Lo sentimos, el reporte solicitado no existe");
+                response.put("message", "Lo sentimos, el reporte solicitado no existe");
                 return new ResponseEntity<Map<String, Object>>(response, HttpStatus.NOT_FOUND);
             }
         } catch (IllegalArgumentException | IOException | NullPointerException e) {
-            response.put("mensaje", "Lo sentimos, hubo un error a la hora de generar el reporte");
+            response.put("message", "Lo sentimos, hubo un error a la hora de generar el reporte");
             response.put("error", e.getMessage());
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -774,20 +772,12 @@ public class ReporteController {
         Map<String, Object> response = new HashMap<>();
         try {
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            Usuario usuarioLogueado = usuarioService.findByEmail(userDetails.getUsername()).get();
-            List<Libro> libros = null;
+            Usuario usuarioLogueado = usuarioService.findByUsuario(userDetails.getUsername()).get();
+            List<Libro> libros = libroService.fetchWithCategoriaWithLocal();
             ByteArrayInputStream bis;
             var headers = new HttpHeaders();
             String rol = "";
-            switch (usuarioLogueado.getRol().getAuthority()) {
-                case "ROLE_SYSADMIN":
-                    libros = libroService.fetchWithCategoriaWithLocal();
-                    break;
-                default:
-                    libros = libroService.fetchByIdWithLocalesAndEmpleado(usuarioLogueado.getLocal().getId(),
-                            usuarioLogueado.getId());
-                    break;
-            }
+
             rol = usuarioLogueado.getRol().getAuthority();
             if (libros.size() != 0) {
                 bis = GenerarReportePDF.generarPDFLibros(rol, "Reporte de Libros", libros);
@@ -795,11 +785,11 @@ public class ReporteController {
                 return ResponseEntity.ok().headers(headers).contentType(MediaType.APPLICATION_PDF)
                         .body(new InputStreamResource(bis));
             } else {
-                response.put("mensaje", "Lo sentimos, no tienes acceso a este recurso");
+                response.put("message", "Lo sentimos, no tienes acceso a este recurso");
                 return new ResponseEntity<Map<String, Object>>(response, HttpStatus.BAD_REQUEST);
             }
         } catch (IOException | NullPointerException e) {
-            response.put("mensaje", "Lo sentimos, hubo un error a la hora de generar el reporte");
+            response.put("message", "Lo sentimos, hubo un error a la hora de generar el reporte");
             response.put("error", e.getMessage());
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -817,25 +807,17 @@ public class ReporteController {
     @GetMapping(value = { "/locales/{idLocal}/libros/reportes/pdf/libros-por-categoria/{id_categoria}",
             "/locales/libros/reportes/pdf/libros-por-categoria/{id_categoria}" }, produces = MediaType.APPLICATION_PDF_VALUE)
     public ResponseEntity<?> generarPdfLibrosPorCategoria(@PathVariable(value = "idLocal") Optional<Long> idLocal,
-            @PathVariable(name = "id_categoria", required = false) Long id, Authentication authentication) {
+            @PathVariable(name = "id_categoria", required = false) Long id, Authentication authentication) throws Exception {
         Map<String, Object> response = new HashMap<>();
         try {
             String rol = "";
             ByteArrayInputStream bis;
             var headers = new HttpHeaders();
-            List<Libro> libros = null;
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            Usuario usuarioLogueado = usuarioService.findByEmail(userDetails.getUsername()).get();
+            Usuario usuarioLogueado = usuarioService.findByUsuario(userDetails.getUsername()).get();
             Categoria categoria = categoriaService.findById(id).get();
-            switch (usuarioLogueado.getRol().getAuthority()) {
-                case "ROLE_SYSADMIN":
-                    libros = libroService.findByCategoria(categoria.getNombre());
-                    break;
-                default:
-                    libros = libroService.findByCategoriaAndLocal(categoria.getNombre(),
-                            usuarioLogueado.getLocal().getId());
-                    break;
-            }
+            List<Libro> libros = libroService.findByCategoria(categoria.getNombre());
+
             rol = usuarioLogueado.getRol().getAuthority();
             if (libros.size() != 0) {
                 bis = GenerarReportePDF.generarPDFLibros(rol, "Reporte de Libros Por Categoría", libros);
@@ -843,11 +825,11 @@ public class ReporteController {
                 return ResponseEntity.ok().headers(headers).contentType(MediaType.APPLICATION_PDF)
                         .body(new InputStreamResource(bis));
             } else {
-                response.put("mensaje", "Lo sentimos, no tienes acceso a este recurso");
+                response.put("message", "Lo sentimos, no tienes acceso a este recurso");
                 return new ResponseEntity<Map<String, Object>>(response, HttpStatus.BAD_REQUEST);
             }
         } catch (IOException | NullPointerException e) {
-            response.put("mensaje", "Lo sentimos, hubo un error a la hora de generar el reporte");
+            response.put("message", "Lo sentimos, hubo un error a la hora de generar el reporte");
             response.put("error", e.getMessage());
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -871,37 +853,20 @@ public class ReporteController {
             ByteArrayInputStream bis;
             var headers = new HttpHeaders();
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            Usuario usuarioLogueado = usuarioService.findByEmail(userDetails.getUsername()).get();
-            List<Libro> libros = null;
+            Usuario usuarioLogueado = usuarioService.findByUsuario(userDetails.getUsername()).get();
             String titulo = "";
             String tituloPdf = "";
             String rol = "";
+            List<Libro> libros = new ArrayList<>();
             // USO UN STRING EN VEZ DE UN BOOLEAN PARA HACER SALTAR LA EXCEPCION
             if (estado.equals("true")) {
-                switch (usuarioLogueado.getRol().getAuthority()) {
-                    case "ROLE_SYSADMIN":
-                        libros = libroService.findByIsActivo(true);
-                        break;
-                    default:
-                        libros = libroService.findByLocalAndIsActivo(usuarioLogueado.getLocal().getId(), true);
-                        break;
-                }
+                libros = libroService.findByIsActivo(true);
                 titulo = "listado-libros-disponibles";
                 tituloPdf = "Reporte de Libros Disponibles";
             } else if (estado.equals("false")) {
-                switch (usuarioLogueado.getRol().getAuthority()) {
-                    case "ROLE_SYSADMIN":
-                        libros = libroService.findByIsActivo(false);
-                        break;
-                    default:
-                        libros = libroService.findByLocalAndIsActivo(usuarioLogueado.getLocal().getId(), false);
-                        break;
-                }
+                libros = libroService.findByIsActivo(false);
                 titulo = "listado-libros-no-disponibles";
                 tituloPdf = "Reporte de Libros No Disponibles";
-            } else if (!estado.equals("true") || estado.equals("false")) {
-                response.put("mensaje", "Lo sentimos, solo puede escoger entre disponibles y no disponibles");
-                return new ResponseEntity<Map<String, Object>>(response, HttpStatus.BAD_REQUEST);
             }
             rol = usuarioLogueado.getRol().getAuthority();
             if (libros.size() != 0) {
@@ -910,11 +875,11 @@ public class ReporteController {
                 return ResponseEntity.ok().headers(headers).contentType(MediaType.APPLICATION_PDF)
                         .body(new InputStreamResource(bis));
             } else {
-                response.put("mensaje", "Lo sentimos, el reporte solicitado no existe");
+                response.put("message", "Lo sentimos, el reporte solicitado no existe");
                 return new ResponseEntity<Map<String, Object>>(response, HttpStatus.NOT_FOUND);
             }
         } catch (IllegalArgumentException | IOException | NullPointerException e) {
-            response.put("mensaje", "Lo sentimos, hubo un error a la hora de generar el reporte");
+            response.put("message", "Lo sentimos, hubo un error a la hora de generar el reporte");
             response.put("error", e.getMessage());
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -938,30 +903,21 @@ public class ReporteController {
         try {
             String rol = "";
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            Usuario usuarioLogueado = usuarioService.findByEmail(userDetails.getUsername()).get();
-            List<Libro> libros = null;
+            Usuario usuarioLogueado = usuarioService.findByUsuario(userDetails.getUsername()).get();
+            List<Libro> libros = libroService.fetchWithCategoriaWithLocal();
             ByteArrayInputStream bis;
             var headers = new HttpHeaders();
-            switch (usuarioLogueado.getRol().getAuthority()) {
-                case "ROLE_SYSADMIN":
-                    libros = libroService.fetchWithCategoriaWithLocal();
-                    break;
-                default:
-                    libros = libroService.fetchByIdWithLocalesAndEmpleado(usuarioLogueado.getLocal().getId(),
-                            usuarioLogueado.getId());
-                    break;
-            }
             rol = usuarioLogueado.getRol().getAuthority();
             if (libros.size() != 0) {
                 bis = GenerarReporteExcel.generarExcelLibros(rol, "Reporte de Libros Unicos", libros);
                 headers.add("Content-Disposition", "attachment; filename=listado-libros-unicos.xlsx");
                 return ResponseEntity.ok().headers(headers).body(new InputStreamResource(bis));
             } else {
-                response.put("mensaje", "Lo sentimos, no tienes acceso a este recurso");
+                response.put("message", "Lo sentimos, no tienes acceso a este recurso");
                 return new ResponseEntity<Map<String, Object>>(response, HttpStatus.BAD_REQUEST);
             }
         } catch (IOException | NullPointerException e) {
-            response.put("mensaje", "Lo sentimos, hubo un error a la hora de generar el reporte");
+            response.put("message", "Lo sentimos, hubo un error a la hora de generar el reporte");
             response.put("error", e.getMessage());
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -979,36 +935,27 @@ public class ReporteController {
     @GetMapping(value = { "/locales/{idLocal}/libros/reportes/xlsx/libros-por-categoria/{id}",
             "/locales/libros/reportes/xlsx/libros-por-categoria/{id}" })
     public ResponseEntity<?> repLibrosPorCategoria(@PathVariable(value = "idLocal") Optional<Long> idLocal,
-            @PathVariable("id") String id, Authentication authentication) {
+            @PathVariable("id") String id, Authentication authentication) throws Exception {
         Map<String, Object> response = new HashMap<>();
         try {
             String rol = "";
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            Usuario usuarioLogueado = usuarioService.findByEmail(userDetails.getUsername()).get();
-            List<Libro> libros = null;
+            Usuario usuarioLogueado = usuarioService.findByUsuario(userDetails.getUsername()).get();
             ByteArrayInputStream in;
             var headers = new HttpHeaders();
             Categoria categoria = categoriaService.findById(Long.parseLong(id)).get();
-            switch (usuarioLogueado.getRol().getAuthority()) {
-                case "ROLE_SYSADMIN":
-                    libros = libroService.findByCategoria(categoria.getNombre());
-                    break;
-                default:
-                    libros = libroService.findByCategoriaAndLocal(categoria.getNombre(),
-                            usuarioLogueado.getLocal().getId());
-                    break;
-            }
+            List<Libro> libros = libroService.findByCategoria(categoria.getNombre());
             rol = usuarioLogueado.getRol().getAuthority();
             if (libros.size() != 0) {
                 in = GenerarReporteExcel.generarExcelLibros(rol, "Reporte de Libros Por Categoría", libros);
                 headers.add("Content-Disposition", "attachment; filename=listado-libros-por-categoria.xlsx");
                 return ResponseEntity.ok().headers(headers).body(new InputStreamResource(in));
             } else {
-                response.put("mensaje", "Lo sentimos, no tienes acceso a este recurso");
+                response.put("message", "Lo sentimos, no tienes acceso a este recurso");
                 return new ResponseEntity<Map<String, Object>>(response, HttpStatus.BAD_REQUEST);
             }
         } catch (IOException | NullPointerException e) {
-            response.put("mensaje", "Lo sentimos, hubo un error a la hora de generar el reporte");
+            response.put("message", "Lo sentimos, hubo un error a la hora de generar el reporte");
             response.put("error", e.getMessage());
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -1029,40 +976,23 @@ public class ReporteController {
             @PathVariable("estado") String estado, Authentication authentication) {
         Map<String, Object> response = new HashMap<>();
         try {
-            List<Libro> libros = null;
+            List<Libro> libros = new ArrayList<>();
             ByteArrayInputStream in;
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            Usuario usuarioLogueado = usuarioService.findByEmail(userDetails.getUsername()).get();
+            Usuario usuarioLogueado = usuarioService.findByUsuario(userDetails.getUsername()).get();
             var headers = new HttpHeaders();
             String titulo = "";
             String tituloExcel = "";
             String rol = "";
             // USO UN STRING EN VEZ DE UN BOOLEAN PARA HACER SALTAR LA EXCEPCION
             if (estado.equals("true")) {
-                switch (usuarioLogueado.getRol().getAuthority()) {
-                    case "ROLE_SYSADMIN":
-                        libros = libroService.findByIsActivo(true);
-                        break;
-                    default:
-                        libros = libroService.findByLocalAndIsActivo(usuarioLogueado.getLocal().getId(), true);
-                        break;
-                }
+                libros = libroService.findByIsActivo(true);
                 titulo = "listado-libros-disponibles";
                 tituloExcel = "Reporte de Libros Disponibles";
             } else if (estado.equals("false")) {
-                switch (usuarioLogueado.getRol().getAuthority()) {
-                    case "ROLE_SYSADMIN":
-                        libros = libroService.findByIsActivo(false);
-                        break;
-                    default:
-                        libros = libroService.findByLocalAndIsActivo(usuarioLogueado.getLocal().getId(), false);
-                        break;
-                }
+                libros = libroService.findByIsActivo(false);
                 titulo = "listado-libros-no-disponibles";
                 tituloExcel = "Reporte de Libros No Disponibles";
-            } else if (!estado.equals("true") || estado.equals("false")) {
-                response.put("mensaje", "Lo sentimos, solo puede escoger entre disponibles y no disponibles");
-                return new ResponseEntity<Map<String, Object>>(response, HttpStatus.BAD_REQUEST);
             }
             rol = usuarioLogueado.getRol().getAuthority();
             if (libros.size() != 0) {
@@ -1070,11 +1000,11 @@ public class ReporteController {
                 headers.add("Content-Disposition", "attachment; filename=" + titulo + ".xlsx");
                 return ResponseEntity.ok().headers(headers).body(new InputStreamResource(in));
             } else {
-                response.put("mensaje", "Lo sentimos, el reporte solicitado no existe");
+                response.put("message", "Lo sentimos, el reporte solicitado no existe");
                 return new ResponseEntity<Map<String, Object>>(response, HttpStatus.NOT_FOUND);
             }
         } catch (IllegalArgumentException | IOException | NullPointerException e) {
-            response.put("mensaje", "Lo sentimos, hubo un error a la hora de generar el reporte");
+            response.put("message", "Lo sentimos, hubo un error a la hora de generar el reporte");
             response.put("error", e.getMessage());
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -1096,19 +1026,8 @@ public class ReporteController {
         Map<String, Object> response = new HashMap<>();
         try {
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            Usuario usuarioLogueado = usuarioService.findByEmail(userDetails.getUsername()).get();
-            List<Usuario> empleados = null;
-            switch (usuarioLogueado.getRol().getAuthority()) {
-                case "ROLE_SYSADMIN":
-                    // MOSTRAR TODOS LOS EMPLEADOS (ADMIN Y EMPLEADOS)
-                    empleados = usuarioService.findByRoles();
-                    break;
-                case "ROLE_ADMIN":
-                    // MOSTRAR LOS EMPLEADOS DEL LOCAL DEL ADMIN (SOLO EMPLEADOS)
-                    empleados = usuarioService.findByLocal(usuarioLogueado.getLocal().getId());
-                    empleados.stream().filter(e -> e.getRol().getAuthority().equals("ROLE_EMEPLADO"));
-                    break;
-            }
+            Usuario usuarioLogueado = usuarioService.findByUsuario(userDetails.getUsername()).get();
+            List<Usuario> empleados = usuarioService.findByRoles();
             for (int i = 0; i < empleados.size(); i++) {
                 // QUITAR DEL LISTADO DE EMPLEADOS LOS EMPLEADOS CON ROL PRUEBA
                 empleados.removeIf(e -> e.getUsuario().equals("prueba"));
@@ -1121,11 +1040,11 @@ public class ReporteController {
                 return ResponseEntity.ok().headers(headers).contentType(MediaType.APPLICATION_PDF)
                         .body(new InputStreamResource(bis));
             } else {
-                response.put("mensaje", "Lo sentimos, no tienes acceso a este recurso");
+                response.put("message", "Lo sentimos, no tienes acceso a este recurso");
                 return new ResponseEntity<Map<String, Object>>(response, HttpStatus.BAD_REQUEST);
             }
         } catch (IOException | NullPointerException e) {
-            response.put("mensaje", "Lo sentimos, hubo un error a la hora de generar el reporte");
+            response.put("message", "Lo sentimos, hubo un error a la hora de generar el reporte");
             response.put("error", e.getMessage());
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -1148,21 +1067,12 @@ public class ReporteController {
             ByteArrayInputStream bis;
             var headers = new HttpHeaders();
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            Usuario usuarioLogueado = usuarioService.findByEmail(userDetails.getUsername()).get();
-            List<Usuario> empleados = null;
+            Usuario usuarioLogueado = usuarioService.findByUsuario(userDetails.getUsername()).get();
+            List<Usuario> empleados = usuarioService.findByRoles();
             String titulo = "";
             String tituloPdf = "";
             // USO UN STRING EN VEZ DE UN BOOLEAN PARA HACER SALTAR LA EXCEPCION
             if (estado.equals("true")) {
-                switch (usuarioLogueado.getRol().getAuthority()) {
-                    case "ROLE_SYSADMIN":
-                        empleados = usuarioService.findByRoles();
-                        break;
-                    case "ROLE_ADMIN":
-                        empleados = usuarioService.findByLocal(usuarioLogueado.getLocal().getId());
-                        empleados.stream().filter(e -> e.getRol().getAuthority().equals("ROLE_EMEPLADO"));
-                        break;
-                }
                 // FILTRO SOLAMENTE LOS EMPLEADOS ACTIVOS Y SIN USUARIOS CON ROL PRUEBA
                 for (int i = 0; i < empleados.size(); i++) {
                     // QUITAR DEL LISTADO DE EMPLEADOS LOS EMPLEADOS CON ROL PRUEBA
@@ -1171,42 +1081,31 @@ public class ReporteController {
                 titulo = "listado-empleados-disponibles";
                 tituloPdf = "Reporte de empleados disponibles";
             } else if (estado.equals("false")) {
-                switch (usuarioLogueado.getRol().getAuthority()) {
-                    case "ROLE_SYSADMIN":
-                        empleados = usuarioService.findByRoles();
-                        break;
-                    case "ROLE_ADMIN":
-                        empleados = usuarioService.findByLocal(usuarioLogueado.getLocal().getId());
-                        empleados.stream().filter(e -> e.getRol().getAuthority().equals("ROLE_EMEPLADO"));
-                        break;
-                }
                 for (int i = 0; i < empleados.size(); i++) {
                     empleados.removeIf(e -> e.getUsuario().equals("prueba"));
                 }
                 titulo = "listado-empleados-no-disponibles";
                 tituloPdf = "Reporte de empleados no disponibles";
-            } else if (!estado.equals("true") || estado.equals("false")) {
-                response.put("mensaje", "Lo sentimos, solo puede escoger entre disponibles y no disponibles");
-                return new ResponseEntity<Map<String, Object>>(response, HttpStatus.BAD_REQUEST);
             }
+
             if (empleados.size() != 0) {
                 bis = GenerarReportePDF.generarPDFUsuarios(tituloPdf, empleados);
                 headers.add("Content-Disposition", "inline; filename=" + titulo + ".pdf");
                 return ResponseEntity.ok().headers(headers).contentType(MediaType.APPLICATION_PDF)
                         .body(new InputStreamResource(bis));
             } else {
-                response.put("mensaje", "Lo sentimos, no tienes acceso a este recurso");
+                response.put("message", "Lo sentimos, no tienes acceso a este recurso");
                 return new ResponseEntity<Map<String, Object>>(response, HttpStatus.BAD_REQUEST);
             }
         } catch (IOException | NullPointerException e) {
-            response.put("mensaje", "Lo sentimos, hubo un error a la hora de generar el reporte");
+            response.put("message", "Lo sentimos, hubo un error a la hora de generar el reporte");
             response.put("error", e.getMessage());
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     // GENERAR PDF DE EMPLEADOS POR LOCAL
-    @ApiOperation(value = "Generación de reporte en formato pdf de empleados por su local", response = ResponseEntity.class)
+    /*@ApiOperation(value = "Generación de reporte en formato pdf de empleados por su local", response = ResponseEntity.class)
     @ApiResponses(value = { @ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
             @ApiResponse(code = 302, message = " "),
             @ApiResponse(code = 400, message = "No tienes acceso a este recurso"),
@@ -1232,15 +1131,15 @@ public class ReporteController {
                 return ResponseEntity.ok().headers(headers).contentType(MediaType.APPLICATION_PDF)
                         .body(new InputStreamResource(bis));
             } else {
-                response.put("mensaje", "Lo sentimos, no tienes acceso a este recurso");
+                response.put("message", "Lo sentimos, no tienes acceso a este recurso");
                 return new ResponseEntity<Map<String, Object>>(response, HttpStatus.BAD_REQUEST);
             }
         } catch (IOException | NullPointerException e) {
-            response.put("mensaje", "Lo sentimos, hubo un error a la hora de generar el reporte");
+            response.put("message", "Lo sentimos, hubo un error a la hora de generar el reporte");
             response.put("error", e.getMessage());
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-    }
+    }*/
 
     // ######################## EXCEL ########################
     // GENERAR REPORTE EXCEL DE EMPLEADOS TOTALES
@@ -1257,19 +1156,8 @@ public class ReporteController {
         Map<String, Object> response = new HashMap<>();
         try {
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            Usuario usuarioLogueado = usuarioService.findByEmail(userDetails.getUsername()).get();
-            List<Usuario> empleados = null;
-            switch (usuarioLogueado.getRol().getAuthority()) {
-                case "ROLE_SYSADMIN":
-                    // MOSTRAR TODOS LOS EMPLEADOS (ADMIN Y EMPLEADOS)
-                    empleados = usuarioService.findByRoles();
-                    break;
-                case "ROLE_ADMIN":
-                    // MOSTRAR LOS EMPLEADOS DEL LOCAL DEL ADMIN (SOLO EMPLEADOS)
-                    empleados = usuarioService.findByLocal(usuarioLogueado.getLocal().getId());
-                    empleados.stream().filter(e -> e.getRol().getAuthority().equals("ROLE_EMEPLADO"));
-                    break;
-            }
+            Usuario usuarioLogueado = usuarioService.findByUsuario(userDetails.getUsername()).get();
+            List<Usuario> empleados = empleados = usuarioService.findByRoles();
             for (int i = 0; i < empleados.size(); i++) {
                 // QUITAR DEL LISTADO DE EMPLEADOS LOS EMPLEADOS CON ROL PRUEBA
                 empleados.removeIf(e -> e.getUsuario().equals("prueba"));
@@ -1281,11 +1169,11 @@ public class ReporteController {
                 headers.add("Content-Disposition", "attachment; filename=listado-empleados-totales.xlsx");
                 return ResponseEntity.ok().headers(headers).body(new InputStreamResource(bis));
             } else {
-                response.put("mensaje", "Lo sentimos, no tienes acceso a este recurso");
+                response.put("message", "Lo sentimos, no tienes acceso a este recurso");
                 return new ResponseEntity<Map<String, Object>>(response, HttpStatus.BAD_REQUEST);
             }
         } catch (IOException | NullPointerException e) {
-            response.put("mensaje", "Lo sentimos, hubo un error a la hora de generar el reporte");
+            response.put("message", "Lo sentimos, hubo un error a la hora de generar el reporte");
             response.put("error", e.getMessage());
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -1307,22 +1195,13 @@ public class ReporteController {
         try {
             ByteArrayInputStream in;
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            Usuario usuarioLogueado = usuarioService.findByEmail(userDetails.getUsername()).get();
-            List<Usuario> empleados = null;
+            Usuario usuarioLogueado = usuarioService.findByUsuario(userDetails.getUsername()).get();
+            List<Usuario> empleados = usuarioService.findByRoles();
             var headers = new HttpHeaders();
             String titulo = "";
             String tituloExcel = "";
             // USO UN STRING EN VEZ DE UN BOOLEAN PARA HACER SALTAR LA EXCEPCION
             if (estado.equals("true")) {
-                switch (usuarioLogueado.getRol().getAuthority()) {
-                    case "ROLE_SYSADMIN":
-                        empleados = usuarioService.findByRoles();
-                        break;
-                    case "ROLE_ADMIN":
-                        empleados = usuarioService.findByLocal(usuarioLogueado.getLocal().getId());
-                        empleados.stream().filter(e -> e.getRol().getAuthority().equals("ROLE_EMEPLADO"));
-                        break;
-                }
                 // FILTRO SOLAMENTE LOS EMPLEADOS ACTIVOS Y SIN USUARIOS CON ROL PRUEBA
                 for (int i = 0; i < empleados.size(); i++) {
                     // QUITAR DEL LISTADO DE EMPLEADOS LOS EMPLEADOS CON ROL PRUEBA
@@ -1331,41 +1210,31 @@ public class ReporteController {
                 titulo = "listado-empleados-disponibles";
                 tituloExcel = "Reporte de empleados disponibles";
             } else if (estado.equals("false")) {
-                switch (usuarioLogueado.getRol().getAuthority()) {
-                    case "ROLE_SYSADMIN":
-                        empleados = usuarioService.findByRoles();
-                        break;
-                    case "ROLE_ADMIN":
-                        empleados = usuarioService.findByLocal(usuarioLogueado.getLocal().getId());
-                        empleados.stream().filter(e -> e.getRol().getAuthority().equals("ROLE_EMEPLADO"));
-                        break;
-                }
+
                 for (int i = 0; i < empleados.size(); i++) {
                     empleados.removeIf(e -> e.getUsuario().equals("prueba"));
                 }
                 titulo = "listado-empleados-no-disponibles";
                 tituloExcel = "Reporte de empleados no disponibles";
-            } else if (!estado.equals("true") || estado.equals("false")) {
-                response.put("mensaje", "Lo sentimos, solo puede escoger entre disponibles y no disponibles");
-                return new ResponseEntity<Map<String, Object>>(response, HttpStatus.BAD_REQUEST);
             }
+
             if (empleados.size() != 0) {
                 in = GenerarReporteExcel.generarExcelUsuarios(tituloExcel, empleados);
                 headers.add("Content-Disposition", "attachment; filename=" + titulo + ".xlsx");
                 return ResponseEntity.ok().headers(headers).body(new InputStreamResource(in));
             } else {
-                response.put("mensaje", "Lo sentimos, no tienes acceso a este recurso");
+                response.put("message", "Lo sentimos, no tienes acceso a este recurso");
                 return new ResponseEntity<Map<String, Object>>(response, HttpStatus.BAD_REQUEST);
             }
         } catch (IOException | NullPointerException e) {
-            response.put("mensaje", "Lo sentimos, hubo un error a la hora de generar el reporte");
+            response.put("message", "Lo sentimos, hubo un error a la hora de generar el reporte");
             response.put("error", e.getMessage());
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     // GENERAR REPORTE EXCEL DE EMPLEADOS POR LOCAL
-    @ApiOperation(value = "Generación de reporte en formato pdf de empleados por su local", response = ResponseEntity.class)
+    /*@ApiOperation(value = "Generación de reporte en formato pdf de empleados por su local", response = ResponseEntity.class)
     @ApiResponses(value = { @ApiResponse(code = 200, message = " ", response = InputStreamResource.class),
             @ApiResponse(code = 302, message = " "),
             @ApiResponse(code = 400, message = "No tienes acceso a este recurso"),
@@ -1390,13 +1259,13 @@ public class ReporteController {
                 headers.add("Content-Disposition", "attachment; filename=listado-empleados-por-local.xlsx");
                 return ResponseEntity.ok().headers(headers).body(new InputStreamResource(in));
             } else {
-                response.put("mensaje", "Lo sentimos, no tienes acceso a este recurso");
+                response.put("message", "Lo sentimos, no tienes acceso a este recurso");
                 return new ResponseEntity<Map<String, Object>>(response, HttpStatus.BAD_REQUEST);
             }
         } catch (IOException | NullPointerException e) {
-            response.put("mensaje", "Lo sentimos, hubo un error a la hora de generar el reporte");
+            response.put("message", "Lo sentimos, hubo un error a la hora de generar el reporte");
             response.put("error", e.getMessage());
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-    }
+    }*/
 }

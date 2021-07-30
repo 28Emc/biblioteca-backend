@@ -18,12 +18,11 @@ public class Categoria {
     @ApiModelProperty(notes = "ID Autogenerado")
     private Long id;
 
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false)
     @ApiModelProperty(notes = "Nombre de la categoría", required = true, example = "Fantasía")
     private String nombre;
 
-    @Column(unique = true, nullable = false)
-    @ApiModelProperty(notes = "Descripción de la categoría", required = true, example = "Libros de fantasía")
+    @ApiModelProperty(notes = "Descripción de la categoría", example = "Libros de fantasía")
     private String descripcion;
 
     @Column(name = "fecha_registro", nullable = false)
@@ -114,7 +113,12 @@ public class Categoria {
     public Categoria() {
     }
 
-    public Categoria(Long id, String nombre, String descripcion, LocalDateTime fechaRegistro, LocalDateTime fechaActualizacion, LocalDateTime fechaBaja, boolean isActivo, List<Libro> libros) {
+    public Categoria(String nombre, String descripcion) {
+        this.nombre = nombre;
+        this.descripcion = descripcion;
+    }
+
+    public Categoria(Long id, String nombre, String descripcion, LocalDateTime fechaRegistro, LocalDateTime fechaActualizacion, LocalDateTime fechaBaja, boolean isActivo) {
         this.id = id;
         this.nombre = nombre;
         this.descripcion = descripcion;
@@ -122,7 +126,6 @@ public class Categoria {
         this.fechaActualizacion = fechaActualizacion;
         this.fechaBaja = fechaBaja;
         this.isActivo = isActivo;
-        this.libros = libros;
     }
 
     @PrePersist

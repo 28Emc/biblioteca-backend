@@ -1,14 +1,10 @@
 package com.biblioteca.backend.model.Local;
 
-import com.biblioteca.backend.model.Empresa;
-import com.biblioteca.backend.model.Usuario.Usuario;
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import io.swagger.annotations.ApiModelProperty;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Entity
 @Table(name = "tb_local")
@@ -21,11 +17,11 @@ public class Local {
     @ApiModelProperty(notes = "ID autogenerado")
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "id_empresa")
-    private Empresa empresa;
+    @Column(name = "id_empresa")
+    @ApiModelProperty(notes = "ID de la empresa relacionada con el local", required = true, example = "1")
+    private Long idEmpresa;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     @ApiModelProperty(notes = "Dirección del local", required = true, example = "Av. Lima 123")
     private String direccion;
 
@@ -47,8 +43,8 @@ public class Local {
 
     // LOCAL(1):EMPLEADO(*)
     //@JsonIgnore
-    @OneToMany(mappedBy = "local")
-    private List<Usuario> usuarios;
+    //@OneToMany(mappedBy = "local")
+    //private List<Usuario> usuarios;
 
     public Long getId() {
         return id;
@@ -99,35 +95,36 @@ public class Local {
     }
 
     @JsonBackReference
-    public Empresa getEmpresa() {
-        return empresa;
+    public Long getIdEmpresa() {
+        return idEmpresa;
     }
 
-    public void setEmpresa(Empresa empresa) {
-        this.empresa = empresa;
+    public void setIdEmpresa(Long idEmpresa) {
+        this.idEmpresa = idEmpresa;
     }
 
+    /*
     @JsonManagedReference
-    public List<Usuario> getUsuarios() {
+    /public List<Usuario> getUsuarios() {
         return usuarios;
     }
 
     public void setUsuarios(List<Usuario> usuarios) {
         this.usuarios = usuarios;
     }
+    */
 
     public Local() {
     }
 
-    public Local(Long id, Empresa empresa, String direccion, LocalDateTime fechaRegistro, LocalDateTime fechaActualizacion, LocalDateTime fechaBaja, boolean isActivo, List<Usuario> usuarios) {
+    public Local(Long id, Long idEmpresa, String direccion, LocalDateTime fechaRegistro, LocalDateTime fechaActualizacion, LocalDateTime fechaBaja, boolean isActivo) {
         this.id = id;
-        this.empresa = empresa;
+        this.idEmpresa = idEmpresa;
         this.direccion = direccion;
         this.fechaRegistro = fechaRegistro;
         this.fechaActualizacion = fechaActualizacion;
         this.fechaBaja = fechaBaja;
         this.isActivo = isActivo;
-        this.usuarios = usuarios;
     }
 
     @PrePersist

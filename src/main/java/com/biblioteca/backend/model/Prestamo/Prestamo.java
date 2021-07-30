@@ -1,11 +1,11 @@
 package com.biblioteca.backend.model.Prestamo;
 
+import com.biblioteca.backend.model.Empleado;
 import com.biblioteca.backend.model.Libro.Libro;
-import com.biblioteca.backend.model.Usuario.Usuario;
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import io.swagger.annotations.ApiModelProperty;
+import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
@@ -23,15 +23,14 @@ public class Prestamo {
     @ApiModelProperty(notes = "ID Autogenerado")
     private Long id;
 
-    // PRESTAMOS(*):USER(1)
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "id_usuario")
-    private Usuario usuario;
+    // PRESTAMOS(*):USER(1) - RELACIÓN INDIRECTA YA QUE PERTENECEN A DISTINTAS BD
+    @Column(name = "id_usuario")
+    private Long idUsuario;
 
     // PRESTAMOS(*):EMPLEADO(1)
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_empleado")
-    private Usuario empleado;
+    private Empleado empleado;
 
     // PRESTAMOS(*):LIBRO(1)
     @ManyToOne(fetch = FetchType.EAGER)
@@ -42,25 +41,26 @@ public class Prestamo {
     @ApiModelProperty(notes = "Fecha de registro del préstamo", required = true, example = "2020-03-12")
     private LocalDateTime fechaRegistro;
 
-    @Column(name = "fecha_prestamo", nullable = false)
-    @ApiModelProperty(notes = "Fecha de préstamo", required = true, example = "2020-03-12")
+    @Column(name = "fecha_prestamo")
+    @ApiModelProperty(notes = "Fecha de préstamo", example = "2020-03-12")
     private LocalDateTime fechaPrestamo;
 
-    @Column(name = "fecha_devolucion", nullable = false)
-    @ApiModelProperty(notes = "Fecha de devolución del préstamo", required = true, example = "2020-03-12")
+    @Column(name = "fecha_devolucion")
+    @ApiModelProperty(notes = "Fecha de devolución del préstamo", example = "2020-03-12")
     private LocalDateTime fechaDevolucion;
 
     @Column(name = "fecha_baja")
     @ApiModelProperty(notes = "Fecha de baja del préstamo", example = "2020-03-12")
     private LocalDateTime fechaBaja;
 
+    @Type(type = "text")
     @Column(nullable = false)
     @ApiModelProperty(notes = "Observaciones del préstamo", required = true, example = "El préstamo del libro A ha sido anulado por el empleado B el dia C")
     private String observaciones;
 
-    @Column(name = "is_activo", nullable = false)
-    @ApiModelProperty(notes = "Estado del préstamo", required = true, example = "true")
-    private boolean isActivo;
+    @Column(name = "estado", nullable = false)
+    @ApiModelProperty(notes = "Estado del préstamo", required = true, example = "E1")
+    private String estado;
 
     public Long getId() {
         return id;
@@ -102,12 +102,12 @@ public class Prestamo {
         this.fechaBaja = fechaBaja;
     }
 
-    public boolean isActivo() {
-        return isActivo;
+    public String getEstado() {
+        return estado;
     }
 
-    public void setActivo(boolean activo) {
-        isActivo = activo;
+    public void setEstado(String estado) {
+        this.estado = estado;
     }
 
     public String getObservaciones() {
@@ -118,21 +118,20 @@ public class Prestamo {
         this.observaciones = observaciones;
     }
 
-    //@JsonBackReference
-    public Usuario getUsuario() {
-        return usuario;
+    public Long getIdUsuario() {
+        return idUsuario;
     }
 
-    public void setUsuario(Usuario usuario) {
-        this.usuario = usuario;
+    public void setIdUsuario(Long idUsuario) {
+        this.idUsuario = idUsuario;
     }
 
     //@JsonBackReference
-    public Usuario getEmpleado() {
+    public Empleado getEmpleado() {
         return empleado;
     }
 
-    public void setEmpleado(Usuario empleado) {
+    public void setEmpleado(Empleado empleado) {
         this.empleado = empleado;
     }
 
@@ -148,9 +147,9 @@ public class Prestamo {
     public Prestamo() {
     }
 
-    public Prestamo(Long id, Usuario usuario, Usuario empleado, Libro libro, LocalDateTime fechaRegistro, LocalDateTime fechaPrestamo, LocalDateTime fechaDevolucion, LocalDateTime fechaBaja, String observaciones, boolean isActivo) {
+    public Prestamo(Long id, Long idUsuario, Empleado empleado, Libro libro, LocalDateTime fechaRegistro, LocalDateTime fechaPrestamo, LocalDateTime fechaDevolucion, LocalDateTime fechaBaja, String observaciones, String estado) {
         this.id = id;
-        this.usuario = usuario;
+        this.idUsuario = idUsuario;
         this.empleado = empleado;
         this.libro = libro;
         this.fechaRegistro = fechaRegistro;
@@ -158,12 +157,12 @@ public class Prestamo {
         this.fechaDevolucion = fechaDevolucion;
         this.fechaBaja = fechaBaja;
         this.observaciones = observaciones;
-        this.isActivo = isActivo;
+        this.estado = estado;
     }
 
     @PrePersist
     public void prePersist() {
-        isActivo = false;
+        estado = "E1";
         fechaRegistro = LocalDateTime.now();
     }
 

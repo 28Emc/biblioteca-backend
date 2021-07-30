@@ -1,5 +1,6 @@
 package com.biblioteca.backend.model;
 
+import com.biblioteca.backend.model.Libro.Libro;
 import com.biblioteca.backend.model.Local.Local;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import io.swagger.annotations.ApiModelProperty;
@@ -16,11 +17,11 @@ public class Empresa {
     @ApiModelProperty(notes = "ID Autogenerado")
     private Long id;
 
-    @Column(length = 11, unique = true, nullable = false)
+    @Column(nullable = false)
     @ApiModelProperty(notes = "RUC de la empresa", required = true, example = "10431143201")
     private String ruc;
 
-    @Column(name = "razon_social", length = 100, unique = true, nullable = false)
+    @Column(name = "razon_social", nullable = false)
     @ApiModelProperty(notes = "Razón social de la empresa", required = true, example = "Pepito S.A.C.")
     private String razonSocial;
 
@@ -28,10 +29,9 @@ public class Empresa {
     @ApiModelProperty(notes = "Dirección de la empresa", required = true, example = "Av. Arequipa 456")
     private String direccion;
 
-    // EMPRESA(1):LOCAL(*)
     //@JsonIgnore
     @OneToMany(mappedBy = "empresa")
-    private List<Local> locales;
+    private List<Sistema> sistemas;
 
     public Long getId() {
         return id;
@@ -65,24 +65,13 @@ public class Empresa {
         this.direccion = direccion;
     }
 
-
-    @JsonManagedReference
-    public List<Local> getLocales() {
-        return locales;
-    }
-
-    public void setLocales(List<Local> locales) {
-        this.locales = locales;
-    }
-
     public Empresa() {
     }
 
-    public Empresa(Long id, String razonSocial, String ruc, String direccion, List<Local> locales) {
+    public Empresa(Long id, String razonSocial, String ruc, String direccion) {
         this.id = id;
         this.razonSocial = razonSocial;
         this.ruc = ruc;
         this.direccion = direccion;
-        this.locales = locales;
     }
 }

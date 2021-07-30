@@ -16,7 +16,6 @@ import com.biblioteca.backend.service.IEmpresaService;
 import com.biblioteca.backend.service.ILibroService;
 import com.biblioteca.backend.service.ILocalService;
 import com.biblioteca.backend.service.IUsuarioService;
-import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -72,12 +71,12 @@ public class LocalController {
             // VER SI EXCLUIR EL LOCAL CON ID "1" (RESERVADO PARA LOS USUARIOS)
             locales = localService.findAll();
         } catch (Exception e) {
-            response.put("mensaje", "Lo sentimos, hubo un error a la hora de buscar los locales");
+            response.put("message", "Lo sentimos, hubo un error a la hora de buscar los locales");
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         }
 
         response.put("locales", locales);
-        response.put("mensaje", "Locales encontrados");
+        response.put("message", "Locales encontrados");
         return new ResponseEntity<>(response, HttpStatus.FOUND);
     }
 
@@ -99,19 +98,19 @@ public class LocalController {
             if (id.matches("^\\d+$") && !id.equals("1")) {
                 local = localService.findById(Long.parseLong(id)).orElseThrow();
             } else {
-                response.put("mensaje", "El id es inválido");
+                response.put("message", "El id es inválido");
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
         } catch (NoSuchElementException e) {
-            response.put("mensaje", "El local no existe");
+            response.put("message", "El local no existe");
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (Exception e) {
-            response.put("mensaje", "Lo sentimos, hubo un error a la hora de buscar el local");
+            response.put("message", "Lo sentimos, hubo un error a la hora de buscar el local");
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
         response.put("local", local);
-        response.put("mensaje", "Local encontrado");
+        response.put("message", "Local encontrado");
         return new ResponseEntity<>(response, HttpStatus.FOUND);
     }
 
@@ -128,7 +127,7 @@ public class LocalController {
     public ResponseEntity<?> crearLocal(@Valid @RequestBody LocalDTO localDTO, BindingResult result,
                                         Authentication authentication) {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        Usuario usuarioLogueado = usuarioService.findByEmail(userDetails.getUsername()).orElseThrow();
+        Usuario usuarioLogueado = usuarioService.findByUsuario(userDetails.getUsername()).orElseThrow();
         Map<String, Object> response = new HashMap<>();
         Optional<Local> localEncontrado;
 
@@ -138,30 +137,31 @@ public class LocalController {
                         .stream()
                         .map(error -> error.getField() + " : " + error.getDefaultMessage())
                         .collect(Collectors.toList());
-                response.put("mensaje", errores);
+                response.put("message", errores);
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
 
             localEncontrado = localService.findByDireccion(localDTO.getDireccion());
 
             if (localEncontrado.isPresent()) {
-                response.put("mensaje", "La dirección ya está asociada a otro local");
+                response.put("message", "La dirección ya está asociada a otro local");
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             } else {
                 Local local = new Local();
                 local.setDireccion(localDTO.getDireccion().trim());
-                local.setInfoAdicional(localDTO.getInfoAdicional().trim());
                 // SYSADMIN CREA LOCALES DE LA EMPRESA PERTENECIENTE SOLAMENTE
-                local.setEmpresa(usuarioLogueado.getLocal().getEmpresa());
+
+                /* TODO: REVISAR
+                local.setIdEmpresa(usuarioLogueado.getLocal().getIdEmpresa());*/
                 localService.save(local);
             }
 
         } catch (DataIntegrityViolationException e) {
-            response.put("mensaje", "Lo sentimos, hubo un error a la hora de registrar el local");
+            response.put("message", "Lo sentimos, hubo un error a la hora de registrar el local");
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        response.put("mensaje", "Local registrado");
+        response.put("message", "Local registrado");
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
@@ -182,7 +182,7 @@ public class LocalController {
             if (id.matches("^\\d+$") && !id.equals("1")) {
                 localEncontrado = localService.findById(Long.parseLong(id)).orElseThrow();
             } else {
-                response.put("mensaje", "El id es inválido");
+                response.put("message", "El id es inválido");
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
 
@@ -191,31 +191,30 @@ public class LocalController {
                         .stream()
                         .map(error -> error.getField() + " : " + error.getDefaultMessage())
                         .collect(Collectors.toList());
-                response.put("mensaje", errores);
+                response.put("message", errores);
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
 
             if (localService.findByDireccion(localDTO.getDireccion()).isPresent()) {
-                response.put("mensaje",
+                response.put("message",
                         "Lo sentimos, el local con esa dirección ya existe");
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             } else {
                 localEncontrado.setDireccion(localDTO.getDireccion().trim());
-                localEncontrado.setInfoAdicional(localDTO.getInfoAdicional().trim());
                 localService.save(localEncontrado);
             }
 
         } catch (NoSuchElementException e) {
-            response.put("mensaje", "Lo sentimos, el local no existe");
+            response.put("message", "Lo sentimos, el local no existe");
             response.put("error", e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (DataIntegrityViolationException e) {
-            response.put("mensaje", "Lo sentimos, hubo un error a la hora de actualizar el local");
+            response.put("message", "Lo sentimos, hubo un error a la hora de actualizar el local");
             response.put("error", e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        response.put("mensaje", "Local actualizado");
+        response.put("message", "Local actualizado");
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
@@ -243,12 +242,12 @@ public class LocalController {
             if (id.matches("^\\d+$") && !id.equals("1")) {
                 localEncontrado = localService.findById(Long.parseLong(id)).orElseThrow();
             } else {
-                response.put("mensaje", "El id es inválido");
+                response.put("message", "El id es inválido");
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
 
             if (!localEncontrado.isActivo()) {
-                response.put("mensaje", "El local ya está deshabilitado");
+                response.put("message", "El local ya está deshabilitado");
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
 
@@ -259,6 +258,7 @@ public class LocalController {
             // - LOS USUARIOS INACTIVOS SE AGREGAN A OTRO LISTADO
             // - GUARDO LOS CAMBIOS
             // EL MISMO PROCEDIMIENTO SE APLICA PARA LOS LIBROS
+            /* TODO: REVISAR
             usuariosTotales = usuarioService.findByLocal(Long.parseLong(id));
             usuariosTotales.forEach(u -> {
                 if (u.isActivo()) {
@@ -268,7 +268,7 @@ public class LocalController {
                 } else {
                     usuariosInactivos.add(u);
                 }
-            });
+            });*/
 
             librosTotales = libroService.findByLocal(Long.parseLong(id));
             librosTotales.forEach(l -> {
@@ -288,14 +288,14 @@ public class LocalController {
             localEncontrado.setActivo(false);
             localService.save(localEncontrado);
         } catch (NoSuchElementException e) {
-            response.put("mensaje", "El local no existe");
+            response.put("message", "El local no existe");
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (DataIntegrityViolationException e) {
-            response.put("mensaje", "Lo sentimos, hubo un error a la hora de deshabilitar el local");
+            response.put("message", "Lo sentimos, hubo un error a la hora de deshabilitar el local");
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        response.put("mensaje", "Local deshabilitado");
+        response.put("message", "Local deshabilitado");
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
@@ -321,15 +321,16 @@ public class LocalController {
             if (id.matches("^\\d+$") && !id.equals("1")) {
                 localEncontrado = localService.findById(Long.parseLong(id)).orElseThrow();
             } else {
-                response.put("mensaje", "Lo sentimos, el id es inválido");
+                response.put("message", "Lo sentimos, el id es inválido");
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
 
             if (localEncontrado.isActivo()) {
-                response.put("mensaje", "El local ya está habilitado");
+                response.put("message", "El local ya está habilitado");
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
 
+            /* TODO: REVISAR
             usuariosTotales = usuarioService.findByLocal(Long.parseLong(id));
             usuariosTotales.forEach(u -> {
                 if (!u.isActivo()) {
@@ -339,7 +340,7 @@ public class LocalController {
                 } else {
                     usuariosActivos.add(u);
                 }
-            });
+            });*/
 
             librosTotales = libroService.findByLocal(Long.parseLong(id));
             librosTotales.forEach(l -> {
@@ -359,14 +360,14 @@ public class LocalController {
             localEncontrado.setActivo(true);
             localService.save(localEncontrado);
         } catch (NoSuchElementException e) {
-            response.put("mensaje", "El local no existe");
+            response.put("message", "El local no existe");
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (DataIntegrityViolationException e) {
-            response.put("mensaje", "Lo sentimos, hubo un error a la hora de habilitar el local");
+            response.put("message", "Lo sentimos, hubo un error a la hora de habilitar el local");
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        response.put("mensaje", "Local habilitado");
+        response.put("message", "Local habilitado");
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 

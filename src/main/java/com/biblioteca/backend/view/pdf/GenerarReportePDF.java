@@ -97,6 +97,7 @@ public class GenerarReportePDF {
             cellCuerpo.setBorder(Border.NO_BORDER);
             cellCuerpo.setPadding(10f);
             tablaCuerpo.addCell(cellCuerpo);
+            /* TODO: REVISAR
             if (prestamoItem.getEmpleado().getUsuario().equals("prueba")) {
                 cellCuerpo = new Cell().add(new Paragraph().add(new Text("No definido").addStyle(styleCuerpo2)));
             } else {
@@ -128,7 +129,7 @@ public class GenerarReportePDF {
                 cellCuerpo = new Cell().add(new Paragraph().add(new Text("Terminado").addStyle(styleCuerpo2)));
             } else {
                 cellCuerpo = new Cell().add(new Paragraph().add(new Text("No devuelto").addStyle(styleCuerpo2)));
-            }
+            }*/
             cellCuerpo.setBorder(Border.NO_BORDER);
             cellCuerpo.setPadding(10f);
             tablaCuerpo.addCell(cellCuerpo);
@@ -314,6 +315,7 @@ public class GenerarReportePDF {
         listCabecera.add("Username");
         listCabecera.add("Estado");
         // Por cada elemento de mi cabecera, creo una celda y la agrego a la tabla
+        /* TODO: REVISAR
         for (String cabeceraItem : listCabecera) {
             Text textCuerpo = new Text(cabeceraItem);
             textCuerpo.addStyle(styleCuerpo);
@@ -359,7 +361,7 @@ public class GenerarReportePDF {
             cellCuerpo.setBorder(Border.NO_BORDER);
             cellCuerpo.setPadding(10f);
             tablaCuerpo.addCell(cellCuerpo);
-        }
+        }*/
         // Agrego la tabla al documento plantilla
         document.add(tablaCuerpo);
         // Cierro el documento para terminar de crear la plantilla

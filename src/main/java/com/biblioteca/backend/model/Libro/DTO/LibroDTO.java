@@ -1,5 +1,6 @@
 package com.biblioteca.backend.model.Libro.DTO;
 
+import javax.persistence.Column;
 import javax.validation.constraints.*;
 import java.time.LocalDateTime;
 
@@ -7,11 +8,21 @@ public class LibroDTO {
 
     private Long id;
 
+    @Column(name = "id_categoria")
+    @NotNull(message = "{notNull.libroDTO.idCategoria}")
+    private Long idCategoria;
+
+    @Column(name = "id_local")
+    @NotNull(message = "{notNull.libroDTO.idLocal}")
+    private Long idLocal;
+
     @NotEmpty(message = "{notEmpty.libroDTO.isbn}")
+    @Size(min = 1, max = 30, message = "{size.libroDTO.isbn}")
+    @Column(name = "isbn")
     private String ISBN;
 
     @NotEmpty(message = "{notEmpty.libroDTO.titulo}")
-    @Size(min = 1, max = 100, message = "{size.libroDTO.titulo}")
+    @Size(min = 1, max = 255, message = "{size.libroDTO.titulo}")
     private String titulo;
 
     @NotEmpty(message = "{notEmpty.libroDTO.autor}")
@@ -20,21 +31,18 @@ public class LibroDTO {
 
     private String descripcion;
 
-    @NotNull(message = "{notNull.libroDTO.fechaPublicacion}")
-    private LocalDateTime fechaPublicacion;
-
-    private boolean isActivo;
-
     @Min(value = 1)
-    @Max(value = 9999)
+    @Max(value = 99999)
     @NotNull(message = "{notNull.libroDTO.stock}")
     private Integer stock;
 
+    @Size(min = 1, max = 255, message = "{size.libroDTO.foto}")
+    @Column(name = "foto_libro")
     private String fotoLibro;
 
-    private Long local;
-
-    private Long categoria;
+    @NotNull(message = "{notNull.libroDTO.fechaPublicacion}")
+    @Column(name = "fecha_publicacion")
+    private LocalDateTime fechaPublicacion;
 
     public Long getId() {
         return id;
@@ -42,6 +50,22 @@ public class LibroDTO {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Long getIdCategoria() {
+        return idCategoria;
+    }
+
+    public void setIdCategoria(Long idCategoria) {
+        this.idCategoria = idCategoria;
+    }
+
+    public Long getIdLocal() {
+        return idLocal;
+    }
+
+    public void setIdLocal(Long idLocal) {
+        this.idLocal = idLocal;
     }
 
     public String getISBN() {
@@ -84,14 +108,6 @@ public class LibroDTO {
         this.fechaPublicacion = fechaPublicacion;
     }
 
-    public boolean isActivo() {
-        return isActivo;
-    }
-
-    public void setActivo(boolean activo) {
-        isActivo = activo;
-    }
-
     public Integer getStock() {
         return stock;
     }
@@ -108,36 +124,31 @@ public class LibroDTO {
         this.fotoLibro = fotoLibro;
     }
 
-    public Long getLocal() {
-        return local;
-    }
-
-    public void setLocal(Long local) {
-        this.local = local;
-    }
-
-    public Long getCategoria() {
-        return categoria;
-    }
-
-    public void setCategoria(Long categoria) {
-        this.categoria = categoria;
-    }
-
     public LibroDTO() {
     }
 
-    public LibroDTO(Long id, String ISBN, String titulo, String autor, String descripcion, LocalDateTime fechaPublicacion, boolean isActivo, Integer stock, String fotoLibro, Long local, Long categoria) {
-        this.id = id;
+    public LibroDTO(Long idCategoria, Long idLocal, String ISBN, String titulo, String autor, String descripcion, Integer stock, String fotoLibro, LocalDateTime fechaPublicacion) {
+        this.idCategoria = idCategoria;
+        this.idLocal = idLocal;
         this.ISBN = ISBN;
         this.titulo = titulo;
         this.autor = autor;
         this.descripcion = descripcion;
-        this.fechaPublicacion = fechaPublicacion;
-        this.isActivo = isActivo;
         this.stock = stock;
         this.fotoLibro = fotoLibro;
-        this.local = local;
-        this.categoria = categoria;
+        this.fechaPublicacion = fechaPublicacion;
+    }
+
+    public LibroDTO(Long id, Long idCategoria, Long idLocal, String ISBN, String titulo, String autor, String descripcion, Integer stock, String fotoLibro, LocalDateTime fechaPublicacion) {
+        this.id = id;
+        this.idCategoria = idCategoria;
+        this.idLocal = idLocal;
+        this.ISBN = ISBN;
+        this.titulo = titulo;
+        this.autor = autor;
+        this.descripcion = descripcion;
+        this.stock = stock;
+        this.fotoLibro = fotoLibro;
+        this.fechaPublicacion = fechaPublicacion;
     }
 }

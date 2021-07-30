@@ -64,7 +64,7 @@ public class PrestamoController {
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
     public ResponseEntity<?> listarPrestamos(Authentication authentication) {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        Usuario usuarioLogueado = usuarioService.findByEmail(userDetails.getUsername()).orElseThrow();
+        Usuario usuarioLogueado = usuarioService.findByUsuario(userDetails.getUsername()).orElseThrow();
         Map<String, Object> response = new HashMap<>();
         List<Prestamo> prestamos = new ArrayList<>();
 
@@ -78,8 +78,9 @@ public class PrestamoController {
                 case "ROLE_EMPLEADO":
                     // MUESTRO LOS PRÉSTAMOS GESTIONADOS EN EL LOCAL DEL ADMIN
                     // Y PARA LOS EMPLEADOS ES LO MISMO
+                    /* TODO: REVISAR
                     Long idLocalEmp = usuarioLogueado.getLocal().getId();
-                    prestamos = prestamoService.fetchByIdWithLibroWithUsuarioWithEmpleado(idLocalEmp);
+                    prestamos = prestamoService.fetchByIdWithLibroWithUsuarioWithEmpleado(idLocalEmp);*/
                     break;
             }
 
@@ -107,7 +108,7 @@ public class PrestamoController {
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO', 'ROLE_USUARIO')")
     public ResponseEntity<?> historialUsuario(Authentication authentication) {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        Usuario usuarioLogueado = usuarioService.findByEmail(userDetails.getUsername()).orElseThrow();
+        Usuario usuarioLogueado = usuarioService.findByUsuario(userDetails.getUsername()).orElseThrow();
         Map<String, Object> response = new HashMap<>();
         List<Prestamo> prestamos;
 
@@ -138,7 +139,7 @@ public class PrestamoController {
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO', 'ROLE_USUARIO')")
     public ResponseEntity<?> historialUsuarioPendientes(Authentication authentication) {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        Usuario usuarioLogueado = usuarioService.findByEmail(userDetails.getUsername()).orElseThrow();
+        Usuario usuarioLogueado = usuarioService.findByUsuario(userDetails.getUsername()).orElseThrow();
         Map<String, Object> response = new HashMap<>();
         List<Prestamo> prestamos;
 
@@ -172,12 +173,12 @@ public class PrestamoController {
     public ResponseEntity<?> crearPrestamo(@Valid @RequestBody PrestamoDTO prestamoDTO, BindingResult result,
                                            Authentication authentication) {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        Usuario usuarioLogueado = usuarioService.findByEmail(userDetails.getUsername()).orElseThrow();
+        Usuario usuarioLogueado = usuarioService.findByUsuario(userDetails.getUsername()).orElseThrow();
         Map<String, Object> response = new HashMap<>();
         Prestamo prestamo = new Prestamo();
         Usuario usuarioPrestamo;
         Usuario empleadoPrestamo;
-        Libro libroPrestamo = libroService.findById(prestamoDTO.getLibro()).orElseThrow();
+        Libro libroPrestamo = libroService.findById(prestamoDTO.getIdLibro()).orElseThrow();
 
         try {
 
@@ -198,8 +199,9 @@ public class PrestamoController {
                 empleadoPrestamo = usuarioService.findById(1L).orElseThrow();
                 prestamoDTO.setObservaciones("Préstamo pendiente creado por un usuario, en espera de " +
                         "confirmación");
-                prestamo.setUsuario(usuarioLogueado);
-                prestamo.setEmpleado(empleadoPrestamo);
+                // TODO: REVISAR
+                // prestamo.setEmpleado(empleadoPrestamo);
+
                 //prestamo.setLibro(libroPrestamo);
                 /*} else {
                     response.put("mensaje", "Lo sentimos, hubo un error a la hora de registrar el préstamo");
@@ -207,47 +209,50 @@ public class PrestamoController {
                 }*/
                 // SI NO ES USUARIO, VALIDO LOS DEMÁS ROLES
             } else {
-                usuarioPrestamo = usuarioService.findById(prestamoDTO.getUsuario()).orElseThrow();
-                empleadoPrestamo = usuarioService.findById(prestamoDTO.getEmpleado()).orElseThrow();
+                usuarioPrestamo = usuarioService.findById(prestamoDTO.getIdUsuario()).orElseThrow();
+                empleadoPrestamo = usuarioService.findById(prestamoDTO.getIdEmpleado()).orElseThrow();
 
                 if (libroPrestamo.isActivo() && empleadoPrestamo.isActivo()
                         && usuarioPrestamo.isActivo()) {
                     switch (usuarioLogueado.getRol().getAuthority()) {
                         case "ROLE_SYSADMIN":
                             // SI ES SYSADMIN, SETEA LOS CAMPOS DE EMPLEADO Y LIBRO QUE TENGAN EL MISMO LOCAL
+                            /* TODO: REVISAR
                             if (!empleadoPrestamo.getLocal().getId()
                                     .equals(libroPrestamo.getLocal().getId())) {
                                 response.put("mensaje",
                                         "Lo sentimos, hubo un error a la hora de registrar el préstamo. " +
                                                 "El empleado y el libro no pertenecen al mismo local");
                                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-                            }
+                            }*/
                             prestamoDTO.setObservaciones("Préstamo creado y confirmado por el Sysadmin");
                             break;
                         case "ROLE_ADMIN":
                             // SI ES ADMIN, REGISTRO EL PRÉSTAMO POR LOCAL (SOLO LOS EMPLEADOS
                             // PERTENECIENTES AL LOCAL DONDE TRABAJA EL ADMIN, ASI COMO EL LOCAL Y EL LIBRO)
+                            /* TODO: REVISAR
                             if (!empleadoPrestamo.getLocal().getId()
                                     .equals(libroPrestamo.getLocal().getId())) {
                                 response.put("mensaje",
                                         "Lo sentimos, hubo un error a la hora de registrar el préstamo. " +
                                                 "El empleado y el libro no pertenecen al mismo local");
                                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-                            }
+                            }*/
                             prestamoDTO.setObservaciones("Préstamo creado y confirmado por un Admin");
                             break;
                         case "ROLE_EMPLEADO":
                             // SI ES EMPLEADO, REGISTRA UN PRÉSTAMO SIMILAR AL ADMIN, PERO SETEA EL
                             // EMPLEADO CON SU NOMBRE
+                            /* TODO: REVISAR
                             if (!empleadoPrestamo.getLocal().getId()
                                     .equals(libroPrestamo.getLocal().getId())) {
                                 response.put("mensaje",
                                         "Lo sentimos, hubo un error a la hora de registrar el préstamo. " +
                                                 "El empleado y el libro no pertenecen al mismo local");
                                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-                            }
+                            }*/
                             prestamoDTO.setObservaciones("Préstamo creado y confirmado por un empleado");
-                            prestamoDTO.setEmpleado(usuarioLogueado.getId());
+                            prestamoDTO.setIdEmpleado(usuarioLogueado.getId());
                             break;
                     }
 
@@ -259,7 +264,7 @@ public class PrestamoController {
                     } else {
                         libroPrestamo.setStock(libroPrestamo.getStock() - 1);
                         libroService.save(libroPrestamo);
-                        prestamoDTO.setLibro(libroPrestamo.getId());
+                        prestamoDTO.setIdLibro(libroPrestamo.getId());
                     }
 
                 } else {
@@ -268,20 +273,23 @@ public class PrestamoController {
                                     " Verificar si el usuario, empleado y/o libro estén disponibles");
                     return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
                 }
-                prestamo.setUsuario(usuarioPrestamo);
+                // TODO: REVISAR
+                // prestamo.setUsuario(usuarioPrestamo);
             }
 
             prestamo.setFechaDevolucion(prestamoDTO.getFechaDevolucion());
             prestamo.setLibro(libroPrestamo);
             prestamo.setObservaciones(prestamoDTO.getObservaciones());
-            prestamo.setEmpleado(empleadoPrestamo);
+            // TODO: REVISAR
+            // prestamo.setEmpleado(empleadoPrestamo);
             prestamoService.save(prestamo);
 
             if (usuarioLogueado.getRol().getAuthority().equals("ROLE_USUARIO")) {
                 Map<String, Object> model = new HashMap<>();
                 model.put("titulo", "Libro Solicitado");
                 model.put("from", "Biblioteca2020 " + "<" + emailFrom + ">");
-                model.put("to", usuarioLogueado.getEmail());
+                // TODO: REVISAR
+                // model.put("to", usuarioLogueado.getEmail());
                 model.put("prestamo", prestamo);
                 model.put("subject", "Libro Solicitado | Biblioteca2020");
                 emailService.enviarEmail(model);
@@ -310,7 +318,7 @@ public class PrestamoController {
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
     public ResponseEntity<?> confirmarPrestamo(@PathVariable String id, Authentication authentication) {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        Usuario usuarioLogueado = usuarioService.findByEmail(userDetails.getUsername()).orElseThrow();
+        Usuario usuarioLogueado = usuarioService.findByUsuario(userDetails.getUsername()).orElseThrow();
         Optional<Prestamo> prestamoEncontrado;
         Map<String, Object> response = new HashMap<>();
 
@@ -332,24 +340,27 @@ public class PrestamoController {
                         break;
                     case "ROLE_ADMIN":
                         // SI ES ADMIN, CONFIRMO EL PRÉSTAMO CON SU ID EMPLEADO
+                        /* TODO: REVISAR
                         prestamoEncontrado.get().setObservaciones(
                                 "Orden de préstamo confirmada por el Admin " + usuarioLogueado.getUsuario()
-                                        + ", del local en " + usuarioLogueado.getLocal().getDireccion());
+                                        + ", del local en " + usuarioLogueado.getLocal().getDireccion());*/
                         break;
                     case "ROLE_EMPLEADO":
                         // SI ES EMPLEADO, CONFIRMO EL PRÉSTAMO CON SU ID EMPLEADO
+                        /* TODO: REVISAR
                         prestamoEncontrado.get().setObservaciones(
                                 "Orden de préstamo confirmada por el Empleado " + usuarioLogueado.getUsuario()
-                                        + ", del local en " + usuarioLogueado.getLocal().getDireccion());
+                                        + ", del local en " + usuarioLogueado.getLocal().getDireccion());*/
                         break;
                 }
 
+                /* TODO: REVISAR
                 if (prestamoEncontrado.get().getEmpleado().getRol().getAuthority().equals("ROLE_PRUEBA")) {
                     prestamoEncontrado.get().setEmpleado(usuarioLogueado);
                 } else {
                     response.put("mensaje", "Lo sentimos, el préstamo ya está asociado a otro empleado");
                     return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-                }
+                }*/
 
                 prestamoService.save(prestamoEncontrado.get());
                 response.put("mensaje", "Préstamo confirmado");
@@ -357,8 +368,8 @@ public class PrestamoController {
                 Map<String, Object> model = new HashMap<>();
                 model.put("titulo", "Orden Confirmada");
                 model.put("from", "Biblioteca2020 " + "<" + emailFrom + ">");
-                model.put("to", prestamoEncontrado.get().getUsuario().getEmail());
-                // model.put("to", "edmech25@gmail.com");
+                // TODO: REVISAR
+                // model.put("to", prestamoEncontrado.get().getUsuario().getEmail());
                 model.put("prestamo", prestamoEncontrado.get());
                 model.put("subject", "Orden Confirmada | Biblioteca2020");
                 emailService.enviarEmail(model);
@@ -390,7 +401,7 @@ public class PrestamoController {
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
     public ResponseEntity<?> devolverLibro(@PathVariable String id, Authentication authentication) {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        Usuario usuarioLogueado = usuarioService.findByEmail(userDetails.getUsername()).orElseThrow();
+        Usuario usuarioLogueado = usuarioService.findByUsuario(userDetails.getUsername()).orElseThrow();
         Optional<Prestamo> prestamoEncontrado;
         Libro libro;
         Map<String, Object> response = new HashMap<>();
@@ -413,28 +424,31 @@ public class PrestamoController {
                         break;
                     case "ROLE_ADMIN":
                         // SI ES ADMIN, DEVUELVO EL LIBRO CON SU ID EMPLEADO
+                        /* TODO: REVISAR
                         prestamoEncontrado.get().setObservaciones("Libro " +
                                 prestamoEncontrado.get().getLibro().getTitulo() +
                                 " devuelto por el Admin " + usuarioLogueado.getUsuario() +
-                                ", del local en " + usuarioLogueado.getLocal().getDireccion());
+                                ", del local en " + usuarioLogueado.getLocal().getDireccion());*/
                         break;
                     case "ROLE_EMPLEADO":
                         // SI ES EMPLEADO, DEVUELVO EL LIBRO CON SU ID EMPLEADO
+                        /* TODO: REVISAR
                         prestamoEncontrado.get().setObservaciones("Libro " +
                                 prestamoEncontrado.get().getLibro().getTitulo() +
                                 " devuelto por el Empleado " + usuarioLogueado.getUsuario() +
-                                ", del local en " + usuarioLogueado.getLocal().getDireccion());
+                                ", del local en " + usuarioLogueado.getLocal().getDireccion());*/
                         break;
                 }
                 libro = libroService.findById(prestamoEncontrado.get().getLibro().getId()).orElseThrow();
 
+                /* TODO: REVISAR
                 if (prestamoEncontrado.get().isActivo()) {
                     response.put("mensaje", "El libro ya ha sido devuelto o anulado");
                     return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
                 } else {
                     libro.setStock(libro.getStock() + 1);
                     prestamoEncontrado.get().setActivo(true);
-                }
+                }*/
 
                 libroService.save(libro);
 
@@ -465,7 +479,7 @@ public class PrestamoController {
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO', 'ROLE_USUARIO')")
     public ResponseEntity<?> anularPrestamo(@PathVariable String id, Authentication authentication) {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        Usuario usuarioLogueado = usuarioService.findByEmail(userDetails.getUsername()).orElseThrow();
+        Usuario usuarioLogueado = usuarioService.findByUsuario(userDetails.getUsername()).orElseThrow();
         Usuario empleado;
         Optional<Prestamo> prestamoEncontrado;
         Libro libro;
@@ -491,24 +505,27 @@ public class PrestamoController {
                         break;
                     case "ROLE_ADMIN":
                         // SI ES ADMIN, ANULO EL PRÈSTAMO CON SU ID EMPLEADO
+                        /* TODO: REVISAR
                         prestamoEncontrado.get()
                                 .setObservaciones("El prèstamo del libro " +
                                         prestamoEncontrado.get().getLibro().getTitulo()
                                         + " ha sido anulado por el Admin " + usuarioLogueado.getUsuario()
-                                        + ", del local en " + usuarioLogueado.getLocal().getDireccion());
+                                        + ", del local en " + usuarioLogueado.getLocal().getDireccion());*/
                         break;
                     case "ROLE_EMPLEADO":
                         // SI ES EMPLEADO, ANULO EL PRÈSTAMO CON SU ID EMPLEADO
+                        /* TODO: REVISAR
                         prestamoEncontrado.get()
                                 .setObservaciones("El prèstamo del libro " +
                                         prestamoEncontrado.get().getLibro().getTitulo() +
                                         " ha sido anulado por el Empleado " + usuarioLogueado.getUsuario() +
-                                        ", del local en " + usuarioLogueado.getLocal().getDireccion());
+                                        ", del local en " + usuarioLogueado.getLocal().getDireccion());*/
                         break;
                     case "ROLE_USUARIO":
                         // SI ES USUARIO, ANULO EL PRÈSTAMO CON EL ID DE PRUEBA
                         // SOLO Y SOLO SI EL PRÉSTAMO A ANULAR ES EL MIO Y DE NADIE MAS
-                        if (prestamoEncontrado.get().getUsuario().getId().equals(usuarioLogueado.getId())) {
+                        /* TODO: REVISAR
+                         if (prestamoEncontrado.get().getUsuario().getId().equals(usuarioLogueado.getId())) {
                             empleado = usuarioService.findById(1L).orElseThrow();
                             prestamoEncontrado.get().setEmpleado(empleado);
                             prestamoEncontrado.get()
@@ -518,19 +535,20 @@ public class PrestamoController {
                         } else {
                             response.put("mensaje", "Lo sentimos, no tienes acceso a este recurso");
                             return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
-                        }
+                        }*/
                         break;
                 }
 
                 libro = libroService.findById(prestamoEncontrado.get().getLibro().getId()).orElseThrow();
 
+                /* TODO: REVISAR
                 if (prestamoEncontrado.get().isActivo()) {
                     response.put("mensaje", "El libro ya ha sido anulado o devuelto");
                     return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
                 } else {
                     libro.setStock(libro.getStock() + 1);
                     prestamoEncontrado.get().setActivo(true);
-                }
+                }*/
 
                 libroService.save(libro);
                 prestamoService.save(prestamoEncontrado.get());

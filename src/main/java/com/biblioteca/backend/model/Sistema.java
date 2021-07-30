@@ -13,14 +13,21 @@ public class Sistema {
     @ApiModelProperty(notes = "ID autogenerado")
     private Long id;
 
+    // SISTEMA(*):EMPRESA(1)
+    @ManyToOne//(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_empresa")
+    private Empresa empresa;
+
+    @Column(nullable = false)
     @ApiModelProperty(notes = "Nombre del sistema", required = true, example = "Biblioteca SPA")
     private String sistema;
 
     public Sistema() {
     }
 
-    public Sistema(Long id, String sistema) {
+    public Sistema(Long id, Empresa empresa, String sistema) {
         this.id = id;
+        this.empresa = empresa;
         this.sistema = sistema;
     }
 
@@ -30,6 +37,14 @@ public class Sistema {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Empresa getEmpresa() {
+        return empresa;
+    }
+
+    public void setEmpresa(Empresa empresa) {
+        this.empresa = empresa;
     }
 
     public String getSistema() {

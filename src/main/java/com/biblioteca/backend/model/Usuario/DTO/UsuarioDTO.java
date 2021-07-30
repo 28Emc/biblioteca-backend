@@ -1,41 +1,27 @@
 package com.biblioteca.backend.model.Usuario.DTO;
 
+import javax.persistence.Column;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.time.LocalDateTime;
 
 public class UsuarioDTO {
 
     private Long id;
 
-    @NotEmpty(message = "{notEmpty.usuarioDTO.nombres}")
-    @Size(min = 5, max = 50, message = "{size.usuarioDTO.nombres}")
-    private String nombres;
+    @Column(name = "id_persona")
+    @NotNull(message = "{notNull.usuarioDTO.idPersona}")
+    private Long idPersona;
 
-    @NotEmpty(message = "{notEmpty.usuarioDTO.apellidoMaterno}")
-    @Size(min = 5, max = 50, message = "{size.usuarioDTO.apellidoMaterno}")
-    private String apellidoMaterno;
+    @Column(name = "id_rol")
+    @NotNull(message = "{notNull.usuarioDTO.idRol}")
+    private Long idRol;
 
-    @NotEmpty(message = "{notEmpty.usuarioDTO.apellidoPaterno}")
-    @Size(min = 5, max = 50, message = "{size.usuarioDTO.apellidoPaterno}")
-    private String apellidoPaterno;
-
-    @NotEmpty(message = "{notEmpty.usuarioDTO.dni}")
-    @Size(min = 8, max = 8, message = "{size.usuarioDTO.dni}")
-    private String dni;
-
-    @NotEmpty(message = "{notEmpty.usuarioDTO.direccion}")
-    @Size(min = 5, max = 100, message = "{size.usuarioDTO.direccion}")
-    private String direccion;
-
-    @NotEmpty(message = "{notEmpty.usuarioDTO.celular}")
-    @Size(min = 9, max = 9, message = "{size.usuarioDTO.celular}")
-    private String celular;
-
-    @NotEmpty(message = "{notEmpty.usuarioDTO.email}")
-    @Size(min = 5, max = 30, message = "{size.usuarioDTO.email}")
-    @Email(message = "{email.usuarioDTO.email}")
-    private String email;
+    /* TODO: REVISAR SI SE PUEDE QUITAR, YA QUE EN EMPLEADO YA EXISTE ID LOCAL */
+    @Column(name = "id_local")
+    private Long idLocal;
 
     @NotEmpty(message = "{notEmpty.usuarioDTO.usuario}")
     @Size(min = 5, max = 30, message = "{size.usuarioDTO.usuario}")
@@ -46,13 +32,8 @@ public class UsuarioDTO {
     // TODO:APLICAR PATTERN DE CONTRASEÑA SEGURA
     private String password;
 
-    private boolean isActivo;
-
+    @Column(name = "foto_usuario")
     private String fotoUsuario;
-
-    private Long rol;
-
-    private Long local;
 
     public Long getId() {
         return id;
@@ -62,60 +43,28 @@ public class UsuarioDTO {
         this.id = id;
     }
 
-    public String getNombres() {
-        return nombres;
+    public Long getIdPersona() {
+        return idPersona;
     }
 
-    public void setNombres(String nombres) {
-        this.nombres = nombres;
+    public void setIdPersona(Long idPersona) {
+        this.idPersona = idPersona;
     }
 
-    public String getApellidoMaterno() {
-        return apellidoMaterno;
+    public Long getIdRol() {
+        return idRol;
     }
 
-    public void setApellidoMaterno(String apellidoMaterno) {
-        this.apellidoMaterno = apellidoMaterno;
+    public void setIdRol(Long idRol) {
+        this.idRol = idRol;
     }
 
-    public String getApellidoPaterno() {
-        return apellidoPaterno;
+    public Long getIdLocal() {
+        return idLocal;
     }
 
-    public void setApellidoPaterno(String apellidoPaterno) {
-        this.apellidoPaterno = apellidoPaterno;
-    }
-
-    public String getDni() {
-        return dni;
-    }
-
-    public void setDni(String dni) {
-        this.dni = dni;
-    }
-
-    public String getDireccion() {
-        return direccion;
-    }
-
-    public void setDireccion(String direccion) {
-        this.direccion = direccion;
-    }
-
-    public String getCelular() {
-        return celular;
-    }
-
-    public void setCelular(String celular) {
-        this.celular = celular;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
+    public void setIdLocal(Long idLocal) {
+        this.idLocal = idLocal;
     }
 
     public String getUsuario() {
@@ -134,14 +83,6 @@ public class UsuarioDTO {
         this.password = password;
     }
 
-    public boolean isActivo() {
-        return isActivo;
-    }
-
-    public void setActivo(boolean activo) {
-        isActivo = activo;
-    }
-
     public String getFotoUsuario() {
         return fotoUsuario;
     }
@@ -150,39 +91,25 @@ public class UsuarioDTO {
         this.fotoUsuario = fotoUsuario;
     }
 
-    public Long getRol() {
-        return rol;
-    }
-
-    public void setRol(Long rol) {
-        this.rol = rol;
-    }
-
-    public Long getLocal() {
-        return local;
-    }
-
-    public void setLocal(Long local) {
-        this.local = local;
-    }
-
     public UsuarioDTO() {
     }
 
-    public UsuarioDTO(Long id, String nombres, String apellidoMaterno, String apellidoPaterno, String dni, String direccion, String celular, String email, String usuario, String password, boolean isActivo, String fotoUsuario, Long rol, Long local) {
-        this.id = id;
-        this.nombres = nombres;
-        this.apellidoMaterno = apellidoMaterno;
-        this.apellidoPaterno = apellidoPaterno;
-        this.dni = dni;
-        this.direccion = direccion;
-        this.celular = celular;
-        this.email = email;
+    public UsuarioDTO(Long idPersona, Long idRol, Long idLocal, String usuario, String password, String fotoUsuario) {
+        this.idPersona = idPersona;
+        this.idRol = idRol;
+        this.idLocal = idLocal;
         this.usuario = usuario;
         this.password = password;
-        this.isActivo = isActivo;
         this.fotoUsuario = fotoUsuario;
-        this.rol = rol;
-        this.local = local;
+    }
+
+    public UsuarioDTO(Long id, Long idPersona, Long idRol, Long idLocal, String usuario, String password, String fotoUsuario) {
+        this.id = id;
+        this.idPersona = idPersona;
+        this.idRol = idRol;
+        this.idLocal = idLocal;
+        this.usuario = usuario;
+        this.password = password;
+        this.fotoUsuario = fotoUsuario;
     }
 }

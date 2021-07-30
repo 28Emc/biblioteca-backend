@@ -1,13 +1,14 @@
 package com.biblioteca.backend.model.Usuario;
 
-import com.biblioteca.backend.model.Local.Local;
-import com.biblioteca.backend.model.Persona;
+import com.biblioteca.backend.model.Persona.Persona;
 import com.biblioteca.backend.model.Rol;
+import com.biblioteca.backend.model.Token;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import io.swagger.annotations.ApiModelProperty;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "tb_usuario")
@@ -62,9 +63,10 @@ public class Usuario {
     @JoinColumn(name = "id_persona")
     private Persona persona;
 
-    @ManyToOne
-    @JoinColumn(name = "id_local"/*, nullable = false*/)
-    private Local local;
+    // USUARIO(1):TOKEN(*)
+    //@JsonIgnore
+    @OneToMany(mappedBy = "usuario"/*, fetch = FetchType.LAZY, cascade = CascadeType.ALL*/)
+    private List<Token> tokens;
 
     public Long getId() {
         return id;
@@ -147,15 +149,6 @@ public class Usuario {
         this.rol = rol;
     }
 
-    @JsonBackReference
-    public Local getLocal() {
-        return local;
-    }
-
-    public void setLocal(Local local) {
-        this.local = local;
-    }
-
     public Persona getPersona() {
         return persona;
     }
@@ -167,7 +160,7 @@ public class Usuario {
     public Usuario() {
     }
 
-    public Usuario(Long id, String usuario, String password, String passwordConfirmacion, boolean isActivo, String fotoUsuario, LocalDateTime fechaRegistro, LocalDateTime fechaActualizacion, LocalDateTime fechaBaja, Rol rol, Local local, Persona persona) {
+    public Usuario(Long id, String usuario, String password, String passwordConfirmacion, boolean isActivo, String fotoUsuario, LocalDateTime fechaRegistro, LocalDateTime fechaActualizacion, LocalDateTime fechaBaja, Rol rol, Persona persona) {
         this.id = id;
         this.usuario = usuario;
         this.password = password;
@@ -178,7 +171,6 @@ public class Usuario {
         this.fechaActualizacion = fechaActualizacion;
         this.fechaBaja = fechaBaja;
         this.rol = rol;
-        this.local = local;
         this.persona = persona;
     }
 

@@ -18,7 +18,7 @@ import javax.sql.DataSource;
 @Configuration
 @EnableTransactionManagement
 @EnableJpaRepositories(entityManagerFactoryRef = "accesoEntityManagerFactory",
-        transactionManagerRef = "accesoTransactionManager", basePackages = "com.biblioteca.backend.model")
+        transactionManagerRef = "accesoTransactionManager", basePackages = "com.biblioteca.backend.model.Acceso")
 public class PersistenceAccesoAutoConfiguration {
 
     @Bean(name = "accesoDataSource")
@@ -30,7 +30,7 @@ public class PersistenceAccesoAutoConfiguration {
     @Bean(name = "accesoEntityManagerFactory")
     public LocalContainerEntityManagerFactoryBean accesoEntityManagerFactory(
             EntityManagerFactoryBuilder builder, @Qualifier("accesoDataSource") DataSource dataSource) {
-        return builder.dataSource(dataSource).packages("com.biblioteca.backend.model").persistenceUnit("tb_acceso")
+        return builder.dataSource(dataSource).packages("com.biblioteca.backend.model.Acceso").persistenceUnit("tb_acceso")
                 .build();
     }
 

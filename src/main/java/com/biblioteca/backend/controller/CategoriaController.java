@@ -1,38 +1,26 @@
 package com.biblioteca.backend.controller;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
 import com.biblioteca.backend.model.Categoria.Categoria;
 import com.biblioteca.backend.model.Categoria.DTO.CategoriaDTO;
-import com.biblioteca.backend.model.Libro.Libro;
 import com.biblioteca.backend.service.ICategoriaService;
 import com.biblioteca.backend.service.ILibroService;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
 
 @CrossOrigin(origins = {"*", "http://localhost:4200"})
 @RestController
@@ -46,13 +34,14 @@ public class CategoriaController {
     private ILibroService libroService;
 
     @ApiOperation(value = "Método de listado de categorias", response = ResponseEntity.class)
-    @ApiResponses(value = {@ApiResponse(code = 200, message = " "),
-            @ApiResponse(code = 302, message = "Categorias encontrados"), @ApiResponse(code = 401, message = " "),
-            @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = " "),
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Categorias encontradas"),
+            @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
+            @ApiResponse(code = 404, message = " "),
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de buscar las categorias. " +
                     "Inténtelo mas tarde")})
     @GetMapping(value = "/categorias", produces = "application/json")
-    @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
+    //@PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
     public ResponseEntity<?> listarCategorias() {
         Map<String, Object> response = new HashMap<>();
         List<Categoria> categorias;
@@ -60,47 +49,72 @@ public class CategoriaController {
         try {
             categorias = categoriaService.findAll();
         } catch (Exception e) {
-            response.put("mensaje", "Lo sentimos, hubo un error a la hora de buscar las categorias");
-            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+            response.put("message", "Lo sentimos, hubo un error a la hora de buscar las categorias");
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        response.put("categorias", categorias);
-        response.put("mensaje", "Categorias encontradas");
-        return new ResponseEntity<>(response, HttpStatus.FOUND);
+        response.put("data", categorias);
+        response.put("message", "Categorias encontradas");
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @ApiOperation(value = "Método de listado de categorias activas", response = ResponseEntity.class)
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Categorias encontradas"),
+            @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
+            @ApiResponse(code = 404, message = " "),
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de buscar las categorias. " +
+                    "Inténtelo mas tarde")})
+    @GetMapping(value = "/categorias/on", produces = "application/json")
+    //@PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
+    public ResponseEntity<?> listarCategoriasActivas() {
+        Map<String, Object> response = new HashMap<>();
+        List<Categoria> categorias;
+
+        try {
+            categorias = categoriaService
+                    .findAll()
+                    .stream()
+                    .filter(Categoria::isActivo)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            response.put("message", "Lo sentimos, hubo un error a la hora de buscar las categorias activas");
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        response.put("data", categorias);
+        response.put("message", "Categorias encontradas");
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @ApiOperation(value = "Método de consulta de categoría por su id", response = ResponseEntity.class)
-    @ApiResponses(value = {@ApiResponse(code = 200, message = " "),
-            @ApiResponse(code = 302, message = "Categoría encontrada"), @ApiResponse(code = 401, message = " "),
-            @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = " "),
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Categoría encontrada"),
+            @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
+            @ApiResponse(code = 404, message = " "),
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de buscar la categoría. " +
                     "Inténtelo mas tarde")})
     @GetMapping(value = "/categorias/{id}", produces = "application/json")
-    @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
-    public ResponseEntity<?> buscarCategoria(@PathVariable String id) {
+    //@PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
+    public ResponseEntity<?> buscarCategoria(@PathVariable Long id) {
         Map<String, Object> response = new HashMap<>();
         Categoria categoria;
 
         try {
 
-            if (id.matches("^\\d+$")) {
-                categoria = categoriaService.findById(Long.parseLong(id)).orElseThrow();
-            } else {
-                response.put("mensaje", "Lo sentimos, el id es inválido");
-                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-            }
+            categoria = categoriaService.findById(id).get();
 
         } catch (NoSuchElementException e) {
-            response.put("mensaje", "La categoría no existe");
+            response.put("message", "La categoría no existe");
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (Exception e) {
-            response.put("mensaje", "Lo sentimos, hubo un error a la hora de buscar la categoría");
+            response.put("message", "Lo sentimos, hubo un error a la hora de buscar la categoría");
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        response.put("categoria", categoria);
-        response.put("mensaje", "Categoría encontrada");
-        return new ResponseEntity<>(response, HttpStatus.FOUND);
+        response.put("data", categoria);
+        response.put("message", "Categoría encontrada");
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @ApiOperation(value = "Método de registro de categorias", response = ResponseEntity.class)
@@ -113,38 +127,30 @@ public class CategoriaController {
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de registrar la categoría. " +
                     "Inténtelo mas tarde")})
     @PostMapping(value = "/categorias", produces = "application/json")
-    @PreAuthorize("hasAnyRole('ROLE_SYSADMIN')")
+    //@PreAuthorize("hasAnyRole('ROLE_SYSADMIN')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
     public ResponseEntity<?> crearCategoria(@Valid @RequestBody CategoriaDTO categoriaDTO,
                                             BindingResult result) {
         Map<String, Object> response = new HashMap<>();
-        Optional<Categoria> categoriaEncontrada;
 
         try {
+
             if (result.hasErrors()) {
                 List<String> errores = result.getFieldErrors()
                         .stream()
                         .map(error -> error.getField() + " : " + error.getDefaultMessage())
                         .collect(Collectors.toList());
-                response.put("mensaje", errores);
+                response.put("message", errores);
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
 
-            categoriaEncontrada = categoriaService.findByNombre(categoriaDTO.getNombre());
-            if (categoriaEncontrada.isPresent()) {
-                response.put("mensaje", "La categoría ya existe");
-                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-            } else {
-                Categoria categoria = new Categoria();
-                categoria.setNombre(categoriaDTO.getNombre());
-                categoria.setActivo(true);
-                categoriaService.save(categoria);
-            }
+            categoriaService.save(categoriaDTO);
 
-        } catch (DataIntegrityViolationException e) {
-            response.put("mensaje", "Lo sentimos, hubo un error a la hora de registrar la categoría");
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Exception e) {
+            response.put("message", e.getMessage());
         }
-        response.put("mensaje", "Categoría registrada");
+
+        response.put("message", "Categoría registrada");
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
@@ -155,45 +161,29 @@ public class CategoriaController {
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de actualizar la categoría. " +
                     "Inténtelo mas tarde")})
     @PutMapping(value = "/categorias/{id}", produces = "application/json")
-    @PreAuthorize("hasAnyRole('ROLE_SYSADMIN')")
+    //@PreAuthorize("hasAnyRole('ROLE_SYSADMIN')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
     public ResponseEntity<?> editarCategoria(@Valid @RequestBody CategoriaDTO categoriaDTO, BindingResult result,
-                                             @PathVariable String id) {
+                                             @PathVariable Long id) throws Exception {
         Map<String, Object> response = new HashMap<>();
-        Categoria categoriaEncontrada;
 
         try {
-
-            if (id.matches("^\\d+$")) {
-                categoriaEncontrada = categoriaService.findById(Long.parseLong(id)).orElseThrow();
-            } else {
-                response.put("mensaje", "Lo sentimos, el id es inválido");
-                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-            }
 
             if (result.hasErrors()) {
                 List<String> errores = result.getFieldErrors()
                         .stream()
                         .map(error -> error.getField() + " : " + error.getDefaultMessage())
                         .collect(Collectors.toList());
-                response.put("mensaje", errores);
-                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-            } else if (categoriaService.findByNombre(categoriaDTO.getNombre()).isPresent() &&
-                    !categoriaEncontrada.getNombre().equals(categoriaDTO.getNombre())) {
-                response.put("mensaje", "La categoría ya existe");
+                response.put("message", errores);
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
 
-            categoriaEncontrada.setNombre(categoriaDTO.getNombre());
-            categoriaService.save(categoriaEncontrada);
-        } catch (NoSuchElementException e) {
-            response.put("mensaje", "La categoría no existe");
-            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-        } catch (DataIntegrityViolationException e) {
-            response.put("mensaje", "Lo sentimos, hubo un error a la hora de actualizar la categoría");
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+            categoriaService.update(id, categoriaDTO);
+        } catch (Exception e) {
+            response.put("message", e.getMessage());
         }
 
-        response.put("mensaje", "Categoría actualizada");
+        response.put("message", "Categoría actualizada");
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
@@ -203,53 +193,20 @@ public class CategoriaController {
             @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = "La categoría no existe"),
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de deshabilitar la categoría. " +
                     "Inténtelo mas tarde")})
-    @PutMapping(value = "/categorias/{id}/deshabilitar", produces = "application/json")
-    @PreAuthorize("hasAnyRole('ROLE_SYSADMIN')")
-    public ResponseEntity<?> deshabilitarCategoria(@PathVariable String id) {
+    @PutMapping(value = "/categorias/{id}/off", produces = "application/json")
+    //@PreAuthorize("hasAnyRole('ROLE_SYSADMIN')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
+    public ResponseEntity<?> deshabilitarCategoria(@PathVariable Long id) throws Exception {
         Map<String, Object> response = new HashMap<>();
-        Categoria categoriaEncontrada;
-        List<Libro> librosTotales;
-        List<Libro> librosActivos = new ArrayList<>();
-        List<Libro> librosInactivos = new ArrayList<>();
 
         try {
-            if (id.matches("^\\d+$")) {
-                categoriaEncontrada = categoriaService.findById(Long.parseLong(id)).orElseThrow();
-            } else {
-                response.put("mensaje", "Lo sentimos, el id es inválido");
-                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-            }
-
-            if (!categoriaEncontrada.isActivo()) {
-                response.put("mensaje", "La categoría ya está deshabilitada");
-                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-            }
-
-            // SE DESHABILITAN LOS "HIJOS" (LIBROS) ANTES DE DESHABILITAR EL "PADRE"
-            // (CATEGORÍA) - LÓGICA SIMILAR DE LOCALES CON EMPRESA (LOCALCONTROLLER)
-            librosTotales = libroService.findByCategoria(categoriaEncontrada.getNombre());
-            librosTotales.forEach(l -> {
-                if (l.isActivo()) {
-                    librosActivos.add(l);
-                    l.setActivo(false);
-                    libroService.save(l);
-                } else {
-                    librosInactivos.add(l);
-                }
-            });
-            //response.put("librosDelLocalActivos", librosActivos.size());
-            //response.put("librosDelLocalInactivos", librosInactivos.size());
-            categoriaEncontrada.setActivo(false);
-            categoriaService.save(categoriaEncontrada);
-        } catch (NoSuchElementException e) {
-            response.put("mensaje", "La categoría no existe");
-            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-        } catch (DataIntegrityViolationException e) {
-            response.put("mensaje", "Lo sentimos, hubo un error a la hora de deshabilitar la categoría");
+            categoriaService.changeCategoriaState(id, false);
+        } catch (Exception e) {
+            response.put("message", e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        response.put("mensaje", "Categoría deshabilitada");
+        response.put("message", "Categoría deshabilitada");
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
@@ -259,54 +216,19 @@ public class CategoriaController {
             @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = "La categoría no existe"),
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de habilitar la categoría. " +
                     "Inténtelo mas tarde")})
-    @PutMapping(value = "/categorias/{id}/habilitar", produces = "application/json")
-    @PreAuthorize("hasAnyRole('ROLE_SYSADMIN')")
-    public ResponseEntity<?> habilitarCategoria(@PathVariable String id) {
+    @PutMapping(value = "/categorias/{id}/on", produces = "application/json")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
+    public ResponseEntity<?> habilitarCategoria(@PathVariable Long id) {
         Map<String, Object> response = new HashMap<>();
-        Categoria categoriaEncontrada;
-        List<Libro> librosTotales;
-        List<Libro> librosActivos = new ArrayList<>();
-        List<Libro> librosInactivos = new ArrayList<>();
 
         try {
-
-            if (id.matches("^\\d+$")) {
-                categoriaEncontrada = categoriaService.findById(Long.parseLong(id)).orElseThrow();
-            } else {
-                response.put("mensaje", "Lo sentimos, el id es inválido");
-                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-            }
-
-            if (categoriaEncontrada.isActivo()) {
-                response.put("mensaje", "La categoría ya está habilitada");
-                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-            }
-
-            // SE HABILITAN LOS "HIJOS" (LIBROS) ANTES DE HABILITAR EL "PADRE"
-            // (CATEGORÍA) - LÓGICA SIMILAR DE LOCALES CON EMPRESA (LOCALCONTROLLER)
-            librosTotales = libroService.findByCategoria(categoriaEncontrada.getNombre());
-            librosTotales.forEach(l -> {
-                if (!l.isActivo()) {
-                    librosInactivos.add(l);
-                    l.setActivo(true);
-                    libroService.save(l);
-                } else {
-                    librosActivos.add(l);
-                }
-            });
-            //response.put("librosDelLocalActivos", librosActivos.size());
-            //response.put("librosDelLocalInactivos", librosInactivos.size());
-            categoriaEncontrada.setActivo(true);
-            categoriaService.save(categoriaEncontrada);
-        } catch (NoSuchElementException e) {
-            response.put("mensaje", "La categoría no existe");
-            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-        } catch (DataIntegrityViolationException e) {
-            response.put("mensaje", "Lo sentimos, hubo un error a la hora de habilitar la categoría");
+            categoriaService.changeCategoriaState(id, true);
+        } catch (Exception e) {
+            response.put("message", e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        response.put("mensaje", "Categoría habilitada");
+        response.put("message", "Categoría habilitada");
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 

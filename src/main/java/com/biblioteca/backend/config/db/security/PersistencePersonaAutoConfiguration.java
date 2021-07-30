@@ -18,7 +18,7 @@ import javax.sql.DataSource;
 @Configuration
 @EnableTransactionManagement
 @EnableJpaRepositories(entityManagerFactoryRef = "personaEntityManagerFactory",
-        transactionManagerRef = "personaTransactionManager", basePackages = "com.biblioteca.backend.model")
+        transactionManagerRef = "personaTransactionManager", basePackages = "com.biblioteca.backend.model.Persona")
 public class PersistencePersonaAutoConfiguration {
 
     @Bean(name = "personaDataSource")
@@ -30,7 +30,7 @@ public class PersistencePersonaAutoConfiguration {
     @Bean(name = "personaEntityManagerFactory")
     public LocalContainerEntityManagerFactoryBean personaEntityManagerFactory(
             EntityManagerFactoryBuilder builder, @Qualifier("personaDataSource") DataSource dataSource) {
-        return builder.dataSource(dataSource).packages("com.biblioteca.backend.model").persistenceUnit("tb_persona")
+        return builder.dataSource(dataSource).packages("com.biblioteca.backend.model.Persona").persistenceUnit("tb_persona")
                 .build();
     }
 

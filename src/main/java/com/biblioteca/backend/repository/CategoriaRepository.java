@@ -8,8 +8,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface CategoriaRepository extends JpaRepository<Categoria, Long> {
 
-    public List<Categoria> findByNombreLikeIgnoreCase(String categoria);
-    
-    public Optional<Categoria> findByNombre(String categoria);
+    List<Categoria> findByNombreLikeIgnoreCase(String categoria);
+
+    Optional<Categoria> findByNombre(String categoria);
 
 }

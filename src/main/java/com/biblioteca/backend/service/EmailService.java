@@ -86,12 +86,12 @@ public class EmailService {
                 break;
             case "Libro Solicitado":
                 prestamo = (Prestamo) model.get("prestamo");
-                fechaDespacho = prestamoService.mostrarFechaAmigable(prestamo.getFechaDespacho());
+                fechaDespacho = prestamoService.mostrarFechaAmigable(prestamo.getFechaPrestamo());
                 fechaDevolucion = prestamoService.mostrarFechaAmigable(prestamo.getFechaDevolucion());
                 cuerpo = "<body style='color: grey; background-color: rgb(0, 143, 167); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;'><div id='container' style='margin-left: auto; margin-right: auto; padding-left: 5em; padding-right: 5em; margin-top: 7em; padding-bottom: 2em; background-color: white; -webkit-box-shadow: 10px 10px 11px 0px rgba(59, 58, 59, 0.5); -moz-box-shadow: 10px 10px 11px 0px rgba(59, 58, 59, 0.5); box-shadow: 10px 10px 11px 0px rgba(59, 58, 59, 0.5); border: none; width: 400px; border: solid 1px rgba(59, 58, 59, 0.096);'><h1 id='titulo' style='padding-top: 1em; text-align: center; font-weight: lighter; font-size: 2.3em; color: black;'>"
                         + model.get("titulo").toString()
                         + "</h1><div id='imagen' style='text-align: center;'><img src='cid:logo-biblioteca2020' alt='libro-solicitado' width='60%' /></div><div style='font-size: 1.1rem; text-align: center;'><h3 style='font-weight: lighter; color:black;'>Saludos "
-                        + prestamo.getUsuario().getUsuario()
+                        + prestamo.getIdUsuario()
                         + ", hemos recibido tu orden de préstamo</h3><table cellspacing='0' cellpadding='0'><tr style='background-color: #008fa7; color: antiquewhite;'><th>Código</th><td>"
                         + String.valueOf(prestamo.getId()) + "</td></tr><tr><th>Libro</th><td>"
                         + prestamo.getLibro().getTitulo() + " (" + prestamo.getLibro().getAutor() + ")" + "</td></tr>"
@@ -102,12 +102,12 @@ public class EmailService {
                 break;
             case "Orden Confirmada":
                 prestamo = (Prestamo) model.get("prestamo");
-                fechaDespacho = prestamoService.mostrarFechaAmigable(prestamo.getFechaDespacho());
+                fechaDespacho = prestamoService.mostrarFechaAmigable(prestamo.getFechaPrestamo());
                 fechaDevolucion = prestamoService.mostrarFechaAmigable(prestamo.getFechaDevolucion());
                 cuerpo = "<body style='color: grey; background-color: rgb(0, 143, 167); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;'><div id='container' style='margin-left: auto; margin-right: auto; padding-left: 5em; padding-right: 5em; margin-top: 7em; padding-bottom: 2em; background-color: white; -webkit-box-shadow: 10px 10px 11px 0px rgba(59, 58, 59, 0.5); -moz-box-shadow: 10px 10px 11px 0px rgba(59, 58, 59, 0.5); box-shadow: 10px 10px 11px 0px rgba(59, 58, 59, 0.5); border: none; width: 400px; border: solid 1px rgba(59, 58, 59, 0.096);'><h1 id='titulo' style='padding-top: 1em; text-align: center; font-weight: lighter; font-size: 2.3em; color: black;'>"
                         + model.get("titulo").toString()
                         + "</h1><div id='imagen' style='text-align: center;'><img src='cid:logo-biblioteca2020' alt='orden-confirmada' width='60%' /></div><div style='font-size: 1.1rem; text-align: center;'><h3 style='font-weight: lighter; color:black;'>Saludos "
-                        + prestamo.getUsuario().getUsuario()
+                        + prestamo.getIdUsuario()
                         + ", le comunicamos que su orden de préstamo ha sido confirmada.</h3><table cellspacing='0' cellpadding='0'><tr style='background-color: #008fa7; color: antiquewhite;'><th>Código</th><td>"
                         + String.valueOf(prestamo.getId()) + "</td></tr><tr><th>Libro</th><td>"
                         + prestamo.getLibro().getTitulo() + " (" + prestamo.getLibro().getAutor() + ")" + "</td></tr>"

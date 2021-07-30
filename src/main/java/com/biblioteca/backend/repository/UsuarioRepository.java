@@ -10,6 +10,8 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     
     Optional<Usuario> findByUsuario(String username);
 
+    List<Usuario> findByIdPersona(Long idPersona);
+
     Optional<Usuario> findByEmail(String email);
 
     @Query("select u from Usuario u where u.dni=?1 and u.email=?2")
@@ -21,7 +23,7 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     @Query("select u from Usuario u join fetch u.rol r where r.authority=?1")
     List<Usuario> findByRol(String authority);
 
-    @Query("select u from Usuario u join fetch u.rol r where r.authority in ('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
+    @Query("select u from Usuario u join fetch u.rol r where r.authority in ('ROLE_ADMIN', 'ROLE_EMPLEADO', 'ROLE_USUARIO', 'ROLE_VISITA')")
     List<Usuario> findByRoles();
 
     @Query("select u from Usuario u join fetch u.rol r join fetch u.local l where r.authority like 'ROLE_ADMIN' and l.id=?1")

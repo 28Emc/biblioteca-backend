@@ -1,6 +1,8 @@
 package com.biblioteca.backend.model.Local.DTO;
 
+import javax.persistence.Column;
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
 public class LocalDTO {
@@ -11,9 +13,9 @@ public class LocalDTO {
     @Size(min = 6, max = 100, message = "{size.localDTO.direccion}")
     private String direccion;
 
-    private String infoAdicional;
-
-    private Long empresa;
+    @Column(name = "id_empresa")
+    @NotNull(message = "{notNull.localDTO.idEmpresa}")
+    private Long idEmpresa;
 
     public Long getId() {
         return id;
@@ -31,29 +33,25 @@ public class LocalDTO {
         this.direccion = direccion;
     }
 
-    public String getInfoAdicional() {
-        return infoAdicional;
+    public Long getIdEmpresa() {
+        return idEmpresa;
     }
 
-    public void setInfoAdicional(String infoAdicional) {
-        this.infoAdicional = infoAdicional;
-    }
-
-    public Long getEmpresa() {
-        return empresa;
-    }
-
-    public void setEmpresa(Long empresa) {
-        this.empresa = empresa;
+    public void setIdEmpresa(Long idEmpresa) {
+        this.idEmpresa = idEmpresa;
     }
 
     public LocalDTO() {
     }
 
-    public LocalDTO(Long id, String direccion, String infoAdicional, Long empresa) {
+    public LocalDTO(String direccion, Long idEmpresa) {
+        this.direccion = direccion;
+        this.idEmpresa = idEmpresa;
+    }
+
+    public LocalDTO(Long id, String direccion, Long idEmpresa) {
         this.id = id;
         this.direccion = direccion;
-        this.infoAdicional = infoAdicional;
-        this.empresa = empresa;
+        this.idEmpresa = idEmpresa;
     }
 }
