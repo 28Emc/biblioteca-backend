@@ -262,5 +262,4 @@ public class CategoriaController {
         response.put("message", "Categoría habilitada");
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
-
 }

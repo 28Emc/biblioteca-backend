@@ -34,20 +34,20 @@ public class EmpresaController {
             @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = " "),
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de buscar las empresas. Inténtelo mas tarde")})
     @GetMapping(value = "/empresas", produces = "application/json")
-    @PreAuthorize("hasAnyRole('ROLE_SYSADMIN')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
     public ResponseEntity<?> listarEmpresas() {
         Map<String, Object> response = new HashMap<>();
         List<Empresa> empresas;
         try {
             empresas = empresaService.findAll();
         } catch (Exception e) {
-            response.put("mensaje", "Lo sentimos, hubo un error a la hora de buscar las empresas");
+            response.put("message", "Lo sentimos, hubo un error a la hora de buscar las empresas");
             response.put("error", e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         }
-        response.put("empresas", empresas);
-        response.put("mensaje", "Empresas encontradas");
-        return new ResponseEntity<>(response, HttpStatus.FOUND);
+        response.put("message", "Empresas encontradas: ".concat(String.valueOf(empresas.size())));
+        response.put("data", empresas);
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @ApiOperation(value = "Método de consulta de empresa por su ruc", response = ResponseEntity.class)
@@ -56,30 +56,30 @@ public class EmpresaController {
             @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = " "),
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de buscar la empresa. Inténtelo mas tarde")})
     @GetMapping(value = "/empresas/{ruc}", produces = "application/json")
-    @PreAuthorize("hasAnyRole('ROLE_SYSADMIN')")
-    public ResponseEntity<?> buscarEmpresaPorIdORuc(@PathVariable String ruc) {
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
+    public ResponseEntity<?> buscarEmpresaPorRuc(@PathVariable String ruc) {
         Map<String, Object> response = new HashMap<>();
         Empresa empresa;
         try {
-            // EL RUC DEBE TENER SOLO 11 DÍGITOS POSITIVOS, SI NO ES INVÁLIDO
-            if (ruc.matches("^\\d{11}$")) {
-                empresa = empresaService.findByRuc(ruc).orElseThrow();
-            } else {
-                response.put("mensaje", "Lo sentimos, el ruc es inválido");
+            if (!ruc.matches("^\\d{11}$")) {
+                response.put("message", "Lo sentimos, el ruc es inválido");
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
+
+            empresa = empresaService.findByRuc(ruc).orElseThrow();
         } catch (NoSuchElementException e) {
-            response.put("mensaje", "Lo sentimos, la empresa no existe");
-            response.put("error", e.getMessage());
+            response.put("message", "Lo sentimos, hubo un error a la hora de buscar la empresa");
+            response.put("error", "La empresa no existe");
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (Exception e) {
-            response.put("mensaje", "Lo sentimos, hubo un error a la hora de buscar la empresa");
+            response.put("message", "Lo sentimos, hubo un error a la hora de buscar la empresa");
             response.put("error", e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        response.put("empresa", empresa);
-        response.put("mensaje", "Empresa encontrada");
-        return new ResponseEntity<>(response, HttpStatus.FOUND);
+
+        response.put("message", "Empresa encontrada");
+        response.put("data", empresa);
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
 }

@@ -37,8 +37,7 @@ public class PersonaDTO {
 
     private String celular;
 
-    @Column(name = "fecha_registro", nullable = false)
-    @NotNull(message = "{notNull.empleadoDTO.fechaRegistro}")
+    @Column(name = "fecha_registro")
     private LocalDateTime fechaRegistro;
 
     @Column(name = "fecha_actualizacion")
@@ -90,7 +89,7 @@ public class PersonaDTO {
         this.isActivo = isActivo;
     }
 
-    public PersonaDTO(Long id, String nombre, String apellidoPaterno, String apellidoMaterno, String tipoDocumento, String nroDocumento, String sexo, String direccion, String celular, LocalDateTime fechaRegistro, LocalDateTime fechaActualizacion, LocalDateTime fechaBaja, Long idRol, Long idLocal, String usuario, String password, String fotoUsuario) {
+    public PersonaDTO(Long id, String nombre, String apellidoPaterno, String apellidoMaterno, String tipoDocumento, String nroDocumento, String sexo, String direccion, String celular, LocalDateTime fechaRegistro, LocalDateTime fechaActualizacion, LocalDateTime fechaBaja, Long idRol, Long idLocal, String usuario, String password, String fotoUsuario, boolean isActivo) {
         this.id = id;
         this.nombre = nombre;
         this.apellidoPaterno = apellidoPaterno;
@@ -108,6 +107,7 @@ public class PersonaDTO {
         this.usuario = usuario;
         this.password = password;
         this.fotoUsuario = fotoUsuario;
+        this.isActivo = isActivo;
     }
 
     public Long getId() {

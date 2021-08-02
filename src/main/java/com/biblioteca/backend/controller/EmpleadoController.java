@@ -48,7 +48,7 @@ public class EmpleadoController {
     @GetMapping(value = "/empleados", produces = "application/json")
     //@PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
     @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
-    public ResponseEntity<?> listarEmnpleados() {
+    public ResponseEntity<?> listarEmpleados() {
         Map<String, Object> response = new HashMap<>();
         List<PersonaDTO> empleados;
 
@@ -56,11 +56,12 @@ public class EmpleadoController {
             empleados = empleadoService.findAll();
         } catch (Exception e) {
             response.put("message", "Lo sentimos, hubo un error a la hora de buscar los empleados");
+            response.put("error", e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
+        response.put("message", "Empleados encontrados: ".concat(String.valueOf(empleados.size())));
         response.put("data", empleados);
-        response.put("message", "Empleados encontrados");
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
@@ -81,11 +82,12 @@ public class EmpleadoController {
             empleados = empleadoService.findActivos();
         } catch (Exception e) {
             response.put("message", "Lo sentimos, hubo un error a la hora de buscar los empleados activos");
+            response.put("error", e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
+        response.put("message", "Empleados encontrados: ".concat(String.valueOf(empleados.size())));
         response.put("data", empleados);
-        response.put("message", "Empleados encontrados");
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
@@ -98,28 +100,34 @@ public class EmpleadoController {
     @GetMapping(value = "/empleados/{id}", produces = "application/json")
     //@PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
     @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
-    public ResponseEntity<?> buscarEmpleado(@PathVariable Long id) {
+    public ResponseEntity<?> buscarEmpleado(@PathVariable String id) {
         Map<String, Object> response = new HashMap<>();
         PersonaDTO empleado;
 
         try {
+            if (!id.matches("^\\d+$")) {
+                response.put("message", "Lo sentimos, hubo un error a la hora de buscar el empleado");
+                response.put("error", "El id es inválido");
+                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+            }
 
-            empleado = empleadoService.findById(id);
-
+            empleado = empleadoService.findById(Long.valueOf(id));
         } catch (NoSuchElementException e) {
-            response.put("message", "El empleado no existe");
+            response.put("message", "Lo sentimos, hubo un error a la hora de buscar el empleado");
+            response.put("error", "El empleado no existe");
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (Exception e) {
             response.put("message", "Lo sentimos, hubo un error a la hora de buscar el empleado");
+            response.put("error", e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        response.put("data", empleado);
         response.put("message", "Empleado encontrado");
+        response.put("data", empleado);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @ApiOperation(value = "Método de consulta de empleado por su id local y su id usuario", response = ResponseEntity.class)
+    @ApiOperation(value = "Método de consulta de empleado por local y usuario", response = ResponseEntity.class)
     @ApiResponses(value = {@ApiResponse(code = 200, message = "Empleado encontrado"),
             @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = " "),
             @ApiResponse(code = 404, message = " "),
@@ -128,24 +136,31 @@ public class EmpleadoController {
     @GetMapping(value = "/empleados/{idLocal}/{idUsuario}", produces = "application/json")
     //@PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
     @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
-    public ResponseEntity<?> buscarEmpleadoPorLocalYUsuario(@PathVariable Long idLocal, @PathVariable Long idUsuario) {
+    public ResponseEntity<?> buscarEmpleadoPorLocalYUsuario(@PathVariable String idLocal,
+                                                            @PathVariable String idUsuario) {
         Map<String, Object> response = new HashMap<>();
         PersonaDTO empleado;
 
         try {
+            if (!idLocal.matches("^\\d+$") || !idUsuario.matches("^\\d+$")) {
+                response.put("message", "Lo sentimos, hubo un error a la hora de buscar el empleado");
+                response.put("error", "El id local o el id usuario es inválido");
+                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+            }
 
-            empleado = empleadoService.findByIdLocalAndIdUsuario(idLocal, idUsuario);
-
+            empleado = empleadoService.findByIdLocalAndIdUsuario(Long.valueOf(idLocal), Long.valueOf(idUsuario));
         } catch (NoSuchElementException e) {
-            response.put("message", "El empleado no existe");
+            response.put("message", "Lo sentimos, hubo un error a la hora de buscar el empleado");
+            response.put("error", "El empleado no existe");
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (Exception e) {
             response.put("message", "Lo sentimos, hubo un error a la hora de buscar el empleado");
+            response.put("error", e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        response.put("data", empleado);
         response.put("message", "Empleado encontrado");
+        response.put("data", empleado);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
@@ -166,20 +181,21 @@ public class EmpleadoController {
         Map<String, Object> response = new HashMap<>();
 
         try {
-
             if (result.hasErrors()) {
                 List<String> errores = result.getFieldErrors()
                         .stream()
                         .map(error -> error.getField() + " : " + error.getDefaultMessage())
                         .collect(Collectors.toList());
-                response.put("message", errores);
+                response.put("message", "Lo sentimos, hubo un error a la hora de registrar el empleado");
+                response.put("error", errores);
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
 
             empleadoService.save(personaDTO);
-
         } catch (Exception e) {
-            response.put("message", e.getMessage());
+            response.put("message", "Lo sentimos, hubo un error a la hora de registrar el empleado");
+            response.put("error", e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
         response.put("message", "Empleado registrado");
@@ -196,25 +212,32 @@ public class EmpleadoController {
     //@PreAuthorize("hasAnyRole('ROLE_SYSADMIN')")
     @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
     public ResponseEntity<?> editarEmpleado(@Valid @RequestBody PersonaDTO personaDTO, BindingResult result,
-                                             @PathVariable Long id, Authentication authentication) throws Exception {
+                                            @PathVariable String id, Authentication authentication) {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         Usuario usuarioLogueado = usuarioService.findByUsuario(userDetails.getUsername()).orElseThrow();
         Map<String, Object> response = new HashMap<>();
 
         try {
+            if (!id.matches("^\\d+$")) {
+                response.put("message", "Lo sentimos, hubo un error a la hora de actualizar el empleado");
+                response.put("error", "El id es inválido");
+                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+            }
 
             if (result.hasErrors()) {
                 List<String> errores = result.getFieldErrors()
                         .stream()
                         .map(error -> error.getField() + " : " + error.getDefaultMessage())
                         .collect(Collectors.toList());
-                response.put("message", errores);
+                response.put("message", "Lo sentimos, hubo un error a la hora de actualizar el empleado");
+                response.put("error", errores);
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
 
-            empleadoService.update(id, personaDTO, usuarioLogueado);
+            empleadoService.update(Long.valueOf(id), personaDTO, usuarioLogueado);
         } catch (Exception e) {
-            response.put("message", e.getMessage());
+            response.put("message", "Lo sentimos, hubo un error a la hora de actualizar el empleado");
+            response.put("error", e.getMessage());
         }
 
         response.put("message", "Empleado actualizado");
@@ -230,13 +253,20 @@ public class EmpleadoController {
     @PutMapping(value = "/empleados/{id}/off", produces = "application/json")
     //@PreAuthorize("hasAnyRole('ROLE_SYSADMIN')")
     @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
-    public ResponseEntity<?> deshabilitarEmpleado(@PathVariable Long id) throws Exception {
+    public ResponseEntity<?> deshabilitarEmpleado(@PathVariable String id) {
         Map<String, Object> response = new HashMap<>();
 
         try {
-            empleadoService.changeEmpleadoState(id, false);
+            if (!id.matches("^\\d+$")) {
+                response.put("message", "Lo sentimos, hubo un error a la hora de deshabilitar el empleado");
+                response.put("error", "El id es inválido");
+                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+            }
+
+            empleadoService.changeEmpleadoState(Long.valueOf(id), false);
         } catch (Exception e) {
-            response.put("message", e.getMessage());
+            response.put("message", "Lo sentimos, hubo un error a la hora de deshabilitar el empleado");
+            response.put("error", e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
@@ -252,13 +282,20 @@ public class EmpleadoController {
                     "Inténtelo mas tarde")})
     @PutMapping(value = "/empleados/{id}/on", produces = "application/json")
     @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
-    public ResponseEntity<?> habilitarEmpleado(@PathVariable Long id) {
+    public ResponseEntity<?> habilitarEmpleado(@PathVariable String id) {
         Map<String, Object> response = new HashMap<>();
 
         try {
-            empleadoService.changeEmpleadoState(id, true);
+            if (!id.matches("^\\d+$")) {
+                response.put("message", "Lo sentimos, hubo un error a la hora de habilitar el empleado");
+                response.put("error", "El id es inválido");
+                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+            }
+
+            empleadoService.changeEmpleadoState(Long.valueOf(id), true);
         } catch (Exception e) {
-            response.put("message", e.getMessage());
+            response.put("message", "Lo sentimos, hubo un error a la hora de habilitar el empleado");
+            response.put("error", e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
