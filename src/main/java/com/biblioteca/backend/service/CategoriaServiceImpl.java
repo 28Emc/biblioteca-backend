@@ -30,9 +30,7 @@ public class CategoriaServiceImpl implements ICategoriaService {
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<Categoria> findById(Long id) throws Exception {
-        if (!id.toString().matches("^\\d+$")) throw new Exception("El id es inválido");
-
+    public Optional<Categoria> findById(Long id) {
         return categoriaRepository.findById(id);
     }
 
@@ -51,9 +49,9 @@ public class CategoriaServiceImpl implements ICategoriaService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void save(CategoriaDTO categoriaDTO) throws Exception {
-        Optional<Categoria> categoriaEncontrada = categoriaRepository.findByNombre(categoriaDTO.getNombre());
-
-        if (categoriaEncontrada.isPresent()) throw new Exception("La categoría ya existe");
+        if (findByNombre(categoriaDTO.getNombre()).isPresent()) {
+            throw new Exception("La categoría con ese nombre ya existe");
+        }
 
         Categoria categoriaNew = new Categoria(categoriaDTO.getNombre(), categoriaDTO.getDescripcion());
         categoriaRepository.save(categoriaNew);
@@ -62,7 +60,8 @@ public class CategoriaServiceImpl implements ICategoriaService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void update(Long id, CategoriaDTO categoriaDTO) throws Exception {
-        Categoria categoriaFound = findById(id).orElseThrow(() -> new Exception("La categoría no existe"));
+        Categoria categoriaFound = findById(id)
+                .orElseThrow(() -> new Exception("La categoría no existe"));
         categoriaFound.setNombre(categoriaDTO.getNombre());
         categoriaFound.setDescripcion(categoriaDTO.getDescripcion());
         categoriaRepository.save(categoriaFound);
@@ -71,11 +70,8 @@ public class CategoriaServiceImpl implements ICategoriaService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void changeCategoriaState(Long id, boolean tipoOperacion) throws Exception {
-
-        if (!id.toString().matches("^\\d+$")) throw new Exception("El id es inválido");
-
-        Categoria categoriaFound = findById(id).orElseThrow(() -> new Exception("La categoría no existe"));
-
+        Categoria categoriaFound = findById(id)
+                .orElseThrow(() -> new Exception("La categoría no existe"));
         List<Libro> libros = libroRepository.findByCategoria(categoriaFound.getNombre());
         List<Libro> librosFiltered = libros
                 .stream()

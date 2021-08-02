@@ -117,6 +117,11 @@ public class Local {
     public Local() {
     }
 
+    public Local(Long idEmpresa, String direccion) {
+        this.idEmpresa = idEmpresa;
+        this.direccion = direccion;
+    }
+
     public Local(Long id, Long idEmpresa, String direccion, LocalDateTime fechaRegistro, LocalDateTime fechaActualizacion, LocalDateTime fechaBaja, boolean isActivo) {
         this.id = id;
         this.idEmpresa = idEmpresa;

@@ -50,11 +50,12 @@ public class CategoriaController {
             categorias = categoriaService.findAll();
         } catch (Exception e) {
             response.put("message", "Lo sentimos, hubo un error a la hora de buscar las categorias");
+            response.put("error", e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
         response.put("data", categorias);
-        response.put("message", "Categorias encontradas");
+        response.put("message", "Categorias encontradas: ".concat(String.valueOf(categorias.size())));
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
@@ -79,11 +80,12 @@ public class CategoriaController {
                     .collect(Collectors.toList());
         } catch (Exception e) {
             response.put("message", "Lo sentimos, hubo un error a la hora de buscar las categorias activas");
+            response.put("error", e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
+        response.put("message", "Categorias encontradas: ".concat(String.valueOf(categorias.size())));
         response.put("data", categorias);
-        response.put("message", "Categorias encontradas");
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
@@ -101,11 +103,16 @@ public class CategoriaController {
         Categoria categoria;
 
         try {
+            if (!id.matches("^\\d+$")) {
+                response.put("message", "Lo sentimos, hubo un error a la hora de buscar la categoría");
+                response.put("error", "El id es inválido");
+                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+            }
 
-            categoria = categoriaService.findById(Long.valueOf(id)).get();
-
+            categoria = categoriaService.findById(Long.valueOf(id)).orElseThrow();
         } catch (NoSuchElementException e) {
-            response.put("message", "La categoría no existe");
+            response.put("message", "Lo sentimos, hubo un error a la hora de buscar la categoría");
+            response.put("error", "La categoría no existe");
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (Exception e) {
             response.put("message", "Lo sentimos, hubo un error a la hora de buscar la categoría");
@@ -113,8 +120,8 @@ public class CategoriaController {
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        response.put("data", categoria);
         response.put("message", "Categoría encontrada");
+        response.put("data", categoria);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
@@ -135,18 +142,17 @@ public class CategoriaController {
         Map<String, Object> response = new HashMap<>();
 
         try {
-
             if (result.hasErrors()) {
                 List<String> errores = result.getFieldErrors()
                         .stream()
                         .map(error -> error.getField() + " : " + error.getDefaultMessage())
                         .collect(Collectors.toList());
-                response.put("message", errores);
+                response.put("message", "Lo sentimos, hubo un error a la hora de registrar la categoría");
+                response.put("error", errores);
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
 
             categoriaService.save(categoriaDTO);
-
         } catch (Exception e) {
             response.put("message", "Lo sentimos, hubo un error a la hora de registrar la categoría");
             response.put("error", e.getMessage());
@@ -167,23 +173,29 @@ public class CategoriaController {
     //@PreAuthorize("hasAnyRole('ROLE_SYSADMIN')")
     @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
     public ResponseEntity<?> editarCategoria(@Valid @RequestBody CategoriaDTO categoriaDTO, BindingResult result,
-                                             @PathVariable String id) throws Exception {
+                                             @PathVariable String id) {
         Map<String, Object> response = new HashMap<>();
 
         try {
+            if (!id.matches("^\\d+$")) {
+                response.put("message", "Lo sentimos, hubo un error a la hora de actualizar la categoría");
+                response.put("error", "El id es inválido");
+                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+            }
 
             if (result.hasErrors()) {
                 List<String> errores = result.getFieldErrors()
                         .stream()
                         .map(error -> error.getField() + " : " + error.getDefaultMessage())
                         .collect(Collectors.toList());
-                response.put("message", errores);
+                response.put("message", "Lo sentimos, hubo un error a la hora de actualizar la categoría");
+                response.put("error", errores);
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
 
             categoriaService.update(Long.valueOf(id), categoriaDTO);
         } catch (Exception e) {
-            response.put("message", "Lo sentimos, hubo un error a la hora de editar la categoría");
+            response.put("message", "Lo sentimos, hubo un error a la hora de actualizar la categoría");
             response.put("error", e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -201,13 +213,20 @@ public class CategoriaController {
     @PutMapping(value = "/categorias/{id}/off", produces = "application/json")
     //@PreAuthorize("hasAnyRole('ROLE_SYSADMIN')")
     @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
-    public ResponseEntity<?> deshabilitarCategoria(@PathVariable String id) throws Exception {
+    public ResponseEntity<?> deshabilitarCategoria(@PathVariable String id) {
         Map<String, Object> response = new HashMap<>();
 
         try {
+            if (!id.matches("^\\d+$")) {
+                response.put("message", "Lo sentimos, hubo un error a la hora de deshabilitar la categoría");
+                response.put("error", "El id es inválido");
+                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+            }
+
             categoriaService.changeCategoriaState(Long.valueOf(id), false);
         } catch (Exception e) {
-            response.put("message", e.getMessage());
+            response.put("message", "Lo sentimos, hubo un error a la hora de deshabilitar la categoría");
+            response.put("error", e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
@@ -227,9 +246,16 @@ public class CategoriaController {
         Map<String, Object> response = new HashMap<>();
 
         try {
+            if (!id.matches("^\\d+$")) {
+                response.put("message", "Lo sentimos, hubo un error a la hora de habilitar la categoría");
+                response.put("error", "El id es inválido");
+                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+            }
+
             categoriaService.changeCategoriaState(Long.valueOf(id), true);
         } catch (Exception e) {
-            response.put("message", e.getMessage());
+            response.put("message", "Lo sentimos, hubo un error a la hora de habilitar la categoría");
+            response.put("error", e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 

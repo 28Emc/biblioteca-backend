@@ -2,23 +2,28 @@ package com.biblioteca.backend.service;
 
 import java.util.List;
 import java.util.Optional;
-import com.biblioteca.backend.model.Empresa.Empresa;
+
+import com.biblioteca.backend.model.Local.DTO.LocalDTO;
 import com.biblioteca.backend.model.Local.Local;
 
 public interface ILocalService {
 
-    public List<Local> findAll();
+    List<Local> findAll();
 
-    public Optional<Local> findById(Long id);
+    Optional<Local> findById(Long id);
 
-    public Optional<Local> findByDireccion(String direccion);
+    Optional<Local> findByDireccion(String direccion);
 
-    //public Optional<Local> fetchByIdWithEmpresaAndUsuario(Long idEmpresa, Long idUsuario);
+    //Optional<Local> fetchByIdWithEmpresaAndUsuario(Long idEmpresa, Long idUsuario);
 
-    public List<Local> findByIdEmpresa(Long idEmpresa);
+    List<Local> findByIdEmpresa(Long idEmpresa);
 
-    public Local save(Local local);
+    Local save(LocalDTO localDTO) throws Exception;
 
-    public boolean existsByDireccion(String direccion);
+    void update(Long id, LocalDTO localDTO) throws Exception;
+
+    void changeLocalState(Long id, boolean tipoOperacion) throws Exception;
+
+    boolean existsByDireccion(String direccion);
 
 }

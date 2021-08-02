@@ -2,6 +2,7 @@ package com.biblioteca.backend.service;
 
 import java.util.List;
 import java.util.Optional;
+
 import com.biblioteca.backend.model.Categoria.Categoria;
 import com.biblioteca.backend.model.Categoria.DTO.CategoriaDTO;
 
@@ -9,7 +10,7 @@ public interface ICategoriaService {
 
     List<Categoria> findAll();
 
-    Optional<Categoria> findById(Long id) throws Exception;
+    Optional<Categoria> findById(Long id);
 
     Optional<Categoria> findByNombre(String categoria);
 
