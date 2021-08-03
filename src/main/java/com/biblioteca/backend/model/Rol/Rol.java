@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import io.swagger.annotations.ApiModelProperty;
 
 import javax.persistence.*;
+import java.util.List;
 
 @Entity
 @Table(name = "tb_rol")
@@ -21,8 +22,8 @@ public class Rol {
 
     //@JsonBackReference
     //FUNGE DE ONETOMANY
-    @OneToOne(mappedBy = "rol")
-    private Usuario usuario;
+    @OneToMany(mappedBy = "rol")
+    private List<Usuario> usuarios;
 
     public Long getId() {
         return id;
@@ -41,20 +42,20 @@ public class Rol {
     }
 
     @JsonManagedReference
-    public Usuario getUsuario() {
-        return usuario;
+    public List<Usuario> getUsuarios() {
+        return usuarios;
     }
 
-    public void setUsuario(Usuario usuario) {
-        this.usuario = usuario;
+    public void setUsuarios(List<Usuario> usuarios) {
+        this.usuarios = usuarios;
     }
 
     public Rol() {
     }
 
-    public Rol(Long id, String authority, Usuario usuario) {
+    public Rol(Long id, String authority, List<Usuario> usuarios) {
         this.id = id;
         this.authority = authority;
-        this.usuario = usuario;
+        this.usuarios = usuarios;
     }
 }

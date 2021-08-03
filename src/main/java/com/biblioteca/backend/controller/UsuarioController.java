@@ -139,7 +139,7 @@ public class UsuarioController {
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
 
-            usuarioService.save(personaDTO);
+            usuarioService.saveAdmin(personaDTO);
         } catch (Exception e) {
             response.put("message", "Lo sentimos, hubo un error a la hora de registrar el usuario");
             response.put("error", e.getMessage());
@@ -156,7 +156,7 @@ public class UsuarioController {
             @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = "El usuario no existe"),
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de actualizar el usuario." +
                     " Inténtelo mas tarde")})
-    @PutMapping(value = "/usuarios/{id}", produces = "application/json")
+    @PutMapping(value = {"/usuarios/{id}", "/perfil/{id}"}, produces = "application/json")
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
     public ResponseEntity<?> editarUsuario(@Valid @RequestBody PersonaDTO personaDTO, BindingResult result,
                                            @PathVariable String id, Authentication authentication) {
@@ -287,15 +287,15 @@ public class UsuarioController {
                         .stream()
                         .map(error -> error.getField() + " : " + error.getDefaultMessage())
                         .collect(Collectors.toList());
-                response.put("message", errores);
+                response.put("message", "Lo sentimos, hubo un error a la hora de registrar el usuario");
+                response.put("error", errores);
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
 
-            Usuario usuarioNew = usuarioService.save(personaDTO);
+            Usuario usuarioNew = usuarioService.saveAdmin(personaDTO);
+            Token tokenConfirma = usuarioService.createTokenAccount(usuarioNew, "OP1");
 
-            Token tokenConfirma = new Token(usuarioNew, "ACTIVAR CUENTA");
-            tokenService.save(tokenConfirma);
-
+            // TODO: REEMPLAZAR POR URL DE SERVIDOR FINAL
             String baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
             Map<String, Object> model = new HashMap<>();
             model.put("titulo", "Validar Correo");
@@ -304,9 +304,9 @@ public class UsuarioController {
             model.put("to", usuarioNew.getUsuario());
             model.put("subject", "Validar Correo | Biblioteca2020");
             emailService.enviarEmail(model);
-
         } catch (MessagingException e) {
             response.put("message", "Lo sentimos, hubo un error a la hora de enviar el correo de confirmación");
+            response.put("error", e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (Exception e) {
             response.put("message", "Lo sentimos, hubo un error a la hora de registrar el usuario");
@@ -314,7 +314,7 @@ public class UsuarioController {
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        response.put("message", "Registro completado. Se ha enviado un email de verificación para activar tu cuenta");
+        response.put("message", "Registro completado. Se ha enviado un email de verificación para activar tu cuenta.");
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
@@ -333,17 +333,15 @@ public class UsuarioController {
         Map<String, Object> response = new HashMap<>();
 
         try {
-
             usuarioService.activateUser(token);
-
         } catch (Exception e) {
-            response.put("message", "Lo sentimos, hubo un error a la hora de enviar la solicitud." +
-                    " Inténtelo mas tarde");
+            response.put("message", "Lo sentimos, hubo un error a la hora de enviar la solicitud");
+            response.put("error", e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
         response.put("message", "Activación de cuenta realizado con éxito." +
-                " Inicia sesión con sus nuevas credenciales");
+                " Inicia sesión con sus nuevas credenciales.");
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
@@ -371,29 +369,27 @@ public class UsuarioController {
                         .stream()
                         .map(error -> error.getField() + " : " + error.getDefaultMessage())
                         .collect(Collectors.toList());
-                response.put("message", errores);
+                response.put("message", "Lo sentimos, hubo un error a la hora de enviar la solicitud. Inténtelo mas tarde");
+                response.put("error", errores);
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
 
-            usuario = usuarioService.findByNroDocumentoAndUsuario(dtoAccountRecovery.getDni(),
+            usuario = usuarioService.findByNroDocumentoAndUsuario(dtoAccountRecovery.getNroDocumento(),
                     dtoAccountRecovery.getEmail());
-
-            Token tokenConfirma = new Token(usuario, "RECUPERAR CONTRASEÑA");
-            tokenService.save(tokenConfirma);
-            response.put("tokenValidacion", tokenConfirma.getToken());
+            Token tokenConfirma = usuarioService.createTokenAccount(usuario, "OP2");
 
             String baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
             Map<String, Object> model = new HashMap<>();
             model.put("titulo", "Recuperar Password");
             model.put("enlace",
-                    baseUrl + "/cuenta/recuperar-password/confirmar-token?token=" + response.get("tokenValidacion"));
+                    baseUrl + "/cuenta/recuperar-password/confirmar-token?token=" + tokenConfirma.getToken());
             model.put("from", "Biblioteca2020 " + "<" + emailFrom + ">");
             model.put("to", usuario.getUsuario());
             model.put("subject", "Recuperar Password | Biblioteca2020");
             emailService.enviarEmail(model);
-
         } catch (Exception e) {
-            response.put("message", "Lo sentimos, hubo un error a la hora de enviar la solicitud. Inténtelo mas tarde");
+            response.put("message", "Lo sentimos, hubo un error a la hora de enviar la solicitud");
+            response.put("error", e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
@@ -412,24 +408,12 @@ public class UsuarioController {
     @GetMapping(value = "/cuenta/recuperar-password/confirmar-token", produces = "application/json")
     public ResponseEntity<?> validarTokenRecuperacionContrasenaUsuario(@RequestParam("token") String token) {
         Map<String, Object> response = new HashMap<>();
-        ChangePassword dtoPassword;
-        Token tokenConfirma;
 
         try {
-
-            tokenConfirma = tokenService.findByToken(token).orElseThrow();
-            dtoPassword = new ChangePassword();
-            Usuario usuario = usuarioService.findByUsuario(tokenConfirma.getUsuario().getUsuario()).orElseThrow();
-            dtoPassword.setId(usuario.getId());
-            response.put("changePassword", dtoPassword);
-            tokenService.delete(tokenConfirma.getId());
-
-        } catch (NoSuchElementException e) {
-            response.put("message", "El enlace es inválido o el token ya caducó");
-            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+            response.put("changePassword", usuarioService.validateToken(token));
         } catch (Exception e) {
-            response.put("message", "Lo sentimos, hubo un error a la hora de enviar la solicitud." +
-                    " Inténtelo mas tarde");
+            response.put("message", "Lo sentimos, hubo un error a la hora de enviar la solicitud");
+            response.put("error", e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
@@ -448,33 +432,21 @@ public class UsuarioController {
     @PostMapping(value = "/cuenta/recuperar-password/confirmar-token", produces = "application/json")
     public ResponseEntity<?> recuperarContrasenaUsuario(@RequestBody ChangePassword dtoPassword) {
         Map<String, Object> response = new HashMap<>();
-        Usuario usuarioNuevo;
-        dtoPassword.setPasswordActual(null);
+        Usuario usuarioRecuperado;
 
         try {
-
-            if (dtoPassword.getNuevaPassword().equals("") || dtoPassword.getConfirmarPassword().equals("")) {
-                response.put("message", "Rellenar todos los campos!");
-                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-            }
-
-            usuarioNuevo = usuarioService.findById(dtoPassword.getId()).orElseThrow();
-            usuarioService.recuperarPassword(dtoPassword);
+            usuarioRecuperado = usuarioService.recuperarPassword(dtoPassword);
 
             Map<String, Object> model = new HashMap<>();
             model.put("titulo", "Contraseña Actualizada");
             model.put("from", "Biblioteca2020 " + "<" + emailFrom + ">");
-            model.put("usuario", usuarioNuevo.getUsuario());
-            model.put("to", usuarioNuevo.getUsuario());
+            model.put("usuario", usuarioRecuperado.getUsuario());
+            model.put("to", usuarioRecuperado.getUsuario());
             model.put("subject", "Contraseña Actualizada | Biblioteca2020");
             emailService.enviarEmail(model);
-
-        } catch (NoSuchElementException | DataIntegrityViolationException e) {
-            response.put("message", "Lo sentimos, hubo un error a la hora de actualizar la contraseña");
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (Exception e) {
-            response.put("message", "Lo sentimos, hubo un error a la hora de actualizar la contraseña." +
-                    " Inténtelo mas tarde");
+            response.put("message", "Lo sentimos, hubo un error a la hora de actualizar la contraseña");
+            response.put("error", e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
@@ -505,34 +477,28 @@ public class UsuarioController {
                         .stream()
                         .map(error -> error.getField() + " : " + error.getDefaultMessage())
                         .collect(Collectors.toList());
-                response.put("message", errores);
+                response.put("message", "Lo sentimos, hubo un error a la hora de enviar la solicitud");
+                response.put("error", errores);
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
 
-            usuario = usuarioService.findByNroDocumentoAndUsuario(dtoAccountRecovery.getDni(),
+            usuario = usuarioService.findByNroDocumentoAndUsuario(dtoAccountRecovery.getNroDocumento(),
                     dtoAccountRecovery.getEmail());
-
-            Token tokenConfirma = new Token(usuario, "REACTIVAR CUENTA");
-            tokenService.save(tokenConfirma);
-            response.put("tokenValidacion", tokenConfirma.getToken());
+            Token tokenConfirma = usuarioService.createTokenAccount(usuario, "OP3");
 
             String baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
             Map<String, Object> model = new HashMap<>();
             model.put("titulo", "Reactivacion Cuenta");
             model.put("enlace", baseUrl + "/cuenta/reactivar-cuenta/confirmar-token?token=" +
-                    response.get("tokenValidacion"));
+                    tokenConfirma.getToken());
             model.put("from", "Biblioteca2020 " + "<" + emailFrom + ">");
             model.put("usuario", usuario.getUsuario());
             model.put("to", usuario.getUsuario());
             model.put("subject", "Reactivacion Cuenta | Biblioteca2020");
             emailService.enviarEmail(model);
-
-        } catch (NoSuchElementException e) {
-            response.put("message", "Lo sentimos, hubo un error a la hora de enviar la solicitud");
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (Exception e) {
-            response.put("message", "Lo sentimos, hubo un error a la hora de enviar la solicitud." +
-                    " Inténtelo mas tarde");
+            response.put("message", "Lo sentimos, hubo un error a la hora de enviar la solicitud");
+            response.put("error", e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
@@ -553,18 +519,12 @@ public class UsuarioController {
     @GetMapping(value = "/cuenta/reactivar-cuenta/confirmar-token", produces = "application/json")
     public ResponseEntity<?> validarTokenRecuperacionCuentaUsuario(@RequestParam("token") String token) {
         Map<String, Object> response = new HashMap<>();
-        Token tokenConfirma;
 
         try {
-
-            tokenConfirma = tokenService.findByToken(token).orElseThrow();
-            usuarioService.activateUser(tokenConfirma.getToken());
-        } catch (NoSuchElementException e) {
-            response.put("message", "El enlace es inválido o el token ya caducó");
-            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+            usuarioService.activateUser(token);
         } catch (Exception e) {
-            response.put("message", "Lo sentimos, hubo un error a la hora de enviar la solicitud." +
-                    " Inténtelo mas tarde");
+            response.put("message", "Lo sentimos, hubo un error a la hora de enviar la solicitud");
+            response.put("error", e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
@@ -572,7 +532,7 @@ public class UsuarioController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @ApiOperation(value = "Método de cambio de contraseña del usuario logueado en ese momento (dentro del sistema)",
+    @ApiOperation(value = "Método de cambio de contraseña del usuario logueado (dentro del sistema)",
             response = ResponseEntity.class)
     @ApiResponses(value = {@ApiResponse(code = 200, message = " "),
             @ApiResponse(code = 201, message = "Contraseña actualizada"), @ApiResponse(code = 401, message = " "),
@@ -580,38 +540,21 @@ public class UsuarioController {
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de actualizar la contraseña." +
                     " Inténtelo mas tarde")})
     @PutMapping(value = "/usuarios/cambiar-password", produces = "application/json")
-    //@PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO', 'ROLE_USER')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_EMPLEADO', 'ROLE_USER')")
     public ResponseEntity<?> cambiarContrasenaUsuario(@RequestBody ChangePassword dtoPassword,
                                                       Authentication authentication) {
         Map<String, Object> response = new HashMap<>();
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        Usuario usuarioAntiguo = usuarioService.findByUsuario(userDetails.getUsername()).orElseThrow();
-        dtoPassword.setId(usuarioAntiguo.getId());
 
         try {
-
-            if (dtoPassword.getPasswordActual().isBlank() || dtoPassword.getNuevaPassword().isBlank()
-                    || dtoPassword.getConfirmarPassword().isBlank()) {
-                response.put("message", "Rellenar todos los campos");
-                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-            }
-
-            usuarioService.cambiarPassword(dtoPassword);
-
-        } catch (NoSuchElementException e) {
-            response.put("message", "El usuario no existe");
-            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-        } catch (DataIntegrityViolationException e) {
-            response.put("message", "Lo sentimos, hubo un error a la hora de actualizar la contraseña");
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+            usuarioService.cambiarPassword(dtoPassword, userDetails.getUsername());
         } catch (Exception e) {
-            response.put("message", "Lo sentimos, hubo un error a la hora de actualizar la contraseña." +
-                    " Inténtelo mas tarde");
+            response.put("message", "Lo sentimos, hubo un error a la hora de actualizar la contraseña");
+            response.put("error", e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
         response.put("message", "Contraseña actualizada");
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
-
 }

@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import com.biblioteca.backend.model.Persona.DTO.PersonaDTO;
 import com.biblioteca.backend.model.Persona.Persona;
+import com.biblioteca.backend.model.Token.Token;
 import com.biblioteca.backend.model.Usuario.DTO.ChangePassword;
 import com.biblioteca.backend.model.Usuario.Usuario;
 
@@ -30,7 +31,11 @@ public interface IUsuarioService {
 
     //Optional<Usuario> existsAdminInLocal(Long local);
 
-    Usuario save(PersonaDTO personaDTO) throws Exception;
+    Usuario saveAdmin(PersonaDTO personaDTO) throws Exception;
+
+    Token createTokenAccount(Usuario usuario, String tipoOperacion) throws Exception;
+
+    ChangePassword validateToken(String token) throws Exception;
 
     Usuario activateUser(String token) throws Exception;
 
@@ -38,7 +43,7 @@ public interface IUsuarioService {
 
     Usuario changeUsuarioState(Long idUsuario, boolean tipoOperacion) throws Exception;
 
-    Usuario cambiarPassword(ChangePassword dtoPassword) throws Exception;
+    Usuario cambiarPassword(ChangePassword dtoPassword, String username) throws Exception;
 
     Usuario recuperarPassword(ChangePassword dtoPassword) throws Exception;
 }

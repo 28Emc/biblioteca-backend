@@ -55,7 +55,7 @@ public class Usuario {
 
     // USER(1):ROLE(1)
     //FUNGE DE MANYTOONE
-    @OneToOne//(cascade = CascadeType.MERGE)
+    @ManyToOne(fetch = FetchType.EAGER)//(cascade = CascadeType.MERGE)
     @JoinColumn(name = "id_rol")
     private Rol rol;
 

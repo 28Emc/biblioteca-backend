@@ -18,10 +18,14 @@ public interface IEmpleadoService {
 
     PersonaDTO findByIdLocalAndIdUsuario(Long idLocal, Long idUsuario) throws Exception;
 
-    void save(PersonaDTO personaDTO) throws Exception;
+    void save(Empleado empleado);
+
+    void saveAdmin(PersonaDTO personaDTO) throws Exception;
 
     void update(Long id, PersonaDTO personaDTO, Usuario usuarioLogueado) throws Exception;
 
     void changeEmpleadoState(Long id, boolean tipoOperacion) throws Exception;
+
+    void delete(Empleado empleado);
 
 }

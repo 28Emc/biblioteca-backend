@@ -191,7 +191,7 @@ public class EmpleadoController {
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
 
-            empleadoService.save(personaDTO);
+            empleadoService.saveAdmin(personaDTO);
         } catch (Exception e) {
             response.put("message", "Lo sentimos, hubo un error a la hora de registrar el empleado");
             response.put("error", e.getMessage());

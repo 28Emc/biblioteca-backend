@@ -5,15 +5,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import com.biblioteca.backend.model.Empleado.Empleado;
-import com.biblioteca.backend.model.Local.Local;
 import com.biblioteca.backend.model.Persona.DTO.PersonaDTO;
 import com.biblioteca.backend.model.Persona.Persona;
 import com.biblioteca.backend.model.Rol.Rol;
 import com.biblioteca.backend.model.Token.Token;
 import com.biblioteca.backend.model.Usuario.Usuario;
 import com.biblioteca.backend.model.Usuario.DTO.ChangePassword;
-import com.biblioteca.backend.repository.core.EmpleadoRepository;
 import com.biblioteca.backend.repository.security.PersonaRepository;
 import com.biblioteca.backend.repository.security.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,7 +31,7 @@ public class UsuarioServiceImpl implements IUsuarioService {
     private PersonaRepository personaRepository;
 
     @Autowired
-    private EmpleadoRepository empleadoRepository;
+    private IEmpleadoService empleadoService;
 
     @Autowired
     private ILocalService localService;
@@ -70,8 +67,8 @@ public class UsuarioServiceImpl implements IUsuarioService {
                     personasDTO.add(new PersonaDTO(usuarioFound.getId(), personaFound.getNombre(),
                             personaFound.getApellidoPaterno(), personaFound.getApellidoMaterno(),
                             personaFound.getTipoDocumento(), personaFound.getNroDocumento(), personaFound.getSexo(),
-                            personaFound.getDireccion(), personaFound.getCelular(), usuarioFound.getFechaRegistro(),
-                            usuarioFound.getFechaActualizacion(), usuarioFound.getFechaBaja(), rolFound.getId(),
+                            personaFound.getDireccion(), personaFound.getCelular(), personaFound.getFechaRegistro(),
+                            personaFound.getFechaActualizacion(), personaFound.getFechaBaja(), rolFound.getId(),
                             null, usuarioFound.getUsuario(), usuarioFound.getPassword(),
                             usuarioFound.getFotoUsuario(), usuarioFound.isActivo()));
                 }
@@ -110,7 +107,7 @@ public class UsuarioServiceImpl implements IUsuarioService {
         return new PersonaDTO(usuarioFound.getId(), personaFound.getNombre(), personaFound.getApellidoPaterno(),
                 personaFound.getApellidoMaterno(), personaFound.getTipoDocumento(), personaFound.getNroDocumento(),
                 personaFound.getSexo(), personaFound.getDireccion(), personaFound.getCelular(),
-                usuarioFound.getFechaRegistro(), usuarioFound.getFechaActualizacion(), usuarioFound.getFechaBaja(),
+                personaFound.getFechaRegistro(), personaFound.getFechaActualizacion(), personaFound.getFechaBaja(),
                 rolFound.getId(), null, usuarioFound.getUsuario(), usuarioFound.getPassword(),
                 usuarioFound.getFotoUsuario(), usuarioFound.isActivo());
     }
@@ -165,7 +162,7 @@ public class UsuarioServiceImpl implements IUsuarioService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Usuario save(PersonaDTO personaDTO) throws Exception {
+    public Usuario saveAdmin(PersonaDTO personaDTO) throws Exception {
         Optional<Usuario> usuarioFound = findByUsuario(personaDTO.getUsuario());
 
         if (usuarioFound.isPresent()) throw new Exception("El correo ya està siendo utilizado");
@@ -191,7 +188,7 @@ public class UsuarioServiceImpl implements IUsuarioService {
         usuarioNew.setUsuario(personaDTO.getUsuario());
         usuarioNew.setPassword(passwordEncoder.encode(personaDTO.getPassword()));
         // TODO: AGREGAR LA RUTA DE LA FOTO POR DEFECTO
-        usuarioNew.setFotoUsuario("");
+        usuarioNew.setFotoUsuario("no-image.jpg");
         usuarioNew.setActivo(true);
 
         return usuarioRepository.save(usuarioNew);
@@ -199,36 +196,67 @@ public class UsuarioServiceImpl implements IUsuarioService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Usuario activateUser(String token) throws Exception {
-        Token tokenConfirma = tokenService
-                .findByToken(token)
-                .orElseThrow(() -> new Exception("El enlace es inválido o el token ya caducó"));
-        Usuario usuarioFound = findByUsuario(tokenConfirma.getUsuario().getUsuario())
-                .orElseThrow(() -> new Exception("El usuario no existe"));
-        usuarioFound.setActivo(true);
-        tokenService.delete(tokenConfirma.getId());
+    public Token createTokenAccount(Usuario usuario, String tipoOperacion) throws Exception {
+        findById(usuario.getId()).orElseThrow(() -> new Exception("El usuario no existe"));
+        Token tokenConfirma = new Token(usuario, tipoOperacion);
+        return tokenService.save(tokenConfirma);
+    }
 
-        return usuarioRepository.save(usuarioFound);
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public ChangePassword validateToken(String token) throws Exception {
+        Token tokenFound = tokenService
+                .findByToken(token)
+                .orElseThrow(() -> new Exception("El token es inválido o ya caducó"));
+        ChangePassword dtoPassword = new ChangePassword();
+        Usuario usuario = findByUsuario(tokenFound.getUsuario().getUsuario())
+                .orElseThrow(() -> new Exception("El usuario no existe"));
+        dtoPassword.setId(usuario.getId());
+        tokenService.delete(tokenFound.getId());
+        return dtoPassword;
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Usuario update(Long id, PersonaDTO personaDTO, Usuario usuarioLogueado) throws Exception {
-        Rol rolFound = roleService
-                .findById(personaDTO.getIdRol())
-                .orElseThrow(() -> new Exception("El rol no existe"));
         Usuario usuarioUpdate = findById(id)
                 .orElseThrow(() -> new Exception("El usuario no existe"));
+        roleService
+                .findById(personaDTO.getIdRol())
+                .orElseThrow(() -> new Exception("El rol no existe"));
 
-        if (usuarioUpdate.getId().equals(usuarioLogueado.getId())
-                && usuarioLogueado.getRol().getAuthority().equals("ROLE_ADMIN")) {
-            usuarioUpdate.setRol(usuarioLogueado.getRol());
-            Empleado empleadoFound = empleadoRepository.findByIdUsuario(usuarioLogueado.getId());
+        /*if (usuarioLogueado.getRol().getAuthority().equals("ROLE_ADMIN") &&
+                personaDTO.getIdLocal() != null) { // USUARIO -> EMPLEADO / ADMIN
             Local localFound = localService
-                    .findById(empleadoFound.getLocal().getId())
+                    .findById(personaDTO.getIdLocal())
                     .orElseThrow(() -> new Exception("El local no existe"));
-            empleadoFound.setLocal(localFound);
-            empleadoRepository.save(empleadoFound);
+            Empleado empleadoFound = empleadoService.findByIdUsuario(usuarioUpdate.getId());
+
+            if (empleadoFound == null) {
+                empleadoFound = new Empleado(usuarioUpdate.getId(), localFound);
+            } else {
+                empleadoFound.setLocal(localFound);
+                if (empleadoFound.getFechaBaja() != null) {
+                    throw new Exception("El empleado asociado a esta cuenta de usuario ha sido dado de baja");
+                }
+            }
+
+            //Empleado empleadoFound = new Empleado(usuarioUpdate.getId(), localFound);
+            empleadoService.save(empleadoFound);
+            //usuarioUpdate.setRol(rolFound);
+            //usuarioRepository.save(usuarioUpdate);
+
+            if (rolFound.getAuthority().equals("ROLE_USUARIO")) {
+                empleadoService.delete(empleadoFound);
+                throw new Exception("El rol asignado es inválido. Rol asignado: "
+                        .concat(rolFound.getAuthority()));
+            }
+        }*/
+
+        Optional<Usuario> usuarioFound = findByUsuario(personaDTO.getUsuario());
+
+        if (usuarioFound.isPresent() && !id.equals(usuarioFound.get().getId())) {
+            throw new Exception("El correo ya està siendo utilizado");
         }
 
         Persona personaUpdate = personaRepository
@@ -243,14 +271,16 @@ public class UsuarioServiceImpl implements IUsuarioService {
         personaUpdate.setSexo(personaDTO.getSexo());
         personaUpdate.setDireccion(personaDTO.getDireccion());
         personaUpdate.setCelular(personaDTO.getCelular());
+        personaUpdate.setFechaActualizacion(LocalDateTime.now());
         personaRepository.save(personaUpdate);
 
         usuarioUpdate.setPersona(personaUpdate);
-        usuarioUpdate.setRol(rolFound);
-        usuarioUpdate.setUsuario(personaDTO.getUsuario());
-        usuarioUpdate.setPassword(passwordEncoder.encode(personaDTO.getPassword()));
-        usuarioUpdate.setFotoUsuario(""); // TODO: AGREGAR LA RUTA DE LA FOTO POR DEFECTO
-        usuarioUpdate.setActivo(true);
+        //usuarioUpdate.setRol(rolFound); // TODO: SE VA A CAMBIAR A UN MÉTODO INDEPENDIENTE
+        usuarioUpdate.setUsuario(personaDTO.getUsuario()); // TODO: CREAR MÉTODO PARA VALIDAR EMAIL AL CAMBIAR
+        usuarioUpdate.setFechaActualizacion(LocalDateTime.now());
+        //usuarioUpdate.setPassword(passwordEncoder.encode(personaDTO.getPassword()));
+        //usuarioUpdate.setFotoUsuario(""); // TODO: AGREGAR LA RUTA DE LA FOTO POR DEFECTO
+        //usuarioUpdate.setActivo(true);
         return usuarioRepository.save(usuarioUpdate);
     }
 
@@ -261,6 +291,7 @@ public class UsuarioServiceImpl implements IUsuarioService {
                 .orElseThrow(() -> new Exception("El usuario no existe"));
         usuarioUpdate.setActivo(tipoOperacion);
         usuarioUpdate.setFechaActualizacion(LocalDateTime.now());
+        usuarioUpdate.setFechaBaja(null);
 
         if (!tipoOperacion) usuarioUpdate.setFechaBaja(LocalDateTime.now());
 
@@ -268,6 +299,7 @@ public class UsuarioServiceImpl implements IUsuarioService {
                 .findById(usuarioUpdate.getPersona().getId())
                 .orElseThrow(() -> new Exception(("La persona no existe")));
         personaUpdate.setFechaActualizacion(LocalDateTime.now());
+        personaUpdate.setFechaBaja(null);
 
         if (!tipoOperacion) personaUpdate.setFechaBaja(LocalDateTime.now());
 
@@ -279,9 +311,54 @@ public class UsuarioServiceImpl implements IUsuarioService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Usuario cambiarPassword(ChangePassword dtoPassword) throws Exception {
+    public Usuario activateUser(String token) throws Exception {
+        Token tokenConfirma = tokenService
+                .findByToken(token)
+                .orElseThrow(() -> new Exception("El token es inválido o ya caducó"));
+        Usuario usuarioFound = findByUsuario(tokenConfirma.getUsuario().getUsuario())
+                .orElseThrow(() -> new Exception("El usuario no existe"));
+        usuarioFound.setActivo(true);
+        tokenService.delete(tokenConfirma.getId());
+
+        return usuarioRepository.save(usuarioFound);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Usuario recuperarPassword(ChangePassword dtoPassword) throws Exception {
         Usuario usuario = findById(dtoPassword.getId())
                 .orElseThrow(() -> new Exception("El usuario no existe"));
+        dtoPassword.setPasswordActual(null);
+
+        if (dtoPassword.getNuevaPassword().equals("") || dtoPassword.getConfirmarPassword().equals("")) {
+            throw new Exception("Rellenar todos los campos");
+        }
+
+        if (passwordEncoder.matches(dtoPassword.getNuevaPassword(), usuario.getPassword())) {
+            throw new Exception("La nueva contraseña debe ser diferente a la actual");
+        }
+
+        if (!dtoPassword.getNuevaPassword().equals(dtoPassword.getConfirmarPassword())) {
+            throw new Exception("Las contraseñas no coinciden");
+        }
+
+        String passwordHash = passwordEncoder.encode(dtoPassword.getNuevaPassword());
+        usuario.setPassword(passwordHash);
+
+        return usuarioRepository.save(usuario);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Usuario cambiarPassword(ChangePassword dtoPassword, String username) throws Exception {
+        Usuario usuario = findByUsuario(username)
+                .orElseThrow(() -> new Exception("El usuario no existe"));
+        dtoPassword.setId(usuario.getId());
+
+        if (dtoPassword.getPasswordActual().isBlank() || dtoPassword.getNuevaPassword().isBlank()
+                || dtoPassword.getConfirmarPassword().isBlank()) {
+            throw new Exception("Rellenar todos los campos");
+        }
 
         if (!passwordEncoder.matches(dtoPassword.getPasswordActual(), usuario.getPassword())) {
             throw new Exception("La contraseña actual es incorrecta");
@@ -300,25 +377,4 @@ public class UsuarioServiceImpl implements IUsuarioService {
 
         return usuarioRepository.save(usuario);
     }
-
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public Usuario recuperarPassword(ChangePassword dtoPassword) throws Exception {
-        Usuario usuario = findById(dtoPassword.getId())
-                .orElseThrow(() -> new Exception("El usuario no existe"));
-
-        if (passwordEncoder.matches(dtoPassword.getNuevaPassword(), usuario.getPassword())) {
-            throw new Exception("La nueva contraseña debe ser diferente a la actual");
-        }
-
-        if (!dtoPassword.getNuevaPassword().equals(dtoPassword.getConfirmarPassword())) {
-            throw new Exception("Las contraseñas no coinciden");
-        }
-
-        String passwordHash = passwordEncoder.encode(dtoPassword.getNuevaPassword());
-        usuario.setPassword(passwordHash);
-
-        return usuarioRepository.save(usuario);
-    }
-
 }

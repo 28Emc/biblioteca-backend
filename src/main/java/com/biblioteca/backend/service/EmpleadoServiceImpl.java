@@ -141,11 +141,17 @@ public class EmpleadoServiceImpl implements IEmpleadoService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void save(PersonaDTO personaDTO) throws Exception {
+    public void save(Empleado empleado) {
+        empleadoRepository.save(empleado);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void saveAdmin(PersonaDTO personaDTO) throws Exception {
         Local localFound = localRepository
                 .findById(personaDTO.getIdLocal())
                 .orElseThrow(() -> new Exception("El local no existe"));
-        Usuario usuarioNew = usuarioService.save(personaDTO);
+        Usuario usuarioNew = usuarioService.saveAdmin(personaDTO);
         Empleado empleadoNew = new Empleado(usuarioNew.getId(), localFound);
         empleadoRepository.save(empleadoNew);
     }
@@ -177,5 +183,11 @@ public class EmpleadoServiceImpl implements IEmpleadoService {
         if (!tipoOperacion) empleadoFound.setFechaBaja(LocalDateTime.now());
 
         empleadoRepository.save(empleadoFound);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void delete(Empleado empleado) {
+        empleadoRepository.delete(empleado);
     }
 }
