@@ -259,7 +259,8 @@ public class PrestamoController {
                         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
                     } else {
                         libroPrestamo.setStock(libroPrestamo.getStock() - 1);
-                        libroService.save(libroPrestamo);
+                        //libroService.save(libroPrestamo);
+                        // TODO: REVISAR
                         prestamoDTO.setIdLibro(libroPrestamo.getId());
                     }
 
@@ -446,7 +447,7 @@ public class PrestamoController {
                     prestamoEncontrado.get().setActivo(true);
                 }*/
 
-                libroService.save(libro);
+                //libroService.save(libro);
 
                 prestamoService.save(prestamoEncontrado.get());
                 response.put("mensaje", "Libro devuelto");
@@ -546,7 +547,7 @@ public class PrestamoController {
                     prestamoEncontrado.get().setActivo(true);
                 }*/
 
-                libroService.save(libro);
+                //libroService.save(libro);
                 prestamoService.save(prestamoEncontrado.get());
                 response.put("mensaje", "Prèstamo anulado");
 

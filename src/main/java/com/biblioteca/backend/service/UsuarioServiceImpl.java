@@ -1,6 +1,7 @@
 package com.biblioteca.backend.service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -46,23 +47,81 @@ public class UsuarioServiceImpl implements IUsuarioService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<Usuario> findAll() {
+    public List<Usuario> findAllUsers() {
         return usuarioRepository.findAll();
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<Usuario> findById(Long id) throws Exception {
-        if (!id.toString().matches("^\\d+$")) throw new Exception("El id es inválido");
+    public List<PersonaDTO> findAll() throws Exception {
+        List<PersonaDTO> personasDTO = new ArrayList<>();
+        findAllUsers().forEach(usuario -> {
+            try {
+                Usuario usuarioFound = findById(usuario.getId())
+                        .orElseThrow(() -> new Exception("El usuario no existe"));
+                Rol rolFound = roleService
+                        .findById(usuarioFound.getRol().getId())
+                        .orElseThrow(() -> new Exception("El rol no existe"));
 
+                if (rolFound.getAuthority().equals("ROLE_USUARIO")) {
+                    Persona personaFound = personaRepository
+                            .findById(usuarioFound.getPersona().getId())
+                            .orElseThrow(() -> new Exception("La persona no existe"));
+                    personasDTO.add(new PersonaDTO(usuarioFound.getId(), personaFound.getNombre(),
+                            personaFound.getApellidoPaterno(), personaFound.getApellidoMaterno(),
+                            personaFound.getTipoDocumento(), personaFound.getNroDocumento(), personaFound.getSexo(),
+                            personaFound.getDireccion(), personaFound.getCelular(), usuarioFound.getFechaRegistro(),
+                            usuarioFound.getFechaActualizacion(), usuarioFound.getFechaBaja(), rolFound.getId(),
+                            null, usuarioFound.getUsuario(), usuarioFound.getPassword(),
+                            usuarioFound.getFotoUsuario(), usuarioFound.isActivo()));
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+
+        return personasDTO;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<Usuario> findById(Long id) {
         return usuarioRepository.findById(id);
     }
 
     @Override
     @Transactional(readOnly = true)
+    public PersonaDTO findPersonaByIdUsuario(Long id) throws Exception {
+        Usuario usuarioFound = findById(id)
+                .orElseThrow(() -> new Exception("El usuario no existe"));
+        Rol rolFound = roleService
+                .findById(usuarioFound.getRol().getId())
+                .orElseThrow(() -> new Exception("El rol no existe"));
+
+        if (!rolFound.getAuthority().equals("ROLE_USUARIO")) {
+            throw new Exception("El usuario encontrado no tiene el rol correcto. Rol del usuario: "
+                    .concat(rolFound.getAuthority()));
+        }
+
+        Persona personaFound = personaRepository
+                .findById(usuarioFound.getPersona().getId())
+                .orElseThrow(() -> new Exception("La persona no existe"));
+
+        return new PersonaDTO(usuarioFound.getId(), personaFound.getNombre(), personaFound.getApellidoPaterno(),
+                personaFound.getApellidoMaterno(), personaFound.getTipoDocumento(), personaFound.getNroDocumento(),
+                personaFound.getSexo(), personaFound.getDireccion(), personaFound.getCelular(),
+                usuarioFound.getFechaRegistro(), usuarioFound.getFechaActualizacion(), usuarioFound.getFechaBaja(),
+                rolFound.getId(), null, usuarioFound.getUsuario(), usuarioFound.getPassword(),
+                usuarioFound.getFotoUsuario(), usuarioFound.isActivo());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<Usuario> findByPersona(Persona persona) throws Exception {
-        Persona personaFound = personaRepository.findById(persona.getId()).orElseThrow(() ->
-                new Exception("La persona no existe"));
+        Persona personaFound = personaRepository
+                .findById(persona.getId())
+                .orElseThrow(() -> new Exception("La persona no existe"));
+
         return usuarioRepository.findByPersona(personaFound);
     }
 
@@ -75,13 +134,15 @@ public class UsuarioServiceImpl implements IUsuarioService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Usuario findByNroDocumentoAndUsuario(String nroDocumento, String usuario) throws Exception {
-        Persona personaFound = personaRepository.findByNroDocumento(nroDocumento).orElseThrow(() ->
-                new Exception("La persona con ese documento no existe"));
+        Persona personaFound = personaRepository
+                .findByNroDocumento(nroDocumento)
+                .orElseThrow(() -> new Exception("La persona con ese documento no existe"));
+
         return findByPersona(personaFound)
                 .stream()
                 .filter(usuarioItem -> usuarioItem.getUsuario().equals(usuario))
                 .findFirst()
-                .orElseThrow(() -> new Exception("El usuario no existe o está deshabilitado"));
+                .orElseThrow(() -> new Exception("El usuario no existe"));
     }
 
     @Override
@@ -107,10 +168,11 @@ public class UsuarioServiceImpl implements IUsuarioService {
     public Usuario save(PersonaDTO personaDTO) throws Exception {
         Optional<Usuario> usuarioFound = findByUsuario(personaDTO.getUsuario());
 
-        if (usuarioFound.isPresent()) throw new Exception("El correo ya està registrado");
+        if (usuarioFound.isPresent()) throw new Exception("El correo ya està siendo utilizado");
 
-        Rol rolFound = roleService.findById(personaDTO.getIdRol()).orElseThrow(() ->
-                new Exception("El rol no existe"));
+        Rol rolFound = roleService
+                .findById(personaDTO.getIdRol())
+                .orElseThrow(() -> new Exception("El rol no existe"));
 
         Persona personaNew = new Persona();
         personaNew.setNombre(personaDTO.getNombre());
@@ -128,7 +190,8 @@ public class UsuarioServiceImpl implements IUsuarioService {
         usuarioNew.setRol(rolFound);
         usuarioNew.setUsuario(personaDTO.getUsuario());
         usuarioNew.setPassword(passwordEncoder.encode(personaDTO.getPassword()));
-        usuarioNew.setFotoUsuario(""); // TODO: AGREGAR LA RUTA DE LA FOTO POR DEFECTO
+        // TODO: AGREGAR LA RUTA DE LA FOTO POR DEFECTO
+        usuarioNew.setFotoUsuario("");
         usuarioNew.setActivo(true);
 
         return usuarioRepository.save(usuarioNew);
@@ -137,12 +200,12 @@ public class UsuarioServiceImpl implements IUsuarioService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Usuario activateUser(String token) throws Exception {
-        Token tokenConfirma = tokenService.findByToken(token).orElseThrow(() ->
-                new Exception("El enlace es inválido o el token ya caducó"));
-        Usuario usuarioFound = findByUsuario(tokenConfirma.getUsuario().getUsuario()).orElseThrow(() ->
-                new Exception("El usuario no existe"));
+        Token tokenConfirma = tokenService
+                .findByToken(token)
+                .orElseThrow(() -> new Exception("El enlace es inválido o el token ya caducó"));
+        Usuario usuarioFound = findByUsuario(tokenConfirma.getUsuario().getUsuario())
+                .orElseThrow(() -> new Exception("El usuario no existe"));
         usuarioFound.setActivo(true);
-
         tokenService.delete(tokenConfirma.getId());
 
         return usuarioRepository.save(usuarioFound);
@@ -151,24 +214,26 @@ public class UsuarioServiceImpl implements IUsuarioService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Usuario update(Long id, PersonaDTO personaDTO, Usuario usuarioLogueado) throws Exception {
-        if (!id.toString().matches("^\\d+$")) throw new Exception("El id es inválido");
+        Rol rolFound = roleService
+                .findById(personaDTO.getIdRol())
+                .orElseThrow(() -> new Exception("El rol no existe"));
+        Usuario usuarioUpdate = findById(id)
+                .orElseThrow(() -> new Exception("El usuario no existe"));
 
-        Rol rolFound = roleService.findById(personaDTO.getIdRol()).orElseThrow(() ->
-                new Exception("El rol no existe"));
-
-        Usuario usuarioUpdate = findById(id).orElseThrow(() -> new Exception("El usuario no existe"));
-
-        if (usuarioUpdate.getId().equals(usuarioLogueado.getId()) && usuarioLogueado.getRol().getAuthority().equals("ROLE_ADMIN")) {
+        if (usuarioUpdate.getId().equals(usuarioLogueado.getId())
+                && usuarioLogueado.getRol().getAuthority().equals("ROLE_ADMIN")) {
             usuarioUpdate.setRol(usuarioLogueado.getRol());
             Empleado empleadoFound = empleadoRepository.findByIdUsuario(usuarioLogueado.getId());
-            Local localFound = localService.findById(empleadoFound.getLocal().getId()).orElseThrow(() ->
-                    new Exception("El local no existe"));
+            Local localFound = localService
+                    .findById(empleadoFound.getLocal().getId())
+                    .orElseThrow(() -> new Exception("El local no existe"));
             empleadoFound.setLocal(localFound);
             empleadoRepository.save(empleadoFound);
         }
 
-        Persona personaUpdate = personaRepository.findById(usuarioUpdate.getPersona().getId()).orElseThrow(() ->
-                new Exception(("La persona no existe")));
+        Persona personaUpdate = personaRepository
+                .findById(usuarioUpdate.getPersona().getId())
+                .orElseThrow(() -> new Exception(("La persona no existe")));
 
         personaUpdate.setNombre(personaDTO.getNombre());
         personaUpdate.setApellidoPaterno(personaDTO.getApellidoPaterno());
@@ -192,20 +257,20 @@ public class UsuarioServiceImpl implements IUsuarioService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Usuario changeUsuarioState(Long idUsuario, boolean tipoOperacion) throws Exception {
-        if (!idUsuario.toString().matches("^\\d+$")) throw new Exception("El id es inválido");
-
-        Usuario usuarioUpdate = usuarioRepository.findById(idUsuario).orElseThrow(() ->
-                new Exception("El usuario no existe"));
-
+        Usuario usuarioUpdate = findById(idUsuario)
+                .orElseThrow(() -> new Exception("El usuario no existe"));
         usuarioUpdate.setActivo(tipoOperacion);
         usuarioUpdate.setFechaActualizacion(LocalDateTime.now());
+
         if (!tipoOperacion) usuarioUpdate.setFechaBaja(LocalDateTime.now());
 
-        Persona personaUpdate = personaRepository.findById(usuarioUpdate.getPersona().getId()).orElseThrow(() ->
-                new Exception(("La persona no existe")));
-
+        Persona personaUpdate = personaRepository
+                .findById(usuarioUpdate.getPersona().getId())
+                .orElseThrow(() -> new Exception(("La persona no existe")));
         personaUpdate.setFechaActualizacion(LocalDateTime.now());
+
         if (!tipoOperacion) personaUpdate.setFechaBaja(LocalDateTime.now());
+
         personaRepository.save(personaUpdate);
 
         usuarioUpdate.setPersona(personaUpdate);
@@ -215,7 +280,8 @@ public class UsuarioServiceImpl implements IUsuarioService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Usuario cambiarPassword(ChangePassword dtoPassword) throws Exception {
-        Usuario usuario = findById(dtoPassword.getId()).orElseThrow();
+        Usuario usuario = findById(dtoPassword.getId())
+                .orElseThrow(() -> new Exception("El usuario no existe"));
 
         if (!passwordEncoder.matches(dtoPassword.getPasswordActual(), usuario.getPassword())) {
             throw new Exception("La contraseña actual es incorrecta");
@@ -238,7 +304,9 @@ public class UsuarioServiceImpl implements IUsuarioService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Usuario recuperarPassword(ChangePassword dtoPassword) throws Exception {
-        Usuario usuario = findById(dtoPassword.getId()).get();
+        Usuario usuario = findById(dtoPassword.getId())
+                .orElseThrow(() -> new Exception("El usuario no existe"));
+
         if (passwordEncoder.matches(dtoPassword.getNuevaPassword(), usuario.getPassword())) {
             throw new Exception("La nueva contraseña debe ser diferente a la actual");
         }

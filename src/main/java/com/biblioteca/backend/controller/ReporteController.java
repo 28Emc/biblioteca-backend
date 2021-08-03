@@ -598,7 +598,7 @@ public class ReporteController {
         Map<String, Object> response = new HashMap<>();
         try {
             List<Usuario> usuarios = null;
-            usuarios = usuarioService.findAll();
+            usuarios = usuarioService.findAllUsers();
             ByteArrayInputStream bis;
             var headers = new HttpHeaders();
             if (usuarios.size() != 0) {
@@ -633,7 +633,7 @@ public class ReporteController {
             List<Usuario> usuarios = null;
             ByteArrayInputStream bis;
             var headers = new HttpHeaders();
-            usuarios = usuarioService.findAll();
+            usuarios = usuarioService.findAllUsers();
             String titulo = "";
             String tituloPdf = "";
             // USO UN STRING EN VEZ DE UN BOOLEAN PARA HACER SALTAR LA EXCEPCION
@@ -688,7 +688,7 @@ public class ReporteController {
             List<Usuario> usuarios = null;
             ByteArrayInputStream bis;
             var headers = new HttpHeaders();
-            usuarios = usuarioService.findAll();
+            usuarios = usuarioService.findAllUsers();
             if (usuarios.size() != 0) {
                 bis = GenerarReporteExcel.generarExcelUsuarios("Reporte de usuarios totales", usuarios);
                 headers.add("Content-Disposition", "attachment; filename=listado-usuarios-totales.xlsx");
@@ -719,7 +719,7 @@ public class ReporteController {
         try {
             ByteArrayInputStream in;
             List<Usuario> usuarios = null;
-            usuarios = usuarioService.findAll();
+            usuarios = usuarioService.findAllUsers();
             var headers = new HttpHeaders();
             String titulo = "";
             String tituloExcel = "";

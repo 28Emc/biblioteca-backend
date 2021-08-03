@@ -10,9 +10,13 @@ import com.biblioteca.backend.model.Usuario.Usuario;
 
 public interface IUsuarioService {
 
-    List<Usuario> findAll();
+    List<Usuario> findAllUsers();
+
+    List<PersonaDTO> findAll() throws Exception;
 
     Optional<Usuario> findById(Long id) throws Exception;
+
+    PersonaDTO findPersonaByIdUsuario(Long id) throws Exception;
 
     List<Usuario> findByPersona(Persona persona) throws Exception;
 

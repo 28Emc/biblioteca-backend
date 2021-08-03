@@ -64,20 +64,22 @@ public class UsuarioController {
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de buscar los usuarios. " +
                     "Inténtelo mas tarde")})
     @GetMapping(value = "/usuarios", produces = "application/json")
-    @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
     public ResponseEntity<?> listarUsuarios() {
         Map<String, Object> response = new HashMap<>();
-        List<Usuario> usuarios;
+        List<PersonaDTO> usuarios;
+
         try {
-            usuarios = usuarioService.findByRol("ROLE_USUARIO");
+            usuarios = usuarioService.findAll();
         } catch (Exception e) {
             response.put("message", "Lo sentimos, hubo un error a la hora de buscar los usuarios");
             response.put("error", e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.FOUND);
         }
+
+        response.put("message", "Usuarios encontrados : ".concat(String.valueOf(usuarios.size())));
         response.put("data", usuarios);
-        response.put("message", "Usuarios encontrados");
-        return new ResponseEntity<>(response, HttpStatus.FOUND);
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @ApiOperation(value = "Método de consulta de usuario por su id", response = ResponseEntity.class)
@@ -89,20 +91,28 @@ public class UsuarioController {
     @GetMapping(value = "/usuarios/{id}", produces = "application/json")
     //@PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
     @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
-    public ResponseEntity<?> buscarUsuario(@PathVariable Long id) {
+    public ResponseEntity<?> buscarUsuario(@PathVariable String id) {
         Map<String, Object> response = new HashMap<>();
-        Usuario usuario;
+        PersonaDTO usuario;
+
         try {
-            usuario = usuarioService.findById(id).orElseThrow();
+
+            if (!id.matches("^\\d+$")) {
+                response.put("message", "Lo sentimos, hubo un error a la hora de buscar el usuario");
+                response.put("error", "El id es inválido");
+                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+            }
+
+            usuario = usuarioService.findPersonaByIdUsuario(Long.valueOf(id));
         } catch (Exception e) {
             response.put("message", "Lo sentimos, hubo un error a la hora de buscar el usuario");
             response.put("error", e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        // TODO: VER SI MANDO UN DTO EN VEZ DEL OBJETO USUARIO
-        response.put("data", usuario);
+
         response.put("message", "Usuario encontrado");
-        return new ResponseEntity<>(response, HttpStatus.FOUND);
+        response.put("data", usuario);
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @ApiOperation(value = "Método de registro de usuarios dentro del sistema", response = ResponseEntity.class)
@@ -149,12 +159,17 @@ public class UsuarioController {
     @PutMapping(value = "/usuarios/{id}", produces = "application/json")
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
     public ResponseEntity<?> editarUsuario(@Valid @RequestBody PersonaDTO personaDTO, BindingResult result,
-                                           @PathVariable Long id, Authentication authentication) {
+                                           @PathVariable String id, Authentication authentication) {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         Usuario usuarioLogueado = usuarioService.findByUsuario(userDetails.getUsername()).orElseThrow();
         Map<String, Object> response = new HashMap<>();
 
         try {
+            if (!id.matches("^\\d+$")) {
+                response.put("message", "Lo sentimos, hubo un error a la hora de buscar el usuario");
+                response.put("error", "El id es inválido");
+                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+            }
 
             if (result.hasErrors()) {
                 List<String> errores = result.getFieldErrors()
@@ -165,7 +180,7 @@ public class UsuarioController {
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
 
-            usuarioService.update(id, personaDTO, usuarioLogueado);
+            usuarioService.update(Long.valueOf(id), personaDTO, usuarioLogueado);
         } catch (Exception e) {
             response.put("message", "Lo sentimos, hubo un error a la hora de actualizar el usuario");
             response.put("error", e.getMessage());
@@ -182,14 +197,21 @@ public class UsuarioController {
             @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = "El usuario no existe"),
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de deshabilitar el usuario." +
                     " Inténtelo mas tarde")})
-    @PutMapping(value = "/usuarios/{id}/deshabilitar", produces = "application/json")
+    @PutMapping(value = "/usuarios/{id}/off", produces = "application/json")
     //@PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_USER')")
     @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
-    public ResponseEntity<?> deshabilitarUsuario(@PathVariable Long id) {
+    public ResponseEntity<?> deshabilitarUsuario(@PathVariable String id) {
         Map<String, Object> response = new HashMap<>();
 
         try {
-            Usuario usuarioFound = usuarioService.changeUsuarioState(id, false);
+
+            if (!id.matches("^\\d+$")) {
+                response.put("message", "Lo sentimos, hubo un error a la hora de buscar el usuario");
+                response.put("error", "El id es inválido");
+                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+            }
+
+            Usuario usuarioFound = usuarioService.changeUsuarioState(Long.valueOf(id), false);
 
             Map<String, Object> model = new HashMap<>();
             model.put("titulo", "Usuario Deshabilitado");
@@ -218,16 +240,20 @@ public class UsuarioController {
             @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = "El usuario no existe"),
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de habilitar el usuario." +
                     " Inténtelo mas tarde")})
-    @PutMapping(value = "/usuarios/{id}/habilitar", produces = "application/json")
+    @PutMapping(value = "/usuarios/{id}/on", produces = "application/json")
     //@PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN')")
     @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
-    public ResponseEntity<?> habilitarUsuario(@PathVariable Long id) {
+    public ResponseEntity<?> habilitarUsuario(@PathVariable String id) {
         Map<String, Object> response = new HashMap<>();
 
         try {
+            if (!id.matches("^\\d+$")) {
+                response.put("message", "Lo sentimos, hubo un error a la hora de buscar el usuario");
+                response.put("error", "El id es inválido");
+                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+            }
 
-            Usuario usuarioFound = usuarioService.changeUsuarioState(id, true);
-
+            Usuario usuarioFound = usuarioService.changeUsuarioState(Long.valueOf(id), true);
         } catch (MessagingException e) {
             response.put("message", "Lo sentimos, hubo un error a la hora de enviar el correo de confirmación");
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
