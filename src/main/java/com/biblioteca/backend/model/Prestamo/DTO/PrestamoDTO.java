@@ -13,7 +13,7 @@ public class PrestamoDTO {
     private Long idUsuario;
 
     @Column(name = "id_empleado")
-    @NotNull(message = "{notNull.prestamoDTO.idEmpresa}")
+    //@NotNull(message = "{notNull.prestamoDTO.idEmpresa}")
     private Long idEmpleado;
 
     @Column(name = "id_libro")

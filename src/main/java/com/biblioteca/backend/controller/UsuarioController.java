@@ -157,7 +157,7 @@ public class UsuarioController {
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de actualizar el usuario." +
                     " Inténtelo mas tarde")})
     @PutMapping(value = {"/usuarios/{id}", "/perfil/{id}"}, produces = "application/json")
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USUARIO')")
     public ResponseEntity<?> editarUsuario(@Valid @RequestBody PersonaDTO personaDTO, BindingResult result,
                                            @PathVariable String id, Authentication authentication) {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
@@ -198,7 +198,7 @@ public class UsuarioController {
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de deshabilitar el usuario." +
                     " Inténtelo mas tarde")})
     @PutMapping(value = "/usuarios/{id}/off", produces = "application/json")
-    //@PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_USER')")
+    //@PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_USUARIO')")
     @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
     public ResponseEntity<?> deshabilitarUsuario(@PathVariable String id) {
         Map<String, Object> response = new HashMap<>();
@@ -540,7 +540,7 @@ public class UsuarioController {
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de actualizar la contraseña." +
                     " Inténtelo mas tarde")})
     @PutMapping(value = "/usuarios/cambiar-password", produces = "application/json")
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_EMPLEADO', 'ROLE_USER')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_EMPLEADO', 'ROLE_USUARIO')")
     public ResponseEntity<?> cambiarContrasenaUsuario(@RequestBody ChangePassword dtoPassword,
                                                       Authentication authentication) {
         Map<String, Object> response = new HashMap<>();

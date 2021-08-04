@@ -54,8 +54,7 @@ public class Prestamo {
     private LocalDateTime fechaBaja;
 
     @Type(type = "text")
-    @Column(nullable = false)
-    @ApiModelProperty(notes = "Observaciones del préstamo", required = true, example = "El préstamo del libro A ha sido anulado por el empleado B el dia C")
+    @ApiModelProperty(notes = "Observaciones del préstamo", example = "El préstamo del libro A ha sido anulado por el empleado B el dia C")
     private String observaciones;
 
     @Column(name = "estado", nullable = false)

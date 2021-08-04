@@ -286,11 +286,9 @@ public class UsuarioServiceImpl implements IUsuarioService {
 
         usuarioUpdate.setPersona(personaUpdate);
         //usuarioUpdate.setRol(rolFound); // TODO: SE VA A CAMBIAR A UN MÉTODO INDEPENDIENTE
-        usuarioUpdate.setUsuario(personaDTO.getUsuario()); // TODO: CREAR MÉTODO PARA VALIDAR EMAIL AL CAMBIAR
+        //usuarioUpdate.setUsuario(personaDTO.getUsuario()); // TODO: CREAR MÉTODO PARA VALIDAR EMAIL AL CAMBIAR
         usuarioUpdate.setFechaActualizacion(LocalDateTime.now());
-        //usuarioUpdate.setPassword(passwordEncoder.encode(personaDTO.getPassword()));
         //usuarioUpdate.setFotoUsuario(""); // TODO: AGREGAR LA RUTA DE LA FOTO POR DEFECTO
-        //usuarioUpdate.setActivo(true);
         return usuarioRepository.save(usuarioUpdate);
     }
 

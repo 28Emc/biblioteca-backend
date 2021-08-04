@@ -86,7 +86,6 @@ public class PrestamoServiceImpl implements IPrestamoService {
         // ARMANDO FECHA MAS AMIGABLE AL USUARIO CON TIME
         Locale esp = new Locale("es", "PE");
         // Obtienes el dia, mes y año actuales
-        //LocalDate fechaFinal = Instant.ofEpochMilli(fecha.getTime()).atZone(ZoneId.systemDefault()).toLocalDate();
         String diaNum = String.valueOf(fecha.getDayOfMonth());
         // Mejorando cadena de dia
         String dia = fecha.getDayOfWeek().getDisplayName(TextStyle.FULL, esp);
@@ -121,13 +120,12 @@ public class PrestamoServiceImpl implements IPrestamoService {
 	}*/
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public Prestamo saveFromUser(PrestamoDTO prestamoDTO, Usuario usuarioLogueado) throws Exception {
-        Prestamo prestamo = findById(prestamoDTO.getId())
-                .orElseThrow(() -> new Exception("El préstamo no existe"));
+        Prestamo prestamo = new Prestamo();
         Usuario usuarioFound = new Usuario();
         Usuario usuarioEmpleado;
-        Empleado empleadoFound = new Empleado();
+        Empleado empleadoFound;
 
         Libro libroFound = libroService
                 .findById(prestamoDTO.getIdLibro())
@@ -163,6 +161,7 @@ public class PrestamoServiceImpl implements IPrestamoService {
                     throw new Exception("El empleado no tiene acceso a este recurso");
                 }
 
+                prestamo.setEmpleado(empleadoFound);
                 break;
             case "ROLE_USUARIO":
                 usuarioFound = usuarioService
@@ -173,12 +172,11 @@ public class PrestamoServiceImpl implements IPrestamoService {
                     throw new Exception("El usuario no se encuentra activo");
                 }
 
-                prestamo.setEmpleado(null);
+                //prestamo.setEmpleado(null);
                 break;
         }
 
         prestamo.setIdUsuario(usuarioFound.getId());
-        prestamo.setEmpleado(empleadoFound);
         prestamo.setLibro(libroFound);
         prestamo.setObservaciones(prestamoDTO.getObservaciones());
         prestamo.setFechaDevolucion(prestamoDTO.getFechaDevolucion());
@@ -236,7 +234,7 @@ public class PrestamoServiceImpl implements IPrestamoService {
         prestamoRespository.deleteById(id);
     }
 
-    public String formatEstadoPrestamo(String estado) {
+    private String formatEstadoPrestamo(String estado) {
         String estadoFormat = "";
 
         switch (estado) {

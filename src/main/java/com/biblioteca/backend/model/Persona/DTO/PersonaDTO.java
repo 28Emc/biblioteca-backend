@@ -57,7 +57,7 @@ public class PersonaDTO {
     @Size(min = 5, max = 30, message = "{size.empleadoDTO.usuario}")
     private String usuario;
 
-    @NotEmpty(message = "{notEmpty.empleadoDTO.password}")
+    //@NotEmpty(message = "{notEmpty.empleadoDTO.password}")
     @Size(min = 5, max = 30, message = "{size.empleadoDTO.password}")
     private String password;
 

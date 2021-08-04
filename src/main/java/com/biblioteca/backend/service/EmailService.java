@@ -39,13 +39,14 @@ public class EmailService {
     public void enviarEmail(Map<String, Object> model) throws MessagingException {
         MimeMessage message = sender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-        Prestamo prestamo = null;
+        Prestamo prestamo;
         String path = "";
         String cabecera = "<!DOCTYPE html><html><head><meta charset='UTF-8'/><meta name='viewport' content='width=device-width, initial-scale=1.0'/><style> th { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: .5em; text-align: right; } td { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: .5em; padding-left: 2em; text-align: justify; } </style></head>";
         String cuerpo = "";
         String pie = "<div id='footer' style='padding-top: 2em; text-align: center; font-weight: lighter; font-size: 1.1rem;'><p>Biblioteca &copy;2020</p></div></div></body></html>";
-        String fechaDespacho = "";
-        String fechaDevolucion = "";
+        String fechaRegistro;
+        String fechaPrestamo;
+        String fechaDevolucion;
         switch (model.get("titulo").toString()) {
             case "Validar Correo":
                 cuerpo = "<body style='color: grey; background-color: rgb(0, 143, 167); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;'><div id='container' style='margin-left: auto; margin-right: auto; padding-left: 5em; padding-right: 5em; margin-top: 7em; padding-bottom: 2em; background-color: white; -webkit-box-shadow: 10px 10px 11px 0px rgba(59, 58, 59, 0.5); -moz-box-shadow: 10px 10px 11px 0px rgba(59, 58, 59, 0.5); box-shadow: 10px 10px 11px 0px rgba(59, 58, 59, 0.5); border: none; width: 400px; border: solid 1px rgba(59, 58, 59, 0.096);'><h1 id='titulo' style='padding-top: 1em; text-align: center; font-weight: lighter; font-size: 2.3em; color: black;'>"
@@ -86,37 +87,40 @@ public class EmailService {
                 break;
             case "Libro Solicitado":
                 prestamo = (Prestamo) model.get("prestamo");
-                fechaDespacho = prestamoService.mostrarFechaAmigable(prestamo.getFechaPrestamo());
+                fechaRegistro = prestamoService.mostrarFechaAmigable(prestamo.getFechaRegistro());
                 fechaDevolucion = prestamoService.mostrarFechaAmigable(prestamo.getFechaDevolucion());
                 cuerpo = "<body style='color: grey; background-color: rgb(0, 143, 167); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;'><div id='container' style='margin-left: auto; margin-right: auto; padding-left: 5em; padding-right: 5em; margin-top: 7em; padding-bottom: 2em; background-color: white; -webkit-box-shadow: 10px 10px 11px 0px rgba(59, 58, 59, 0.5); -moz-box-shadow: 10px 10px 11px 0px rgba(59, 58, 59, 0.5); box-shadow: 10px 10px 11px 0px rgba(59, 58, 59, 0.5); border: none; width: 400px; border: solid 1px rgba(59, 58, 59, 0.096);'><h1 id='titulo' style='padding-top: 1em; text-align: center; font-weight: lighter; font-size: 2.3em; color: black;'>"
                         + model.get("titulo").toString()
                         + "</h1><div id='imagen' style='text-align: center;'><img src='cid:logo-biblioteca2020' alt='libro-solicitado' width='60%' /></div><div style='font-size: 1.1rem; text-align: center;'><h3 style='font-weight: lighter; color:black;'>Saludos "
                         + prestamo.getIdUsuario()
                         + ", hemos recibido tu orden de préstamo</h3><table cellspacing='0' cellpadding='0'><tr style='background-color: #008fa7; color: antiquewhite;'><th>Código</th><td>"
-                        + String.valueOf(prestamo.getId()) + "</td></tr><tr><th>Libro</th><td>"
+                        + prestamo.getId() + "</td></tr><tr><th>Libro</th><td>"
                         + prestamo.getLibro().getTitulo() + " (" + prestamo.getLibro().getAutor() + ")" + "</td></tr>"
                         + "<tr><th>Local</th><td>" + prestamo.getLibro().getLocal().getDireccion() + "</td></tr>"
-                        + "<tr><th>Fecha Despacho</th><td>" + fechaDespacho + "</td></tr>"
-                        + "<tr><th>Fecha Devolucion</th><td>" + fechaDevolucion + "</td></tr></table></div>";
+                        + "<tr><th>Fecha Registro</th><td>" + fechaRegistro + "</td></tr>"
+                        + "<tr><th>Fecha Devolución</th><td>" + fechaDevolucion + "</td></tr></table></div>";
                 path = "static/img/libro-solicitado.png";
                 break;
             case "Orden Confirmada":
                 prestamo = (Prestamo) model.get("prestamo");
-                fechaDespacho = prestamoService.mostrarFechaAmigable(prestamo.getFechaPrestamo());
+                fechaRegistro = prestamoService.mostrarFechaAmigable(prestamo.getFechaRegistro());
+                fechaPrestamo = prestamoService.mostrarFechaAmigable(prestamo.getFechaPrestamo());
                 fechaDevolucion = prestamoService.mostrarFechaAmigable(prestamo.getFechaDevolucion());
                 cuerpo = "<body style='color: grey; background-color: rgb(0, 143, 167); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;'><div id='container' style='margin-left: auto; margin-right: auto; padding-left: 5em; padding-right: 5em; margin-top: 7em; padding-bottom: 2em; background-color: white; -webkit-box-shadow: 10px 10px 11px 0px rgba(59, 58, 59, 0.5); -moz-box-shadow: 10px 10px 11px 0px rgba(59, 58, 59, 0.5); box-shadow: 10px 10px 11px 0px rgba(59, 58, 59, 0.5); border: none; width: 400px; border: solid 1px rgba(59, 58, 59, 0.096);'><h1 id='titulo' style='padding-top: 1em; text-align: center; font-weight: lighter; font-size: 2.3em; color: black;'>"
                         + model.get("titulo").toString()
                         + "</h1><div id='imagen' style='text-align: center;'><img src='cid:logo-biblioteca2020' alt='orden-confirmada' width='60%' /></div><div style='font-size: 1.1rem; text-align: center;'><h3 style='font-weight: lighter; color:black;'>Saludos "
                         + prestamo.getIdUsuario()
                         + ", le comunicamos que su orden de préstamo ha sido confirmada.</h3><table cellspacing='0' cellpadding='0'><tr style='background-color: #008fa7; color: antiquewhite;'><th>Código</th><td>"
-                        + String.valueOf(prestamo.getId()) + "</td></tr><tr><th>Libro</th><td>"
+                        + prestamo.getId() + "</td></tr><tr><th>Libro</th><td>"
                         + prestamo.getLibro().getTitulo() + " (" + prestamo.getLibro().getAutor() + ")" + "</td></tr>"
                         + "<tr><th>Local</th><td>" + prestamo.getLibro().getLocal().getDireccion() + "</td></tr>"
-                        + "<tr><th>Fecha Despacho</th><td>" + fechaDespacho + "</td></tr>"
-                        + "<tr><th>Fecha Devolucion</th><td>" + fechaDevolucion + "</td></tr></table></div>";
+                        + "<tr><th>Fecha Registro</th><td>" + fechaRegistro + "</td></tr>"
+                        + "<tr><th>Fecha Préstamo</th><td>" + fechaPrestamo + "</td></tr>"
+                        + "<tr><th>Fecha Devolución</th><td>" + fechaDevolucion + "</td></tr></table></div>";
                 path = "static/img/orden-confirmada.png";
                 break;
         }
+
         helper.setText(cabecera + cuerpo + pie, true);
         helper.setFrom(model.get("from").toString());
         helper.setTo(model.get("to").toString());
@@ -130,9 +134,9 @@ public class EmailService {
         MimeMessage message = sender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
         ByteArrayInputStream bis = null;
-        List<Prestamo> prestamos = null;
-        List<Usuario> usuarios = null;
-        List<Libro> libros = null;
+        List<Prestamo> prestamos;
+        List<Usuario> usuarios;
+        List<Libro> libros;
         String path = "";
         String nomReporte = "";
         String cabecera = "<!DOCTYPE html><html><head><meta charset='UTF-8'/><meta name='viewport' content='width=device-width, initial-scale=1.0'/><style> th { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: .5em; text-align: right; } td { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: .5em; padding-left: 2em; text-align: justify; } </style></head>";
@@ -177,6 +181,7 @@ public class EmailService {
                 nomReporte = "reporte-libros-bajo-stock-" + mesActual + ".pdf";
                 break;
         }
+
         helper.setText(cabecera + cuerpo + pie, true);
         helper.setFrom(model.get("from").toString());
         helper.setTo(model.get("to").toString());
@@ -187,5 +192,4 @@ public class EmailService {
 
         sender.send(message);
     }
-
 }
