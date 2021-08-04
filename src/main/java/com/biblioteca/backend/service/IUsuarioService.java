@@ -23,6 +23,8 @@ public interface IUsuarioService {
 
     Optional<Usuario> findByUsuario(String usuario);
 
+    Optional<Usuario> findByIdEmpleado(Long idEmpleado) throws Exception;
+
     Usuario findByNroDocumentoAndUsuario(String nroDocumento, String usuario) throws Exception;
 
     List<Usuario> findByRoles();

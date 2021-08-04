@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import com.biblioteca.backend.model.Empleado.Empleado;
 import com.biblioteca.backend.model.Persona.DTO.PersonaDTO;
 import com.biblioteca.backend.model.Persona.Persona;
 import com.biblioteca.backend.model.Rol.Rol;
@@ -126,6 +127,15 @@ public class UsuarioServiceImpl implements IUsuarioService {
     @Transactional(readOnly = true)
     public Optional<Usuario> findByUsuario(String usuario) {
         return usuarioRepository.findByUsuario(usuario);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<Usuario> findByIdEmpleado(Long idEmpleado) throws Exception {
+        Empleado empleadoFound = empleadoService
+                .findById(idEmpleado)
+                .orElseThrow(() -> new Exception("El empleado no existe"));
+        return usuarioRepository.findById(empleadoFound.getIdUsuario());
     }
 
     @Override

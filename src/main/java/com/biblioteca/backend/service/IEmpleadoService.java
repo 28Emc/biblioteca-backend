@@ -5,6 +5,7 @@ import com.biblioteca.backend.model.Persona.DTO.PersonaDTO;
 import com.biblioteca.backend.model.Usuario.Usuario;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface IEmpleadoService {
 
@@ -12,7 +13,9 @@ public interface IEmpleadoService {
 
     List<PersonaDTO> findActivos();
 
-    PersonaDTO findById(Long id) throws Exception;
+    PersonaDTO findPersonaById(Long id) throws Exception;
+
+    Optional<Empleado> findById(Long idEmpleado) throws Exception;
 
     Empleado findByIdUsuario(Long idUsuario) throws Exception;
 

@@ -6,7 +6,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.TextStyle;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import com.biblioteca.backend.model.Libro.Libro;
 import com.biblioteca.backend.model.Prestamo.Prestamo;
@@ -45,7 +44,7 @@ public class Scheduler {
     @Autowired
     private EmailService emailService;
 
-    // ENVIAR CORREO DE PRÉSTAMOS TOTALES CADA MES AL SYSADMIN
+    // ENVIAR CORREO DE PRÉSTAMOS TOTALES CADA MES AL ADMIN
     // SE ENVÍA CADA FIN DE MES A LAS 12 AM (MEDIANOCHE)
     // SE PROGRAMA LA TAREA PARA QUE SE REPITA CADA DIA A MEDIANOCHE ...
     @Scheduled(cron = "0 0 0 * * ?", zone = "America/Lima") // firme

@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -73,7 +74,7 @@ public class EmpleadoServiceImpl implements IEmpleadoService {
 
     @Override
     @Transactional(readOnly = true)
-    public PersonaDTO findById(Long id) throws Exception {
+    public PersonaDTO findPersonaById(Long id) throws Exception {
         Empleado empleadoFound = empleadoRepository
                 .findById(id)
                 .orElseThrow(() -> new Exception("El empleado no existe"));
@@ -96,6 +97,12 @@ public class EmpleadoServiceImpl implements IEmpleadoService {
                 usuarioFound.getFechaRegistro(), usuarioFound.getFechaActualizacion(), usuarioFound.getFechaBaja(),
                 rolFound.getId(), localFound.getId(), usuarioFound.getUsuario(),
                 usuarioFound.getPassword(), usuarioFound.getFotoUsuario(), usuarioFound.isActivo());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<Empleado> findById(Long idEmpleado) throws Exception {
+        return empleadoRepository.findById(idEmpleado);
     }
 
     @Override

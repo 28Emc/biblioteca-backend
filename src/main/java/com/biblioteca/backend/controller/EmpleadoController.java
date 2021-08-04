@@ -111,7 +111,7 @@ public class EmpleadoController {
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
 
-            empleado = empleadoService.findById(Long.valueOf(id));
+            empleado = empleadoService.findPersonaById(Long.valueOf(id));
         } catch (NoSuchElementException e) {
             response.put("message", "Lo sentimos, hubo un error a la hora de buscar el empleado");
             response.put("error", "El empleado no existe");

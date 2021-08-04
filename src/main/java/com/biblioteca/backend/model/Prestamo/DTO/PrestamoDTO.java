@@ -26,7 +26,7 @@ public class PrestamoDTO {
 
     private String observaciones;
 
-    private boolean estado;
+    private String estado;
 
     public Long getId() {
         return id;
@@ -76,18 +76,18 @@ public class PrestamoDTO {
         this.observaciones = observaciones;
     }
 
-    public boolean isEstado() {
+    public String getEstado() {
         return estado;
     }
 
-    public void setEstado(boolean estado) {
+    public void setEstado(String estado) {
         this.estado = estado;
     }
 
     public PrestamoDTO() {
     }
 
-    public PrestamoDTO(Long idUsuario, Long idEmpleado, Long idLibro, LocalDateTime fechaDevolucion, String observaciones, boolean estado) {
+    public PrestamoDTO(Long idUsuario, Long idEmpleado, Long idLibro, LocalDateTime fechaDevolucion, String observaciones, String estado) {
         this.idUsuario = idUsuario;
         this.idEmpleado = idEmpleado;
         this.idLibro = idLibro;
@@ -96,7 +96,7 @@ public class PrestamoDTO {
         this.estado = estado;
     }
 
-    public PrestamoDTO(Long id, Long idUsuario, Long idEmpleado, Long idLibro, LocalDateTime fechaDevolucion, String observaciones, boolean estado) {
+    public PrestamoDTO(Long id, Long idUsuario, Long idEmpleado, Long idLibro, LocalDateTime fechaDevolucion, String observaciones, String estado) {
         this.id = id;
         this.idUsuario = idUsuario;
         this.idEmpleado = idEmpleado;

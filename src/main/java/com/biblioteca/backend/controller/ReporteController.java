@@ -27,7 +27,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -72,11 +71,11 @@ public class ReporteController {
             switch (usuarioLogueado.getRol().getAuthority().toString()) {
                 case "ROLE_ADMIN":
                     prestamos = prestamoService
-                            .findAll();
+                            .findAllByAdmin(usuarioLogueado);
                     break;
                 case "ROLE_EMPLEADO":
                     prestamos = prestamoService
-                            .findAll()
+                            .findAllByAdmin(usuarioLogueado)
                             .stream()
                             .filter(prestamo -> prestamo.getIdUsuario().equals(usuarioLogueado.getId()))
                             .collect(Collectors.toList());
@@ -119,14 +118,14 @@ public class ReporteController {
             switch (usuarioLogueado.getRol().getAuthority()) {
                 case "ROLE_ADMIN":
                     prestamosTotales = prestamoService
-                            .findAll()
+                            .findAllByAdmin(usuarioLogueado)
                             .stream()
                             .filter(prestamo -> prestamo.getEstado().equals("E1"))
                             .collect(Collectors.toList());
                     break;
                 case "ROLE_EMPLEADO":
                     prestamosTotales = prestamoService
-                            .findAll()
+                            .findAllByAdmin(usuarioLogueado)
                             .stream()
                             .filter(prestamo -> prestamo.getIdUsuario().equals(usuarioLogueado.getId()) &&
                                     prestamo.getEstado().equals("E1"))
@@ -174,14 +173,14 @@ public class ReporteController {
             switch (usuarioLogueado.getRol().getAuthority()) {
                 case "ROLE_ADMIN":
                     prestamosTotales = prestamoService
-                            .findAll()
+                            .findAllByAdmin(usuarioLogueado)
                             .stream()
                             .filter(prestamo -> prestamo.getEstado().equals("E3"))
                             .collect(Collectors.toList());
                     break;
                 case "ROLE_EMPLEADO":
                     prestamosTotales = prestamoService
-                            .findAll()
+                            .findAllByAdmin(usuarioLogueado)
                             .stream()
                             .filter(prestamo -> prestamo.getIdUsuario().equals(usuarioLogueado.getId()) &&
                                     prestamo.getEstado().equals("E3"))
@@ -220,11 +219,14 @@ public class ReporteController {
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde")})
     @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
     @GetMapping(value = "/reportes/pdf/prestamos-por-empleado/{id}", produces = MediaType.APPLICATION_PDF_VALUE)
-    public ResponseEntity<?> generarPdfPrestamosPorEmpleado(@PathVariable("id") Long id) {
+    public ResponseEntity<?> generarPdfPrestamosPorEmpleado(@PathVariable("id") Long id,
+                                                            Authentication authentication) {
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        Usuario usuarioLogueado = usuarioService.findByUsuario(userDetails.getUsername()).get();
         Map<String, Object> response = new HashMap<>();
         try {
             List<Prestamo> prestamos = prestamoService
-                    .findAll()
+                    .findAllByAdmin(usuarioLogueado)
                     .stream()
                     .filter(prestamo -> prestamo.getEmpleado().getId().equals(id))
                     .collect(Collectors.toList());
@@ -256,11 +258,14 @@ public class ReporteController {
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde")})
     @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
     @GetMapping(value = "/reportes/pdf/prestamos-por-usuario/{id}", produces = MediaType.APPLICATION_PDF_VALUE)
-    public ResponseEntity<?> generarPdfPrestamosPorUsuario(@PathVariable("id") Long id) {
+    public ResponseEntity<?> generarPdfPrestamosPorUsuario(@PathVariable("id") Long id,
+                                                           Authentication authentication) {
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        Usuario usuarioLogueado = usuarioService.findByUsuario(userDetails.getUsername()).get();
         Map<String, Object> response = new HashMap<>();
         try {
             List<Prestamo> prestamos = prestamoService
-                    .findAll()
+                    .findAllByAdmin(usuarioLogueado)
                     .stream()
                     .filter(prestamo -> prestamo.getIdUsuario().equals(id))
                     .collect(Collectors.toList());
@@ -295,10 +300,12 @@ public class ReporteController {
             "/reportes/pdf/prestamos-por-libro/{id}"}, produces = MediaType.APPLICATION_PDF_VALUE)
     public ResponseEntity<?> generarPdfPrestamosPorLibro(@PathVariable(value = "id", required = false) Long id,
                                                          Authentication authentication) {
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        Usuario usuarioLogueado = usuarioService.findByUsuario(userDetails.getUsername()).get();
         Map<String, Object> response = new HashMap<>();
         try {
             List<Prestamo> prestamos = prestamoService
-                    .findAll()
+                    .findAllByAdmin(usuarioLogueado)
                     .stream()
                     .filter(prestamo -> prestamo.getLibro().getId().equals(id))
                     .collect(Collectors.toList());
@@ -339,11 +346,11 @@ public class ReporteController {
             List<Prestamo> prestamos = null;
             switch (usuarioLogueado.getRol().getAuthority().toString()) {
                 case "ROLE_ADMIN":
-                    prestamos = prestamoService.findAll();
+                    prestamos = prestamoService.findAllByAdmin(usuarioLogueado);
                     break;
                 case "ROLE_EMPLEADO":
                     prestamos = prestamoService
-                            .findAll()
+                            .findAllByAdmin(usuarioLogueado)
                             .stream()
                             .filter(prestamo -> prestamo.getEmpleado().getId().equals(usuarioLogueado.getId()))
                             .collect(Collectors.toList());
@@ -385,14 +392,14 @@ public class ReporteController {
             switch (usuarioLogueado.getRol().getAuthority().toString()) {
                 case "ROLE_ADMIN":
                     prestamos = prestamoService
-                            .findAll()
+                            .findAllByAdmin(usuarioLogueado)
                             .stream()
                             .filter(prestamo -> prestamo.getEstado().equals("E1"))
                             .collect(Collectors.toList());
                     break;
                 case "ROLE_EMPLEADO":
                     prestamos = prestamoService
-                            .findAll()
+                            .findAllByAdmin(usuarioLogueado)
                             .stream()
                             .filter(prestamo -> prestamo.getEstado().equals("E1") &&
                                     prestamo.getEmpleado().getId().equals(usuarioLogueado.getId()))
@@ -439,14 +446,14 @@ public class ReporteController {
             switch (usuarioLogueado.getRol().getAuthority().toString()) {
                 case "ROLE_ADMIN":
                     prestamos = prestamoService
-                            .findAll()
+                            .findAllByAdmin(usuarioLogueado)
                             .stream()
                             .filter(prestamo -> prestamo.getEstado().equals("E3"))
                             .collect(Collectors.toList());
                     break;
                 case "ROLE_EMPLEADO":
                     prestamos = prestamoService
-                            .findAll()
+                            .findAllByAdmin(usuarioLogueado)
                             .stream()
                             .filter(prestamo -> prestamo.getEstado().equals("E1") &&
                                     prestamo.getEmpleado().getId().equals(usuarioLogueado.getId()))
@@ -484,14 +491,17 @@ public class ReporteController {
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde")})
     @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
     @GetMapping(value = "/reportes/xlsx/prestamos-por-empleado/{id}")
-    public ResponseEntity<?> repPrestamosPorEmpleado(@PathVariable("id") Long id) {
+    public ResponseEntity<?> repPrestamosPorEmpleado(@PathVariable("id") Long id,
+                                                     Authentication authentication) {
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        Usuario usuarioLogueado = usuarioService.findByUsuario(userDetails.getUsername()).get();
         Map<String, Object> response = new HashMap<>();
         try {
             List<Prestamo> prestamos = null;
             ByteArrayInputStream in;
             var headers = new HttpHeaders();
             prestamos = prestamoService
-                    .findAll()
+                    .findAllByAdmin(usuarioLogueado)
                     .stream()
                     .filter(prestamo -> prestamo.getEmpleado().getId().equals(id))
                     .collect(Collectors.toList());
@@ -520,12 +530,15 @@ public class ReporteController {
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde")})
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_EMPLEADO')")
     @GetMapping(value = "/reportes/xlsx/prestamos-por-usuario/{id}")
-    public ResponseEntity<?> repPrestamosPorUsuario(@PathVariable("id") Long id) {
+    public ResponseEntity<?> repPrestamosPorUsuario(@PathVariable("id") Long id,
+                                                    Authentication authentication) {
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        Usuario usuarioLogueado = usuarioService.findByUsuario(userDetails.getUsername()).get();
         Map<String, Object> response = new HashMap<>();
         List<Prestamo> prestamos = null;
         try {
             prestamos = prestamoService
-                    .findAll()
+                    .findAllByAdmin(usuarioLogueado)
                     .stream()
                     .filter(prestamo -> prestamo.getIdUsuario().equals(id))
                     .collect(Collectors.toList());
@@ -556,12 +569,15 @@ public class ReporteController {
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de generar el reporte. Inténtelo mas tarde")})
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_EMPLEADO')")
     @GetMapping(value = "/reportes/xlsx/prestamos-por-libro/{id}")
-    public ResponseEntity<?> repPrestamosPorLibro(@PathVariable("id") Long id) {
+    public ResponseEntity<?> repPrestamosPorLibro(@PathVariable("id") Long id,
+                                                  Authentication authentication) {
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        Usuario usuarioLogueado = usuarioService.findByUsuario(userDetails.getUsername()).get();
         Map<String, Object> response = new HashMap<>();
         try {
             List<Prestamo> prestamos = null;
             prestamos = prestamoService
-                    .findAll()
+                    .findAllByAdmin(usuarioLogueado)
                     .stream()
                     .filter(prestamo -> prestamo.getLibro().getId().equals(id))
                     .collect(Collectors.toList());
