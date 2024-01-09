@@ -16,23 +16,23 @@ public class Category {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    // @ApiModelProperty(notes = "ID Autogenerado")
+    // @ApiModelProperty(notes = "Category ID")
     private Long id;
 
     @Column(unique = true, nullable = false)
-    // @ApiModelProperty(notes = "Nombre de la categoría", required = true, example = "Fantasía")
+    // @ApiModelProperty(notes = "Category name", required = true, example = "Fantasía")
     private String name;
 
     @Column(name = "creation_date", nullable = false)
-    // @ApiModelProperty(notes = "Fecha de creación de la categoría", required = true, example = "2020-05-25")
+    // @ApiModelProperty(notes = "Category creation date", required = true, example = "2020-05-25")
     private LocalDateTime creationDate;
 
     @Column(name = "modification_date")
-    // @ApiModelProperty(notes = "Fecha de actualización de la categoría", example = "2020-06-01")
+    // @ApiModelProperty(notes = "Category modification date", example = "2020-06-01")
     private LocalDateTime modificationDate;
 
     @Column(name = "status", nullable = false)
-    // @ApiModelProperty(notes = "Estado de la categoría", required = true, example = "A")
+    // @ApiModelProperty(notes = "Category status", required = true, example = "A")
     private String status;
 
     /*
