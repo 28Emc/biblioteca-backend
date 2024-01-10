@@ -19,7 +19,7 @@ public class Category {
     // @ApiModelProperty(notes = "Category ID")
     private Long id;
 
-    @Column(unique = true, nullable = false)
+    @Column(length = 30, unique = true, nullable = false)
     // @ApiModelProperty(notes = "Category name", required = true, example = "Fantasía")
     private String name;
 

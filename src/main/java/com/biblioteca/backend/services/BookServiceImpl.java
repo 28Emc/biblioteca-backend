@@ -13,8 +13,8 @@ public class BookServiceImpl implements IBookService {
 
     private final IBookRepository bookRepository;
 
-    public BookServiceImpl(IBookRepository categoriaRepository) {
-        this.bookRepository = categoriaRepository;
+    public BookServiceImpl(IBookRepository bookRepository) {
+        this.bookRepository = bookRepository;
     }
 
     @Override

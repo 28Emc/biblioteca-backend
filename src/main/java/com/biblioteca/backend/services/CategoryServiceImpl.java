@@ -13,8 +13,8 @@ public class CategoryServiceImpl implements ICategoryService {
 
     private final ICategoryRepository categoryRepository;
 
-    public CategoryServiceImpl(ICategoryRepository categoriaRepository) {
-        this.categoryRepository = categoriaRepository;
+    public CategoryServiceImpl(ICategoryRepository categoryRepository) {
+        this.categoryRepository = categoryRepository;
     }
 
     @Override

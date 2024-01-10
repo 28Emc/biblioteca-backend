@@ -21,7 +21,7 @@ public class Book {
     // @ApiModelProperty(notes = "Book ID")
     private Long id;
 
-    @Column(name = "isbn", unique = true, nullable = false)
+    @Column(name = "isbn", length = 20, unique = true, nullable = false)
     // @ApiModelProperty(notes = "Book ISBN", required = true, example = "9791234567896")
     private String ISBN;
 

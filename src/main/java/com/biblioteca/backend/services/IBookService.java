@@ -6,11 +6,11 @@ import java.util.List;
 import java.util.Optional;
 
 public interface IBookService {
-    public List<Book> findAll();
+    List<Book> findAll();
 
-    public Optional<Book> findById(Long id);
+    Optional<Book> findById(Long id);
 
-    public Optional<Book> findByTitle(String title);
+    Optional<Book> findByTitle(String title);
 
-    public Book save(Book book);
+    Book save(Book book);
 }
