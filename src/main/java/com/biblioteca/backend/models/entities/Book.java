@@ -33,6 +33,10 @@ public class Book {
     // @ApiModelProperty(notes = "Book author", required = true, example = "Brandon Sanderson")
     private String author;
 
+    @Column(name = "publishing_house", length = 100, nullable = false)
+    // @ApiModelProperty(notes = "Book publishing house", required = true, example = "Editorial Pepito")
+    private String publishingHouse;
+
     @Column(columnDefinition = "text")
     // @ApiModelProperty(notes = "Book synopsis", example = "Libro que hace parte de una trilogía")
     private String synopsis;
@@ -50,9 +54,9 @@ public class Book {
     // @ApiModelProperty(notes = "Bok status", required = true, example = "A")
     private String status;
 
-    @Column(name = "pubblish_date", nullable = false)
-    // @ApiModelProperty(notes = "Book pubblish date", required = true, example = "2020-05-25")
-    private LocalDate pubblishDate;
+    @Column(name = "publish_date", nullable = false)
+    // @ApiModelProperty(notes = "Book publish date", required = true, example = "2020-05-25")
+    private LocalDate publishDate;
 
     @Column(name = "creation_date", nullable = false)
     // @ApiModelProperty(notes = "Book creation date", required = true, example = "2020-05-25")

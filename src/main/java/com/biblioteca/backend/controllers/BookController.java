@@ -117,8 +117,9 @@ public class BookController {
             book.setISBN(categoriaDTO.getISBN());
             book.setTitle(categoriaDTO.getTitle());
             book.setAuthor(categoriaDTO.getAuthor());
+            book.setPublishingHouse(categoriaDTO.getPublishingHouse());
             book.setSynopsis(categoriaDTO.getSynopsis());
-            book.setPubblishDate(LocalDate.parse(categoriaDTO.getPubblishDate()));
+            book.setPublishDate(LocalDate.parse(categoriaDTO.getPublishDate()));
             book.setStock(categoriaDTO.getStock());
             book.setImage(categoriaDTO.getImage());
             bookService.save(book);
@@ -166,8 +167,9 @@ public class BookController {
             bookFound.setISBN(categoriaDTO.getISBN());
             bookFound.setTitle(categoriaDTO.getTitle());
             bookFound.setAuthor(categoriaDTO.getAuthor());
+            bookFound.setPublishingHouse(categoriaDTO.getPublishingHouse());
             bookFound.setSynopsis(categoriaDTO.getSynopsis());
-            bookFound.setPubblishDate(LocalDate.parse(categoriaDTO.getPubblishDate()));
+            bookFound.setPublishDate(LocalDate.parse(categoriaDTO.getPublishDate()));
             bookFound.setStock(categoriaDTO.getStock());
             bookFound.setImage(categoriaDTO.getImage());
             bookService.save(bookFound);
