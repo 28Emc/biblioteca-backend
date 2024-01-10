@@ -17,6 +17,9 @@ public class BookDTO {
     @NotNull(message = "{notNull.bookDTO.categoryId}")
     private Integer categoryId;
 
+    @NotNull(message = "{notNull.bookDTO.libraryId}")
+    private Integer libraryId;
+
     @NotEmpty(message = "{notEmpty.bookDTO.title}")
     @Size(max = 100, message = "{size.bookDTO.title}")
     private String title;

@@ -2,10 +2,12 @@ package com.biblioteca.backend.services;
 
 import com.biblioteca.backend.models.entities.Book;
 import com.biblioteca.backend.models.entities.BookCopy;
+import com.biblioteca.backend.models.projections.BookCopyView;
 import com.biblioteca.backend.repositories.IBookCopyRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -22,6 +24,12 @@ public class BookCopyServiceImpl implements IBookCopyService {
     @Transactional(readOnly = true)
     public List<BookCopy> findAll() {
         return bookCopyRepository.findAll();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<BookCopyView> findAllWithView() {
+        return bookCopyRepository.findAllWithView();
     }
 
     @Override
@@ -43,12 +51,22 @@ public class BookCopyServiceImpl implements IBookCopyService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public Optional<BookCopyView> getOneByIdWithView(Long bookCopyId) {
+        return bookCopyRepository.getOneByIdWithView(bookCopyId);
+    }
+
+    @Override
     @Transactional
-    public void save(Book book) {
-        BookCopy bookCopy = new BookCopy();
-        bookCopy.setBook(book);
-        bookCopy.setISBN(book.getISBN());
-        bookCopyRepository.save(bookCopy);
+    public void save(Book book, Integer quantity) {
+        List<BookCopy> bookCopyList = new ArrayList<>();
+        for (int i = 0; i < quantity; i++) {
+            BookCopy bookCopy = new BookCopy();
+            bookCopy.setBook(book);
+            bookCopy.setISBN(book.getISBN());
+            bookCopyList.add(bookCopy);
+        }
+        bookCopyRepository.saveAll(bookCopyList);
     }
 
     @Override

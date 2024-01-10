@@ -1,6 +1,7 @@
 package com.biblioteca.backend.models.entities;
 
 import com.biblioteca.backend.utils.Utils;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -16,6 +17,7 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Book {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -67,8 +69,13 @@ public class Book {
     // @ApiModelProperty(notes = "Book modification date", example = "2020-06-01")
     private LocalDateTime modificationDate;
 
+    // BOOK(M):LIBRARY(1)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "library_id")
+    private Library library;
+
     // BOOK(M):CATEGORY(1)
-    @ManyToOne//(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
     private Category category;
 

@@ -1,6 +1,5 @@
 package com.biblioteca.backend.models.entities;
 
-import com.biblioteca.backend.utils.Utils;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -17,7 +16,9 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class BookCopy {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    // @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_generator")
+    // @GeneratedValue(strategy = GenerationType.AUTO)
     // @ApiModelProperty(notes = "Book copy ID")
     private Long id;
 
@@ -38,7 +39,7 @@ public class BookCopy {
     private LocalDateTime modificationDate;
 
     // BOOK_COPY(M):BOOK(1)
-    @ManyToOne//(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "book_id")
     private Book book;
 

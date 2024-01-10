@@ -4,6 +4,7 @@ import com.biblioteca.backend.models.dtos.BookCopyDTO;
 import com.biblioteca.backend.models.dtos.UpdateStatusDTO;
 import com.biblioteca.backend.models.entities.Book;
 import com.biblioteca.backend.models.entities.BookCopy;
+import com.biblioteca.backend.models.projections.BookCopyView;
 import com.biblioteca.backend.services.IBookCopyService;
 import com.biblioteca.backend.services.IBookService;
 import jakarta.validation.Valid;
@@ -53,6 +54,30 @@ public class BookCopyController {
     }
 
     /*
+    @ApiOperation(value = "Método de listado de categorias", response = ResponseEntity.class)
+    @ApiResponses(value = {@ApiResponse(code = 200, message = " "),
+            @ApiResponse(code = 302, message = "Categorias encontrados"), @ApiResponse(code = 401, message = " "),
+            @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = " "),
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de buscar las categorias. " +
+                    "Inténtelo mas tarde")})
+     */
+    // @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
+    @GetMapping(value = "/book-copies/view", produces = "application/json")
+    public ResponseEntity<?> fetchAllWithView() {
+        Map<String, Object> response = new HashMap<>();
+        List<BookCopyView> bookCopies;
+        try {
+            bookCopies = bookCopyService.findAllWithView();
+        } catch (Exception e) {
+            response.put("message", "There was an error while retrieving book copies");
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        }
+        response.put("data", bookCopies);
+        response.put("message", "Data found");
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    /*
     @ApiOperation(value = "Método de consulta de categoría por su id", response = ResponseEntity.class)
     @ApiResponses(value = {@ApiResponse(code = 200, message = " "),
             @ApiResponse(code = 302, message = "Categoría encontrada"), @ApiResponse(code = 401, message = " "),
@@ -71,6 +96,38 @@ public class BookCopyController {
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
             bookCopy = bookCopyService.findById(Long.parseLong(id)).orElseThrow();
+        } catch (NoSuchElementException e) {
+            response.put("message", "Book copy no found");
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            response.put("message", "There was an error while retrieving the book copy");
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        response.put("data", bookCopy);
+        response.put("message", "Data found");
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    /*
+    @ApiOperation(value = "Método de consulta de categoría por su id", response = ResponseEntity.class)
+    @ApiResponses(value = {@ApiResponse(code = 200, message = " "),
+            @ApiResponse(code = 302, message = "Categoría encontrada"), @ApiResponse(code = 401, message = " "),
+            @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = " "),
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de buscar la categoría. " +
+                    "Inténtelo mas tarde")})
+    */
+    // @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
+    @GetMapping(value = "/book-copies/{id}/view", produces = "application/json")
+    public ResponseEntity<?> getOneWithView(@PathVariable String id) {
+        Map<String, Object> response = new HashMap<>();
+        BookCopyView bookCopy;
+        try {
+            if (!id.matches("^\\d+$")) {
+                response.put("message", "Invalid book copy ID");
+                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+            }
+            bookCopy = bookCopyService.getOneByIdWithView(Long.parseLong(id)).orElseThrow();
         } catch (NoSuchElementException e) {
             response.put("message", "Book copy no found");
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
@@ -136,10 +193,12 @@ public class BookCopyController {
                 response.put("message", errors);
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
-            bookFound = bookService.findByISBN(bookCopyDTO.getISBN()).orElseThrow();
-            bookCopyService.save(bookFound);
+            bookFound = bookService
+                    .findByLibraryIdAndISBN(bookCopyDTO.getLibraryId(), bookCopyDTO.getISBN())
+                    .orElseThrow();
+            bookCopyService.save(bookFound, bookCopyDTO.getQuantity());
         } catch (NoSuchElementException e) {
-            response.put("message", "Book not found");
+            response.put("message", "Book or library not found");
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (DataIntegrityViolationException e) {
             response.put("message", "There was an error while registering the book copy");
@@ -200,7 +259,7 @@ public class BookCopyController {
     // @PreAuthorize("hasAnyRole('ROLE_SYSADMIN')")
 
     @DeleteMapping(value = "/book-copies/{id}", produces = "application/json")
-    public ResponseEntity<?> updateStatus(@PathVariable String id) {
+    public ResponseEntity<?> delete(@PathVariable String id) {
         Map<String, Object> response = new HashMap<>();
         BookCopy bookCopy;
         try {
