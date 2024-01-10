@@ -1,7 +1,6 @@
 package com.biblioteca.backend.models.dtos;
 
 import com.biblioteca.backend.enums.CustomDateConstraint;
-import jakarta.persistence.Column;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -13,9 +12,10 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class BookDTO {
-    @NotEmpty(message = "{notEmpty.bookDTO.isbn}")
-    @Size(max = 20, message = "{size.bookDTO.isbn}")
-    private String ISBN;
+    private String id;
+
+    @NotNull(message = "{notNull.bookDTO.categoryId}")
+    private Integer categoryId;
 
     @NotEmpty(message = "{notEmpty.bookDTO.title}")
     @Size(max = 100, message = "{size.bookDTO.title}")

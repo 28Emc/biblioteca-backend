@@ -1,5 +1,6 @@
 package com.biblioteca.backend.models.entities;
 
+import com.biblioteca.backend.utils.Utils;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -66,6 +67,11 @@ public class Book {
     // @ApiModelProperty(notes = "Book modification date", example = "2020-06-01")
     private LocalDateTime modificationDate;
 
+    // BOOK(M):CATEGORY(1)
+    @ManyToOne//(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    private Category category;
+
     /*
     // LIBRO(*):LOCAL(1)
     @ManyToOne//(fetch = FetchType.LAZY)
@@ -76,11 +82,6 @@ public class Book {
     //@JsonIgnore
     @OneToMany(mappedBy = "libro")
     private List<Prestamo> prestamos;
-
-    // LIBRO(*):CATEGORIA(1)
-    @ManyToOne//(fetch = FetchType.LAZY)
-    @JoinColumn(name = "categoria_id")
-    private Categoria categoria;
 
     @JsonBackReference
     public Local getLocal() {
@@ -114,45 +115,12 @@ public class Book {
     @PrePersist
     public void prePersist() {
         status = "A";
+        ISBN = Utils.makeISBN();
         creationDate = LocalDateTime.now();
     }
 
     @PreUpdate
     public void preUpdate() {
         modificationDate = LocalDateTime.now();
-    }
-
-    // ALGORITMO PARA DETERMINAR SI EL CODIGO ISBN DEL LIBRO ES VÁLIDO
-    public boolean validateIsbn13(String isbn) {
-        if (isbn == null) {
-            return false;
-        }
-
-        //remove any hyphens
-        isbn = isbn.replaceAll("-", "");
-
-        //must be a 13 digit ISBN
-        if (isbn.length() != 13) {
-            return false;
-        }
-
-        try {
-            int tot = 0;
-            for (int i = 0; i < 12; i++) {
-                int digit = Integer.parseInt(isbn.substring(i, i + 1));
-                tot += (i % 2 == 0) ? digit : digit * 3;
-            }
-
-            //checksum must be 0-9. If calculated as 10 then = 0
-            int checksum = 10 - (tot % 10);
-            if (checksum == 10) {
-                checksum = 0;
-            }
-
-            return checksum == Integer.parseInt(isbn.substring(12));
-        } catch (NumberFormatException nfe) {
-            //to catch invalid ISBNs that have non-numeric characters in them
-            return false;
-        }
     }
 }
