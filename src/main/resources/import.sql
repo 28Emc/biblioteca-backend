@@ -2,6 +2,8 @@
 CREATE DATABASE IF NOT EXISTS bd_biblioteca;
 USE bd_biblioteca;
 
+# TB_LIBRARY
+
 # TB_CATEGORY
 -- INSERT INTO tb_category (id, name, status, creation_date) VALUES (1, 'Fantasy', 'A', current_timestamp());
 
@@ -12,3 +14,9 @@ USE bd_biblioteca;
 
 # TB_BOOK_COPY
 -- INSERT INTO tb_book_copy (isbn, status, creation_date, book_id) VALUES ('123-4-567', 'D', NOW(), 1);
+
+# TB_MEMBER
+
+# TB_EMPLOYEE
+
+# TB_BOOK_LOAN

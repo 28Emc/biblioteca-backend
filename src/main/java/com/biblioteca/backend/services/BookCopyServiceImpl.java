@@ -73,7 +73,7 @@ public class BookCopyServiceImpl implements IBookCopyService {
     @Override
     @Transactional
     public void updateStatus(Long id, UpdateStatusDTO updateStatusDTO) {
-        BookCopy bookCopy = bookCopyRepository.findById(id).orElseThrow();
+        BookCopy bookCopy = findById(id).orElseThrow();
         bookCopy.setStatus(updateStatusDTO.getStatus());
         bookCopyRepository.save(bookCopy);
     }

@@ -13,7 +13,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class UpdateStatusDTO {
     @NotEmpty(message = "{notEmpty.updateStatusDTO.status}")
-    // @EnumNamePattern(regexp = "A|I|D|P", message = "{notValid.updateStatusDTO.status}")
-    @Pattern(regexp = "[AIDP]", message = "{pattern.updateStatusDTO.status}")
+    // @EnumNamePattern(regexp = "A|I|D|P|O|C|R", message = "{notValid.updateStatusDTO.status}")
+    @Pattern(regexp = "[AIDPOCR]", message = "{pattern.updateStatusDTO.status}")
     private String status;
 }

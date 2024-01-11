@@ -50,4 +50,10 @@ public class Utils {
         }
         return doubled;
     }
+
+    public static String makeRandom10StringCode() {
+        String PREFIX = "BL";
+        String formatISBN = makeISBN().substring(0, 8).replaceAll("-", "");
+        return PREFIX.concat(formatISBN);
+    }
 }

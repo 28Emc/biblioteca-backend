@@ -79,46 +79,6 @@ public class Book {
     @JoinColumn(name = "category_id")
     private Category category;
 
-    /*
-    // LIBRO(*):LOCAL(1)
-    @ManyToOne//(fetch = FetchType.LAZY)
-    @JoinColumn(name = "local_id")
-    private Local local;
-
-    // LIBRO(1):PRESTAMO(*)
-    //@JsonIgnore
-    @OneToMany(mappedBy = "libro")
-    private List<Prestamo> prestamos;
-
-    @JsonBackReference
-    public Local getLocal() {
-        return local;
-    }
-
-    public void setLocal(Local local) {
-        this.local = local;
-    }
-
-    //@JsonManagedReference
-    @JsonIgnore
-    public List<Prestamo> getPrestamos() {
-        return prestamos;
-    }
-
-    public void setPrestamos(List<Prestamo> prestamos) {
-        this.prestamos = prestamos;
-    }
-
-    @JsonBackReference
-    public Categoria getCategoria() {
-        return categoria;
-    }
-
-    public void setCategoria(Categoria categoria) {
-        this.categoria = categoria;
-    }
-    */
-
     @PrePersist
     public void prePersist() {
         status = "A";
