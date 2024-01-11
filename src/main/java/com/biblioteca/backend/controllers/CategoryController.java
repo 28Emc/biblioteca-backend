@@ -183,13 +183,11 @@ public class CategoryController {
     public ResponseEntity<?> updateStatus(@Valid @RequestBody UpdateStatusDTO updateStatusDTO,
                                           BindingResult result, @PathVariable String id) {
         Map<String, Object> response = new HashMap<>();
-        Category categoryFound;
         try {
             if (!id.matches("^\\d+$")) {
                 response.put("message", "Invalid Category ID");
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
-            categoryFound = categoriaService.findById(Long.parseLong(id)).orElseThrow();
             if (result.hasErrors()) {
                 List<String> errors = new ArrayList<>();
                 for (FieldError fieldError : result.getFieldErrors()) {
@@ -198,9 +196,7 @@ public class CategoryController {
                 response.put("message", errors);
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
-            categoryFound.setStatus(updateStatusDTO.getStatus());
-            categoriaService.save(categoryFound);
-            // TODO: UPDATE BOOK STATUSES BY CATEGORY ID
+            categoriaService.updateStatus(Long.parseLong(id), updateStatusDTO);
         } catch (NoSuchElementException e) {
             response.put("message", "Category not found");
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);

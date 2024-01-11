@@ -1,6 +1,7 @@
 package com.biblioteca.backend.services;
 
 import com.biblioteca.backend.models.dtos.BookDTO;
+import com.biblioteca.backend.models.dtos.UpdateStatusDTO;
 import com.biblioteca.backend.models.entities.Book;
 import com.biblioteca.backend.models.entities.BookCopy;
 import com.biblioteca.backend.models.projections.BookView;
@@ -122,8 +123,9 @@ public class BookServiceImpl implements IBookService {
 
     @Override
     @Transactional
-    public void updateStatus(Book book) {
-        book.setStatus(book.getStatus());
+    public void updateStatus(Long id, UpdateStatusDTO updateStatusDTO) {
+        Book book = findById(id).orElseThrow();
+        book.setStatus(updateStatusDTO.getStatus());
         bookRepository.save(book);
     }
 }

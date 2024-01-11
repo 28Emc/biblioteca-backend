@@ -1,5 +1,6 @@
 package com.biblioteca.backend.services;
 
+import com.biblioteca.backend.models.dtos.UpdateStatusDTO;
 import com.biblioteca.backend.models.entities.Library;
 import com.biblioteca.backend.repositories.ILibraryRepository;
 import org.springframework.stereotype.Service;
@@ -33,5 +34,13 @@ public class LibraryServiceImpl implements ILibraryService {
     @Transactional
     public Library save(Library library) {
         return libraryRepository.save(library);
+    }
+
+    @Override
+    @Transactional
+    public void updateStatus(Long id, UpdateStatusDTO updateStatusDTO) {
+        Library library = findById(id).orElseThrow();
+        library.setStatus(updateStatusDTO.getStatus());
+        libraryRepository.save(library);
     }
 }

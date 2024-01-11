@@ -1,6 +1,7 @@
 package com.biblioteca.backend.services;
 
 import com.biblioteca.backend.models.dtos.BookDTO;
+import com.biblioteca.backend.models.dtos.UpdateStatusDTO;
 import com.biblioteca.backend.models.entities.Book;
 import com.biblioteca.backend.models.projections.BookView;
 
@@ -32,5 +33,5 @@ public interface IBookService {
 
     void save(BookDTO bookDTO);
 
-    void updateStatus(Book book);
+    void updateStatus(Long id, UpdateStatusDTO updateStatusDTO);
 }

@@ -1,10 +1,10 @@
 package com.biblioteca.backend.controllers;
 
-import com.biblioteca.backend.models.dtos.BookDTO;
+import com.biblioteca.backend.models.dtos.MemberDTO;
 import com.biblioteca.backend.models.dtos.UpdateStatusDTO;
-import com.biblioteca.backend.models.entities.Book;
-import com.biblioteca.backend.models.projections.BookView;
-import com.biblioteca.backend.services.IBookService;
+import com.biblioteca.backend.models.entities.Member;
+import com.biblioteca.backend.models.projections.MemberView;
+import com.biblioteca.backend.services.IMemberService;
 import jakarta.validation.Valid;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -17,12 +17,12 @@ import java.util.*;
 
 @CrossOrigin(origins = {"*", "http://localhost:4200"})
 @RestController
-// @Api(value = "book", description = "Book controller endpoints")
-public class BookController {
-    private final IBookService bookService;
+// @Api(value = "category", description = "Operaciones referentes a las categorías de libros")
+public class MemberController {
+    private final IMemberService memberService;
 
-    public BookController(IBookService bookService) {
-        this.bookService = bookService;
+    public MemberController(IMemberService memberService) {
+        this.memberService = memberService;
     }
 
     /*
@@ -34,17 +34,17 @@ public class BookController {
                     "Inténtelo mas tarde")})
      */
     // @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
-    @GetMapping(value = "/books", produces = "application/json")
+    @GetMapping(value = "/members", produces = "application/json")
     public ResponseEntity<?> fetchAll() {
         Map<String, Object> response = new HashMap<>();
-        List<Book> books;
+        List<Member> members;
         try {
-            books = bookService.findAll();
+            members = memberService.findAll();
         } catch (Exception e) {
-            response.put("message", "There was an error while retrieving books");
+            response.put("message", "There was an error while retrieving the members");
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         }
-        response.put("data", books);
+        response.put("data", members);
         response.put("message", "Data found");
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
@@ -58,17 +58,17 @@ public class BookController {
                     "Inténtelo mas tarde")})
      */
     // @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
-    @GetMapping(value = "/books/view", produces = "application/json")
+    @GetMapping(value = "/members/view", produces = "application/json")
     public ResponseEntity<?> fetchAllWithView() {
         Map<String, Object> response = new HashMap<>();
-        List<BookView> books;
+        List<MemberView> members;
         try {
-            books = bookService.findAllWithView();
+            members = memberService.findAllWithView();
         } catch (Exception e) {
-            response.put("message", "There was an error while retrieving books");
+            response.put("message", "There was an error while retrieving the members");
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         }
-        response.put("data", books);
+        response.put("data", members);
         response.put("message", "Data found");
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
@@ -82,25 +82,25 @@ public class BookController {
                     "Inténtelo mas tarde")})
     */
     // @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
-    @GetMapping(value = "/books/{id}", produces = "application/json")
+    @GetMapping(value = "/members/{id}", produces = "application/json")
     public ResponseEntity<?> getOne(@PathVariable String id) {
         Map<String, Object> response = new HashMap<>();
-        Book book;
+        Member member;
         try {
             if (!id.matches("^\\d+$")) {
-                response.put("message", "Invalid Book ID");
+                response.put("message", "Invalid Member ID");
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
-            book = bookService.findById(Long.parseLong(id)).orElseThrow();
+            member = memberService.findById(Long.parseLong(id)).orElseThrow();
         } catch (NoSuchElementException e) {
-            response.put("message", "Book no found");
+            response.put("message", "Member not found");
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (Exception e) {
-            response.put("message", "There was an error while retrieving the book");
+            response.put("message", "There was an error while retrieving the member");
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        response.put("data", book);
+        response.put("data", member);
         response.put("message", "Data found");
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
@@ -114,25 +114,25 @@ public class BookController {
                     "Inténtelo mas tarde")})
     */
     // @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
-    @GetMapping(value = "/books/{id}/view", produces = "application/json")
+    @GetMapping(value = "/members/{id}/view", produces = "application/json")
     public ResponseEntity<?> getOneWithView(@PathVariable String id) {
         Map<String, Object> response = new HashMap<>();
-        BookView book;
+        MemberView member;
         try {
             if (!id.matches("^\\d+$")) {
-                response.put("message", "Invalid Book ID");
+                response.put("message", "Invalid Member ID");
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
-            book = bookService.findByIdWithView(Long.parseLong(id)).orElseThrow();
+            member = memberService.findByIdWithView(Long.parseLong(id)).orElseThrow();
         } catch (NoSuchElementException e) {
-            response.put("message", "Book no found");
+            response.put("message", "Member not found");
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (Exception e) {
-            response.put("message", "There was an error while retrieving the book");
+            response.put("message", "There was an error while retrieving the member");
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        response.put("data", book);
+        response.put("data", member);
         response.put("message", "Data found");
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
@@ -146,21 +146,21 @@ public class BookController {
                     "Inténtelo mas tarde")})
     */
     // @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
-    @GetMapping(value = "/books/{libraryId}/library", produces = "application/json")
-    public ResponseEntity<?> fetchByLibraryId(@PathVariable Long libraryId) {
+    @GetMapping(value = "/members/{uuid}/uuid", produces = "application/json")
+    public ResponseEntity<?> getOneByUUID(@PathVariable String uuid) {
         Map<String, Object> response = new HashMap<>();
-        List<Book> book;
+        Member member;
         try {
-            book = bookService.findByLibraryId(libraryId);
+            member = memberService.findByUuid(uuid).orElseThrow();
         } catch (NoSuchElementException e) {
-            response.put("message", "Book not found");
+            response.put("message", "Member not found");
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (Exception e) {
-            response.put("message", "There was an error while retrieving the book by library ID");
+            response.put("message", "There was an error while retrieving the member");
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        response.put("data", book);
+        response.put("data", member);
         response.put("message", "Data found");
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
@@ -174,21 +174,21 @@ public class BookController {
                     "Inténtelo mas tarde")})
     */
     // @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
-    @GetMapping(value = "/books/{libraryId}/library/view", produces = "application/json")
-    public ResponseEntity<?> fetchByLibraryIdWithView(@PathVariable Long libraryId) {
+    @GetMapping(value = "/members/{uuid}/uuid/view", produces = "application/json")
+    public ResponseEntity<?> getOneByUUIDWithView(@PathVariable String uuid) {
         Map<String, Object> response = new HashMap<>();
-        List<BookView> book;
+        MemberView member;
         try {
-            book = bookService.findByLibraryIdWithView(libraryId);
+            member = memberService.findByUuidWithView(uuid).orElseThrow();
         } catch (NoSuchElementException e) {
-            response.put("message", "Book not found");
+            response.put("message", "Member not found");
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (Exception e) {
-            response.put("message", "There was an error while retrieving the book by library ID");
+            response.put("message", "There was an error while retrieving the member");
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        response.put("data", book);
+        response.put("data", member);
         response.put("message", "Data found");
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
@@ -202,21 +202,21 @@ public class BookController {
                     "Inténtelo mas tarde")})
     */
     // @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
-    @GetMapping(value = "/books/{isbn}/isbn/{libraryId}/library", produces = "application/json")
-    public ResponseEntity<?> getOneByISBNAndLibraryId(@PathVariable String isbn, @PathVariable Long libraryId) {
+    @GetMapping(value = "/members/{docNro}/docNro", produces = "application/json")
+    public ResponseEntity<?> getOneByDocNro(@PathVariable String docNro) {
         Map<String, Object> response = new HashMap<>();
-        Book book;
+        Member member;
         try {
-            book = bookService.findByLibraryIdAndISBN(libraryId, isbn).orElseThrow();
+            member = memberService.findByDocNro(docNro).orElseThrow();
         } catch (NoSuchElementException e) {
-            response.put("message", "Book not found");
+            response.put("message", "Member not found");
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (Exception e) {
-            response.put("message", "There was an error while retrieving the book by library ID and ISBN");
+            response.put("message", "There was an error while retrieving the member");
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        response.put("data", book);
+        response.put("data", member);
         response.put("message", "Data found");
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
@@ -230,21 +230,21 @@ public class BookController {
                     "Inténtelo mas tarde")})
     */
     // @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
-    @GetMapping(value = "/books/{isbn}/isbn/{libraryId}/library/view", produces = "application/json")
-    public ResponseEntity<?> getOneByISBNWithView(@PathVariable String isbn, @PathVariable Long libraryId) {
+    @GetMapping(value = "/members/{docNro}/docNro/view", produces = "application/json")
+    public ResponseEntity<?> getOneByDocNroWithView(@PathVariable String docNro) {
         Map<String, Object> response = new HashMap<>();
-        BookView book;
+        MemberView member;
         try {
-            book = bookService.findByLibraryIdAndISBNWithView(libraryId, isbn).orElseThrow();
+            member = memberService.findByDocNroWithView(docNro).orElseThrow();
         } catch (NoSuchElementException e) {
-            response.put("message", "Book not found");
+            response.put("message", "Member not found");
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (Exception e) {
-            response.put("message", "There was an error while retrieving the book by library ID and ISBN");
+            response.put("message", "There was an error while retrieving the member");
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        response.put("data", book);
+        response.put("data", member);
         response.put("message", "Data found");
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
@@ -258,21 +258,21 @@ public class BookController {
                     "Inténtelo mas tarde")})
     */
     // @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
-    @GetMapping(value = "/books/{categoryId}/category", produces = "application/json")
-    public ResponseEntity<?> fetchByCategoryId(@PathVariable Long categoryId) {
+    @GetMapping(value = "/members/{email}/email", produces = "application/json")
+    public ResponseEntity<?> getOneByEmail(@PathVariable String email) {
         Map<String, Object> response = new HashMap<>();
-        List<Book> book;
+        Member member;
         try {
-            book = bookService.findByCategoryId(categoryId);
+            member = memberService.findByEmail(email).orElseThrow();
         } catch (NoSuchElementException e) {
-            response.put("message", "Book not found");
+            response.put("message", "Member not found");
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (Exception e) {
-            response.put("message", "There was an error while retrieving the books by category ID");
+            response.put("message", "There was an error while retrieving the member");
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        response.put("data", book);
+        response.put("data", member);
         response.put("message", "Data found");
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
@@ -286,21 +286,77 @@ public class BookController {
                     "Inténtelo mas tarde")})
     */
     // @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
-    @GetMapping(value = "/books/{categoryId}/category/view", produces = "application/json")
-    public ResponseEntity<?> fetchByCategoryIdWithView(@PathVariable Long categoryId) {
+    @GetMapping(value = "/members/{email}/email/view", produces = "application/json")
+    public ResponseEntity<?> getOneByEmailWithView(@PathVariable String email) {
         Map<String, Object> response = new HashMap<>();
-        List<BookView> book;
+        MemberView member;
         try {
-            book = bookService.findByCategoryIdWithView(categoryId);
+            member = memberService.findByEmailWithView(email).orElseThrow();
         } catch (NoSuchElementException e) {
-            response.put("message", "Book not found");
+            response.put("message", "Member not found");
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (Exception e) {
-            response.put("message", "There was an error while retrieving the books by category ID");
+            response.put("message", "There was an error while retrieving the member");
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        response.put("data", book);
+        response.put("data", member);
+        response.put("message", "Data found");
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    /*
+    @ApiOperation(value = "Método de consulta de categoría por su id", response = ResponseEntity.class)
+    @ApiResponses(value = {@ApiResponse(code = 200, message = " "),
+            @ApiResponse(code = 302, message = "Categoría encontrada"), @ApiResponse(code = 401, message = " "),
+            @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = " "),
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de buscar la categoría. " +
+                    "Inténtelo mas tarde")})
+    */
+    // @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
+    @GetMapping(value = "/members/{phoneNumber}/phoneNumber", produces = "application/json")
+    public ResponseEntity<?> getOneByPhoneNumber(@PathVariable String phoneNumber) {
+        Map<String, Object> response = new HashMap<>();
+        Member member;
+        try {
+            member = memberService.findByPhoneNumber(phoneNumber).orElseThrow();
+        } catch (NoSuchElementException e) {
+            response.put("message", "Member not found");
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            response.put("message", "There was an error while retrieving the member");
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        response.put("data", member);
+        response.put("message", "Data found");
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    /*
+    @ApiOperation(value = "Método de consulta de categoría por su id", response = ResponseEntity.class)
+    @ApiResponses(value = {@ApiResponse(code = 200, message = " "),
+            @ApiResponse(code = 302, message = "Categoría encontrada"), @ApiResponse(code = 401, message = " "),
+            @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = " "),
+            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de buscar la categoría. " +
+                    "Inténtelo mas tarde")})
+    */
+    // @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
+    @GetMapping(value = "/members/{phoneNumber}/phoneNumber/view", produces = "application/json")
+    public ResponseEntity<?> getOneByPhoneNumberWithView(@PathVariable String phoneNumber) {
+        Map<String, Object> response = new HashMap<>();
+        MemberView member;
+        try {
+            member = memberService.findByPhoneNumberWithView(phoneNumber).orElseThrow();
+        } catch (NoSuchElementException e) {
+            response.put("message", "Member not found");
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            response.put("message", "There was an error while retrieving the member");
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        response.put("data", member);
         response.put("message", "Data found");
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
@@ -311,18 +367,18 @@ public class BookController {
             @ApiResponse(code = 201, message = "Categoría registrada"),
             @ApiResponse(code = 400, message = "La categoría ya existe"),
             @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = "El nombre de la " +
-            "book es requerido"),
+            "category es requerido"),
             @ApiResponse(code = 404, message = " "),
             @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de registrar la categoría. " +
                     "Inténtelo mas tarde")})
     */
     // @PreAuthorize("hasAnyRole('ROLE_SYSADMIN')")
 
-    @PostMapping(value = "/books", produces = "application/json")
-    public ResponseEntity<?> create(@Valid @RequestBody BookDTO bookDTO,
+    @PostMapping(value = "/members", produces = "application/json")
+    public ResponseEntity<?> create(@Valid @RequestBody MemberDTO memberDTO,
                                     BindingResult result) {
         Map<String, Object> response = new HashMap<>();
-        Optional<Book> bookFound;
+        Optional<Member> memberFound;
         try {
             if (result.hasErrors()) {
                 List<String> errors = new ArrayList<>();
@@ -332,21 +388,17 @@ public class BookController {
                 response.put("message", errors);
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
-            bookFound = bookService.findByTitle(bookDTO.getTitle());
-            if (bookFound.isPresent()) {
-                response.put("message", "Book already exists");
+            memberFound = memberService.findByDocNro(memberDTO.getDocNro());
+            if (memberFound.isPresent()) {
+                response.put("message", "Member already exists");
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
-            bookDTO.setId(null);
-            bookService.save(bookDTO);
-        } catch (NoSuchElementException e) {
-            response.put("message", "Category not found");
-            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+            memberService.save(memberDTO);
         } catch (DataIntegrityViolationException e) {
-            response.put("message", "There was an error while registering the book");
+            response.put("message", "There was an error while registering the member");
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        response.put("message", "The book was registered successfully");
+        response.put("message", "The member was registered successfully");
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
@@ -360,17 +412,17 @@ public class BookController {
     */
     // @PreAuthorize("hasAnyRole('ROLE_SYSADMIN')")
 
-    @PutMapping(value = "/books/{id}", produces = "application/json")
-    public ResponseEntity<?> update(@Valid @RequestBody BookDTO bookDTO, BindingResult result,
+    @PutMapping(value = "/members/{id}", produces = "application/json")
+    public ResponseEntity<?> update(@Valid @RequestBody MemberDTO memberDTO, BindingResult result,
                                     @PathVariable String id) {
         Map<String, Object> response = new HashMap<>();
-        Book bookFound;
+        Member memberFound;
         try {
             if (!id.matches("^\\d+$")) {
-                response.put("message", "Invalid book ID");
+                response.put("message", "Invalid Member ID");
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
-            bookService.findById(Long.parseLong(id)).orElseThrow();
+            memberFound = memberService.findById(Long.parseLong(id)).orElseThrow();
             if (result.hasErrors()) {
                 List<String> errors = new ArrayList<>();
                 for (FieldError fieldError : result.getFieldErrors()) {
@@ -378,24 +430,24 @@ public class BookController {
                 }
                 response.put("message", errors);
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-            }
-            /*
-            else if (bookService.findByTitle(bookDTO.getTitle()).isPresent() &&
-                    !bookFound.getTitle().equals(bookDTO.getTitle())) {
-                response.put("message", "Book already exists");
+            } else if (memberService.findByDocNro(memberDTO.getDocNro()).isPresent() &&
+                    !memberFound.getDocNro().equals(memberDTO.getDocNro())) {
+                response.put("message", "Member already exists");
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
-            */
-            bookDTO.setId(id);
-            bookService.save(bookDTO);
+            memberDTO.setId(Long.parseLong(id));
+            memberDTO.setUuid(memberFound.getUuid());
+            memberDTO.setStatus(memberFound.getStatus());
+            memberDTO.setCreationDate(memberFound.getCreationDate());
+            memberService.save(memberDTO);
         } catch (NoSuchElementException e) {
-            response.put("message", "Book, category or library not found");
+            response.put("message", "Member not found");
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (DataIntegrityViolationException e) {
-            response.put("message", "There was an error while updating book values");
+            response.put("message", "There was an error while updating member values");
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        response.put("message", "The book was updated successfully");
+        response.put("message", "The member was updated successfully");
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
@@ -409,13 +461,13 @@ public class BookController {
     */
     // @PreAuthorize("hasAnyRole('ROLE_SYSADMIN')")
 
-    @PutMapping(value = "/books/{id}/status", produces = "application/json")
+    @PutMapping(value = "/members/{id}/status", produces = "application/json")
     public ResponseEntity<?> updateStatus(@Valid @RequestBody UpdateStatusDTO updateStatusDTO,
                                           BindingResult result, @PathVariable String id) {
         Map<String, Object> response = new HashMap<>();
         try {
             if (!id.matches("^\\d+$")) {
-                response.put("message", "Invalid Book ID");
+                response.put("message", "Invalid Member ID");
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
             if (result.hasErrors()) {
@@ -426,15 +478,15 @@ public class BookController {
                 response.put("message", errors);
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
-            bookService.updateStatus(Long.parseLong(id), updateStatusDTO);
+            memberService.updateStatus(Long.parseLong(id), updateStatusDTO);
         } catch (NoSuchElementException e) {
-            response.put("message", "Book, category or library not found");
+            response.put("message", "Member not found");
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (DataIntegrityViolationException e) {
-            response.put("message", "There was an error while updating book status");
+            response.put("message", "There was an error while updating member status");
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        response.put("message", "The book status was updated successfully");
+        response.put("message", "The member status was updated successfully");
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }

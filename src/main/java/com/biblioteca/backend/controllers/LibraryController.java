@@ -192,13 +192,11 @@ public class LibraryController {
     public ResponseEntity<?> updateStatus(@Valid @RequestBody UpdateStatusDTO updateStatusDTO,
                                           BindingResult result, @PathVariable String id) {
         Map<String, Object> response = new HashMap<>();
-        Library libraryFound;
         try {
             if (!id.matches("^\\d+$")) {
                 response.put("message", "Invalid Library ID");
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
-            libraryFound = libraryService.findById(Long.parseLong(id)).orElseThrow();
             if (result.hasErrors()) {
                 List<String> errors = new ArrayList<>();
                 for (FieldError fieldError : result.getFieldErrors()) {
@@ -207,8 +205,7 @@ public class LibraryController {
                 response.put("message", errors);
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
-            libraryFound.setStatus(updateStatusDTO.getStatus());
-            libraryService.save(libraryFound);
+            libraryService.updateStatus(Long.parseLong(id), updateStatusDTO);
         } catch (NoSuchElementException e) {
             response.put("message", "Library not found");
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);

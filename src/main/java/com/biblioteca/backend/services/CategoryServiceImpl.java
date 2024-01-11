@@ -1,5 +1,6 @@
 package com.biblioteca.backend.services;
 
+import com.biblioteca.backend.models.dtos.UpdateStatusDTO;
 import com.biblioteca.backend.models.entities.Category;
 import com.biblioteca.backend.repositories.ICategoryRepository;
 import org.springframework.stereotype.Service;
@@ -39,5 +40,13 @@ public class CategoryServiceImpl implements ICategoryService {
     @Transactional
     public Category save(Category category) {
         return categoryRepository.save(category);
+    }
+
+    @Override
+    @Transactional
+    public void updateStatus(Long id, UpdateStatusDTO updateStatusDTO) {
+        Category category = findById(id).orElseThrow();
+        category.setStatus(updateStatusDTO.getStatus());
+        categoryRepository.save(category);
     }
 }

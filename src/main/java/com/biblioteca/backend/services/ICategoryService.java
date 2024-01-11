@@ -1,5 +1,6 @@
 package com.biblioteca.backend.services;
 
+import com.biblioteca.backend.models.dtos.UpdateStatusDTO;
 import com.biblioteca.backend.models.entities.Category;
 
 import java.util.List;
@@ -13,4 +14,6 @@ public interface ICategoryService {
     Optional<Category> findByName(String name);
 
     Category save(Category category);
+
+    void updateStatus(Long id, UpdateStatusDTO updateStatusDTO);
 }

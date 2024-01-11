@@ -236,7 +236,7 @@ public class BookCopyController {
                 response.put("message", errors);
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
-            bookCopyService.updateStatus(Long.parseLong(id), updateStatusDTO.getStatus());
+            bookCopyService.updateStatus(Long.parseLong(id), updateStatusDTO);
         } catch (NoSuchElementException e) {
             response.put("message", "Book copy not found");
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
