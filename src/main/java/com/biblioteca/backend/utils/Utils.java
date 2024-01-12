@@ -51,9 +51,8 @@ public class Utils {
         return doubled;
     }
 
-    public static String makeRandom10StringCode() {
-        String PREFIX = "BL";
+    public static String makeRandom10StringCode(String prefix) {
         String formatISBN = makeISBN().substring(0, 8).replaceAll("-", "");
-        return PREFIX.concat(formatISBN);
+        return prefix.concat(formatISBN);
     }
 }

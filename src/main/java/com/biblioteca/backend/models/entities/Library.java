@@ -47,31 +47,6 @@ public class Library {
     // @ApiModelProperty(notes = "library modification date", example = "2020-06-01")
     private LocalDateTime modificationDate;
 
-    /*
-    @ManyToOne
-    @JoinColumn(name = "empresa_id")
-    private Empresa empresa;
-
-    // LOCAL(1):EMPLEADO(*)
-    //@JsonIgnore
-    @OneToMany(mappedBy = "local")
-    private List<Usuario> usuarios;
-
-    @JsonBackReference
-    public Empresa getEmpresa() {
-        return empresa;
-    }
-
-    public void setEmpresa(Empresa empresa) {
-        this.empresa = empresa;
-    }
-
-    @JsonManagedReference
-    public List<Usuario> getUsuarios() {
-        return usuarios;
-    }
-    */
-
     @PrePersist
     public void prePersist() {
         status = "A";

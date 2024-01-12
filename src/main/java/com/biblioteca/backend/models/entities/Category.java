@@ -36,21 +36,6 @@ public class Category {
     // @ApiModelProperty(notes = "Category status", required = true, example = "A")
     private String status;
 
-    /*
-    //@JsonIgnore
-    @OneToMany(mappedBy = "categoria")
-    private List<Libro> libros;
-
-    @JsonManagedReference
-    public List<Libro> getLibros() {
-        return libros;
-    }
-
-    public void setLibros(List<Libro> libros) {
-        this.libros = libros;
-    }
-    */
-
     @PrePersist
     public void prePersist() {
         status = "A";

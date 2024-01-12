@@ -25,7 +25,7 @@ public class BookLoan {
     private Long id;
 
     @Column(name = "code", length = 10, unique = true, nullable = false)
-    // @ApiModelProperty(notes = "Book ISBN", required = true, example = "BL-1234567890")
+    // @ApiModelProperty(notes = "Book loan code", required = true, example = "BL1234567890")
     private String code;
 
     @Column(name = "loan_date", nullable = false)
@@ -67,7 +67,7 @@ public class BookLoan {
 
     @PrePersist
     public void prePersist() {
-        code = Utils.makeRandom10StringCode();
+        code = Utils.makeRandom10StringCode("BL");
         status = "P"; // P => PENDING, A => ACTIVE, O => OVERDUE, C => CANCELED, R => RETURNED
         creationDate = LocalDateTime.now();
     }
