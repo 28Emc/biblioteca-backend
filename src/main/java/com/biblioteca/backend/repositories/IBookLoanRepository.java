@@ -16,18 +16,20 @@ public interface IBookLoanRepository extends JpaRepository<BookLoan, Long> {
     @Query(value = "SELECT bl.id as book_loan_id, m.id as member_id, CONCAT(m.name, ' ', m.last_name) " +
             "as member_name, m.doc_nro as member_doc_nro, b.id as book_id, b.isbn as book_isbn, b.title " +
             "as book_title, c.id as category_id, c.name as category_name, bl.code, bl.loan_date, bl.return_date, " +
-            "bl.status, bl.creation_date, bl.modification_date FROM tb_book_loan bl INNER JOIN tb_book b " +
+            "bl.status, bl.creation_date, bl.modification_date, e.id as employee_id, CONCAT(e.name, ' ', e.last_name) " +
+            "as employee_name FROM tb_book_loan bl INNER JOIN tb_book b " +
             "ON b.id = bl.book_id INNER JOIN tb_category c ON c.id = b.category_id INNER JOIN tb_member m " +
-            "ON m.id = bl.member_id",
+            "ON m.id = bl.member_id INNER JOIN tb_employee e ON e.id = bl.id",
             nativeQuery = true)
     List<BookLoanView> findAllWithView();
 
     @Query(value = "SELECT bl.id as book_loan_id, m.id as member_id, CONCAT(m.name, ' ', m.last_name) " +
             "as member_name, m.doc_nro as member_doc_nro, b.id as book_id, b.isbn as book_isbn, b.title " +
             "as book_title, c.id as category_id, c.name as category_name, bl.code, bl.loan_date, bl.return_date, " +
-            "bl.status, bl.creation_date, bl.modification_date FROM tb_book_loan bl INNER JOIN tb_book b " +
+            "bl.status, bl.creation_date, bl.modification_date e.id as employee_id, CONCAT(e.name, ' ', e.last_name) " +
+            "as employee_name FROM tb_book_loan bl INNER JOIN tb_book b " +
             "ON b.id = bl.book_id INNER JOIN tb_category c ON c.id = b.category_id INNER JOIN tb_member m " +
-            "ON m.id = bl.member_id WHERE bl.id = :bookLoanId",
+            "ON m.id = bl.member_id INNER JOIN tb_employee e ON e.id = bl.id WHERE bl.id = :bookLoanId",
             nativeQuery = true)
     Optional<BookLoanView> findByIdWithView(Long bookLoanId);
 
@@ -36,9 +38,10 @@ public interface IBookLoanRepository extends JpaRepository<BookLoan, Long> {
     @Query(value = "SELECT bl.id as book_loan_id, m.id as member_id, CONCAT(m.name, ' ', m.last_name) " +
             "as member_name, m.doc_nro as member_doc_nro, b.id as book_id, b.isbn as book_isbn, b.title " +
             "as book_title, c.id as category_id, c.name as category_name, bl.code, bl.loan_date, bl.return_date, " +
-            "bl.status, bl.creation_date, bl.modification_date FROM tb_book_loan bl INNER JOIN tb_book b " +
+            "bl.status, bl.creation_date, bl.modification_date e.id as employee_id, CONCAT(e.name, ' ', e.last_name) " +
+            "as employee_name FROM tb_book_loan bl INNER JOIN tb_book b " +
             "ON b.id = bl.book_id INNER JOIN tb_category c ON c.id = b.category_id INNER JOIN tb_member m " +
-            "ON m.id = bl.member_id WHERE bl.code = :bookLoanCode",
+            "ON m.id = bl.member_id INNER JOIN tb_employee e ON e.id = bl.id WHERE bl.code = :bookLoanCode",
             nativeQuery = true)
     Optional<BookLoanView> findByCodeWithView(String bookLoanCode);
 
@@ -47,9 +50,10 @@ public interface IBookLoanRepository extends JpaRepository<BookLoan, Long> {
     @Query(value = "SELECT bl.id as book_loan_id, m.id as member_id, CONCAT(m.name, ' ', m.last_name) " +
             "as member_name, m.doc_nro as member_doc_nro, b.id as book_id, b.isbn as book_isbn, b.title " +
             "as book_title, c.id as category_id, c.name as category_name, bl.code, bl.loan_date, bl.return_date, " +
-            "bl.status, bl.creation_date, bl.modification_date FROM tb_book_loan bl INNER JOIN tb_book b " +
+            "bl.status, bl.creation_date, bl.modification_date e.id as employee_id, CONCAT(e.name, ' ', e.last_name) " +
+            "as employee_name FROM tb_book_loan bl INNER JOIN tb_book b " +
             "ON b.id = bl.book_id INNER JOIN tb_category c ON c.id = b.category_id INNER JOIN tb_member m " +
-            "ON m.id = bl.member_id WHERE bl.status = :bookLoanStatus",
+            "ON m.id = bl.member_id INNER JOIN tb_employee e ON e.id = bl.id WHERE bl.status = :bookLoanStatus",
             nativeQuery = true)
     List<BookLoanView> findByStatusWithView(String bookLoanStatus);
 }

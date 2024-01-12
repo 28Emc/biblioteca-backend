@@ -18,15 +18,11 @@ public interface BookLoanView {
     @Value("#{target.member_doc_nro}")
     String getMemberDocNro();
 
-    /*
     @Value("#{target.employee_id}")
     Long getEmployeeId();
-    */
 
-    /*
     @Value("#{target.employee_name}")
     String getEmployeeName();
-    */
 
     @Value("#{target.book_id}")
     Long getBookId();

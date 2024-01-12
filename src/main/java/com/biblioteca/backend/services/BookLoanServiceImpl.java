@@ -2,15 +2,9 @@ package com.biblioteca.backend.services;
 
 import com.biblioteca.backend.models.dtos.BookLoanDTO;
 import com.biblioteca.backend.models.dtos.UpdateStatusDTO;
-import com.biblioteca.backend.models.entities.Book;
-import com.biblioteca.backend.models.entities.BookCopy;
-import com.biblioteca.backend.models.entities.BookLoan;
-import com.biblioteca.backend.models.entities.Member;
+import com.biblioteca.backend.models.entities.*;
 import com.biblioteca.backend.models.projections.BookLoanView;
-import com.biblioteca.backend.repositories.IBookCopyRepository;
-import com.biblioteca.backend.repositories.IBookLoanRepository;
-import com.biblioteca.backend.repositories.IBookRepository;
-import com.biblioteca.backend.repositories.IMemberRepository;
+import com.biblioteca.backend.repositories.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,14 +24,18 @@ public class BookLoanServiceImpl implements IBookLoanService {
 
     private final IBookCopyRepository bookCopyRepository;
 
+    private final IEmployeeRepository employeeRepository;
+
     public BookLoanServiceImpl(IBookLoanRepository bookLoanRepository,
                                IMemberRepository memberRepository,
                                IBookRepository bookRepository,
-                               IBookCopyRepository bookCopyRepository) {
+                               IBookCopyRepository bookCopyRepository,
+                               IEmployeeRepository employeeRepository) {
         this.bookLoanRepository = bookLoanRepository;
         this.memberRepository = memberRepository;
         this.bookRepository = bookRepository;
         this.bookCopyRepository = bookCopyRepository;
+        this.employeeRepository = employeeRepository;
     }
 
     @Override
@@ -95,6 +93,8 @@ public class BookLoanServiceImpl implements IBookLoanService {
                 .orElseThrow(() -> new NoSuchElementException("Book not found"));
         Member memberFound = memberRepository.findById(bookLoanDTO.getMemberId())
                 .orElseThrow(() -> new NoSuchElementException("Member not found"));
+        Employee employeeFound = employeeRepository.findById(bookLoanDTO.getEmployeeId())
+                .orElseThrow(() -> new NoSuchElementException("Employee not found"));
         BookLoan bookLoan = new BookLoan();
         if (id != null) {
             bookLoan = findById(id).orElseThrow(() -> new NoSuchElementException("Book loan not found"));
@@ -110,7 +110,7 @@ public class BookLoanServiceImpl implements IBookLoanService {
         bookLoan.setLoanDate(LocalDate.parse(bookLoanDTO.getLoanDate()));
         bookLoan.setReturnDate(LocalDate.parse(bookLoanDTO.getReturnDate()));
         bookLoan.setMember(memberFound);
-        // bookLoan.setEmployee(employeeRepository.findById(bookLoanDTO.getEmployeeId()).orElseThrow());
+        bookLoan.setEmployee(employeeFound);
         bookLoan.setBook(bookFound);
         // TODO: ADD OPERATION LOG LOGIC
         return bookLoanRepository.save(bookLoan);

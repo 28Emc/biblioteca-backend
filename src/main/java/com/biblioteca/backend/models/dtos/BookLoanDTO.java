@@ -15,10 +15,8 @@ public class BookLoanDTO {
     @NotNull(message = "{notNull.bookLoanDTO.memberId}")
     private Long memberId;
 
-    /*
     @NotNull(message = "{notNull.bookLoanDTO.employeeId}")
     private Long employeeId;
-    */
 
     @NotNull(message = "{notNull.bookLoanDTO.bookId}")
     private Long bookId;

@@ -53,12 +53,10 @@ public class BookLoan {
     @JoinColumn(name = "member_id")
     private Member member;
 
-    /*
     // BOOK_LOAN(M):EMPLOYEE(1)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "employee_id")
     private Employee employee;
-    */
 
     // BOOK_LOAN(M):BOOK(1)
     @ManyToOne(fetch = FetchType.LAZY)
