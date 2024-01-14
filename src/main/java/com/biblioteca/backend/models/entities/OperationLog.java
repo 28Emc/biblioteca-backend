@@ -26,11 +26,16 @@ public class OperationLog {
     private String entityName;
 
     @Column(name = "entity_id", nullable = false)
-    private String entityId;
+    private Long entityId;
+
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
 
     @Column(name = "creation_date", nullable = false)
     private LocalDateTime creationDate;
 
-    @Column(name = "user_id", nullable = false)
-    private Long userId;
+    @PrePersist
+    public void prePersist() {
+        creationDate = LocalDateTime.now();
+    }
 }

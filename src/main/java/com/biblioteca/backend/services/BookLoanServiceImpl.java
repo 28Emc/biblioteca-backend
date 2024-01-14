@@ -1,6 +1,7 @@
 package com.biblioteca.backend.services;
 
 import com.biblioteca.backend.models.dtos.BookLoanDTO;
+import com.biblioteca.backend.models.dtos.OperationLogDTO;
 import com.biblioteca.backend.models.dtos.UpdateStatusDTO;
 import com.biblioteca.backend.models.entities.*;
 import com.biblioteca.backend.models.projections.BookLoanView;
@@ -26,16 +27,20 @@ public class BookLoanServiceImpl implements IBookLoanService {
 
     private final IEmployeeRepository employeeRepository;
 
+    private final IOperationLogService operationLogService;
+
     public BookLoanServiceImpl(IBookLoanRepository bookLoanRepository,
                                IMemberRepository memberRepository,
                                IBookRepository bookRepository,
                                IBookCopyRepository bookCopyRepository,
-                               IEmployeeRepository employeeRepository) {
+                               IEmployeeRepository employeeRepository,
+                               IOperationLogService operationLogService) {
         this.bookLoanRepository = bookLoanRepository;
         this.memberRepository = memberRepository;
         this.bookRepository = bookRepository;
         this.bookCopyRepository = bookCopyRepository;
         this.employeeRepository = employeeRepository;
+        this.operationLogService = operationLogService;
     }
 
     @Override
@@ -89,6 +94,8 @@ public class BookLoanServiceImpl implements IBookLoanService {
     @Override
     @Transactional
     public BookLoan save(BookLoanDTO bookLoanDTO, Long id) {
+        String operationLogType = "BOOK_LOAN_REGISTRATION";
+        String operationLogEntityName = "BOOK_LOAN";
         Book bookFound = bookRepository.findById(bookLoanDTO.getBookId())
                 .orElseThrow(() -> new NoSuchElementException("Book not found"));
         Member memberFound = memberRepository.findById(bookLoanDTO.getMemberId())
@@ -97,6 +104,7 @@ public class BookLoanServiceImpl implements IBookLoanService {
                 .orElseThrow(() -> new NoSuchElementException("Employee not found"));
         BookLoan bookLoan = new BookLoan();
         if (id != null) {
+            operationLogType = "UPDATE_BOOK_LOAN";
             bookLoan = findById(id).orElseThrow(() -> new NoSuchElementException("Book loan not found"));
         } else {
             BookCopy bookCopyFound = bookCopyRepository.findByISBN(bookFound.getISBN())
@@ -112,13 +120,23 @@ public class BookLoanServiceImpl implements IBookLoanService {
         bookLoan.setMember(memberFound);
         bookLoan.setEmployee(employeeFound);
         bookLoan.setBook(bookFound);
-        // TODO: ADD OPERATION LOG LOGIC
-        return bookLoanRepository.save(bookLoan);
+        BookLoan savedBookLoan = bookLoanRepository.save(bookLoan);
+
+        OperationLogDTO operationLogDTO = new OperationLogDTO();
+        operationLogDTO.setOperationType(operationLogType);
+        operationLogDTO.setEntityId(savedBookLoan.getId());
+        operationLogDTO.setEntityName(operationLogEntityName);
+        operationLogDTO.setUserId(employeeFound.getId());
+        operationLogService.create(operationLogDTO);
+
+        return savedBookLoan;
     }
 
     @Override
     @Transactional
     public String updateStatus(Long id, UpdateStatusDTO updateStatusDTO) {
+        String operationLogType = "";
+        String operationLogEntityName = "BOOK_LOAN";
         BookLoan bookLoanFound = findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Book loan not found"));
         Book bookFound = bookRepository.findById(bookLoanFound.getBook().getId())
@@ -133,6 +151,7 @@ public class BookLoanServiceImpl implements IBookLoanService {
                         .orElseThrow(() -> new NoSuchElementException("No book copy with PENDING status found"));
                 bookCopyFound.setStatus("A"); // BOOK COPY STATUS IS "ACTIVE"
                 bookCopyRepository.save(bookCopyFound);
+                operationLogType = "BOOK_LOAN_STATUS_CONFIRMED";
                 msg = "Book loan confirmed";
             }
             case "O" -> { // BOOK_LOAN STATUS "OVERDUE" => BOOK_COPY STATUS FROM "ACTIVE" TO "OVERDUE"
@@ -143,6 +162,7 @@ public class BookLoanServiceImpl implements IBookLoanService {
                         .orElseThrow(() -> new NoSuchElementException("No book copy with ACTIVE status found"));
                 bookCopyFound.setStatus("O"); // BOOK COPY STATUS IS "OVERDUE"
                 bookCopyRepository.save(bookCopyFound);
+                operationLogType = "BOOK_LOAN_STATUS_OVERDUE";
                 msg = "Book loan overdue";
             }
             case "R" -> { // BOOK_LOAN STATUS "RETURNED" => BOOK_COPY STATUS FROM "ACTIVE" OR "OVERDUE" TO "RETURNED"
@@ -152,10 +172,10 @@ public class BookLoanServiceImpl implements IBookLoanService {
                         .findFirst()
                         .orElseThrow(() -> new NoSuchElementException("No book copy with ACTIVE or OVERDUE status" +
                                 " found"));
-                bookCopyFound.setStatus("R"); // BOOK COPY STATUS IS "RETURNED"
+                bookCopyFound.setStatus("P");
                 bookCopyRepository.save(bookCopyFound);
+                operationLogType = "BOOK_LOAN_STATUS_RETURNED";
                 msg = "Book loan returned";
-                // TODO: APPLY LOGIC TO BOOK COPY STATUS UPDATE TO "PENDING"
             }
             case "C" -> { // BOOK_LOAN STATUS "CANCELED" => BOOK_COPY STATUS REMAINS "PENDING"
                 BookCopy bookCopyFound = bookCopyRepository.findByISBN(bookFound.getISBN())
@@ -165,24 +185,22 @@ public class BookLoanServiceImpl implements IBookLoanService {
                         .orElseThrow(() -> new NoSuchElementException("No book copy with PENDING status found"));
                 bookCopyFound.setStatus("P"); // BOOK COPY STATUS IS "PENDING"
                 bookCopyRepository.save(bookCopyFound);
+                operationLogType = "BOOK_LOAN_STATUS_CANCELED";
                 msg = "Book loan canceled";
             }
-            default -> { // BOOK_LOAN STATUS "PENDING" => BOOK_COPY STATUS REMAINS "PENDING"
-                /*
-                BookCopy bookCopyFound = bookCopyRepository.findByISBN(bookFound.getISBN())
-                        .stream()
-                        .filter(b -> b.getStatus().equals("P"))
-                        .findFirst()
-                        .orElseThrow(() -> new NoSuchElementException("No book copy with PENDING status found"));
-                bookCopyFound.setStatus("P"); // BOOK COPY STATUS IS "PENDING"
-                bookCopyRepository.save(bookCopyFound);
-                msg = "Book loan pending";
-                */
-                msg = "No changes were made to the book loan";
-            }
+            // BOOK_LOAN STATUS "PENDING" => BOOK_COPY STATUS REMAINS "PENDING"
+            default -> msg = "No changes were made to the book loan";
         }
         bookLoanFound.setStatus(updateStatusDTO.getStatus());
         bookLoanRepository.save(bookLoanFound);
+        if (!operationLogType.isEmpty()) {
+            OperationLogDTO operationLogDTO = new OperationLogDTO();
+            operationLogDTO.setOperationType(operationLogType);
+            operationLogDTO.setEntityId(bookLoanFound.getId());
+            operationLogDTO.setEntityName(operationLogEntityName);
+            operationLogDTO.setUserId(bookLoanFound.getEmployee().getId());
+            operationLogService.create(operationLogDTO);
+        }
         return msg;
     }
 }
