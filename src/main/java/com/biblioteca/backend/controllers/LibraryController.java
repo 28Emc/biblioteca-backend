@@ -4,6 +4,12 @@ import com.biblioteca.backend.models.dtos.LibraryDTO;
 import com.biblioteca.backend.models.dtos.UpdateStatusDTO;
 import com.biblioteca.backend.models.entities.Library;
 import com.biblioteca.backend.services.ILibraryService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -14,9 +20,12 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
 
+import static com.biblioteca.backend.utils.Utils.ID_REGEXP;
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+
 @CrossOrigin(origins = {"*", "http://localhost:4200"})
 @RestController
-// @Api(value = "book", description = "Library controller endpoints")
+@Tag(name = "Library", description = "Library operations")
 public class LibraryController {
     private final ILibraryService libraryService;
 
@@ -24,14 +33,21 @@ public class LibraryController {
         this.libraryService = libraryService;
     }
 
-    /*
-    @ApiOperation(value = "Método de listado de categorias", response = ResponseEntity.class)
-    @ApiResponses(value = {@ApiResponse(code = 200, message = " "),
-            @ApiResponse(code = 302, message = "Categorias encontrados"), @ApiResponse(code = 401, message = " "),
-            @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = " "),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de buscar las categorias. " +
-                    "Inténtelo mas tarde")})
-     */
+    @Operation(summary = "Fetch library list")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Data found", content = {
+                    @Content(mediaType = APPLICATION_JSON_VALUE,
+                            schema = @Schema(ref = "#/components/schemas/responseEntityListSchema"))
+            }),
+            // @ApiResponse(responseCode = 401, description = ""),
+            // @ApiResponse(responseCode = "403", description = ""),
+            // @ApiResponse(responseCode = "404", description = ""),
+            @ApiResponse(responseCode = "500", description = "There was an error while retrieving the libraries",
+                    content = {
+                            @Content(mediaType = APPLICATION_JSON_VALUE,
+                                    schema = @Schema(ref = "#/components/schemas/responseEntityErrorSchema"))
+                    })
+    })
     // @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
     @GetMapping(value = "/libraries", produces = "application/json")
     public ResponseEntity<?> fetchAll() {
@@ -40,62 +56,90 @@ public class LibraryController {
         try {
             libraries = libraryService.findAll();
         } catch (Exception e) {
-            response.put("message", "There was an error while retrieving libraries");
-            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+            response.put("message", "There was an error while retrieving the libraries");
+            response.put("details", List.of());
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        response.put("data", libraries);
         response.put("message", "Data found");
+        response.put("details", libraries);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    /*
-    @ApiOperation(value = "Método de consulta de categoría por su id", response = ResponseEntity.class)
-    @ApiResponses(value = {@ApiResponse(code = 200, message = " "),
-            @ApiResponse(code = 302, message = "Categoría encontrada"), @ApiResponse(code = 401, message = " "),
-            @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = " "),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de buscar la categoría. " +
-                    "Inténtelo mas tarde")})
-    */
+    @Operation(summary = "Get library by ID")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Data found", content = {
+                    @Content(mediaType = APPLICATION_JSON_VALUE,
+                            schema = @Schema(ref = "#/components/schemas/responseEntityObjectSchema"))
+            }),
+            @ApiResponse(responseCode = "400", description = "Invalid library ID", content = {
+                    @Content(mediaType = APPLICATION_JSON_VALUE,
+                            schema = @Schema(ref = "#/components/schemas/responseEntityErrorSchema"))
+            }),
+            // @ApiResponse(responseCode = "401", description = "", content = @Content),
+            // @ApiResponse(responseCode = "403", description = "", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Category not found", content = {
+                    @Content(mediaType = APPLICATION_JSON_VALUE,
+                            schema = @Schema(ref = "#/components/schemas/responseEntityErrorSchema"))
+            }),
+            @ApiResponse(responseCode = "500", description = "There was an error while retrieving the library",
+                    content = {
+                            @Content(mediaType = APPLICATION_JSON_VALUE,
+                                    schema = @Schema(ref = "#/components/schemas/responseEntityErrorSchema"))
+                    })
+    })
     // @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
     @GetMapping(value = "/libraries/{id}", produces = "application/json")
     public ResponseEntity<?> getOne(@PathVariable String id) {
         Map<String, Object> response = new HashMap<>();
         Library library;
         try {
-            if (!id.matches("^\\d+$")) {
+            if (!id.matches(ID_REGEXP)) {
                 response.put("message", "Invalid Library ID");
+                response.put("details", List.of());
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
             library = libraryService.findById(Long.parseLong(id)).orElseThrow();
         } catch (NoSuchElementException e) {
-            response.put("message", "Library no found");
+            response.put("message", "Library not found");
+            response.put("details", List.of());
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (Exception e) {
             response.put("message", "There was an error while retrieving the library");
+            response.put("details", List.of());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-
-        response.put("data", library);
         response.put("message", "Data found");
+        response.put("details", library);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    /*
-    @ApiOperation(value = "Método de registro de categorias", response = ResponseEntity.class)
-    @ApiResponses(value = {@ApiResponse(code = 200, message = " "),
-            @ApiResponse(code = 201, message = "Categoría registrada"),
-            @ApiResponse(code = 400, message = "La categoría ya existe"),
-            @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = "El nombre de la " +
-            "book es requerido"),
-            @ApiResponse(code = 404, message = " "),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de registrar la categoría. " +
-                    "Inténtelo mas tarde")})
-    */
+    @Operation(summary = "Register a library")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Library registered successfully", content = {
+                    @Content(mediaType = APPLICATION_JSON_VALUE,
+                            schema = @Schema(ref = "#/components/schemas/responseEntityObjectSchema"))
+            }),
+            @ApiResponse(responseCode = "400", description = "Library already exists / " +
+                    "There was an error while registering the library",
+                    content = {
+                            @Content(mediaType = APPLICATION_JSON_VALUE,
+                                    schema = @Schema(ref = "#/components/schemas/responseEntityErrorSchema"))
+                    }),
+            // @ApiResponse(responseCode = "401", description = "", content = @Content),
+            // @ApiResponse(responseCode = "403", description = "", content = @Content),
+            /* @ApiResponse(responseCode = "404", description = "Library not found", content = {
+                    @Content(mediaType = APPLICATION_JSON_VALUE,
+                            schema = @Schema(ref = "#/components/schemas/responseEntityErrorSchema"))
+            }), */
+            @ApiResponse(responseCode = "500", description = "There was an error while registering the library",
+                    content = {
+                            @Content(mediaType = APPLICATION_JSON_VALUE,
+                                    schema = @Schema(ref = "#/components/schemas/responseEntityErrorSchema"))
+                    })
+    })
     // @PreAuthorize("hasAnyRole('ROLE_SYSADMIN')")
-
     @PostMapping(value = "/libraries", produces = "application/json")
-    public ResponseEntity<?> create(@Valid @RequestBody LibraryDTO libraryDTO,
-                                    BindingResult result) {
+    public ResponseEntity<?> create(@Valid @RequestBody LibraryDTO libraryDTO, BindingResult result) {
         Map<String, Object> response = new HashMap<>();
         Optional<Library> libraryFound;
         try {
@@ -104,13 +148,16 @@ public class LibraryController {
                 for (FieldError fieldError : result.getFieldErrors()) {
                     errors.add(fieldError.getDefaultMessage());
                 }
-                response.put("message", errors);
+                response.put("message", "There was an error while registering the library");
+                response.put("details", errors);
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
             /*
-            libraryFound = libraryService.findById(libraryDTO.getTitle());
+            // TODO: VALIDATE BY ZIP CODE
+            libraryFound = libraryService.findByZIPCode(libraryDTO.getZIPCode());
             if (libraryFound.isPresent()) {
                 response.put("message", "Library already exists");
+                response.put("details", List.of());
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
             */
@@ -121,30 +168,48 @@ public class LibraryController {
             libraryService.save(library);
         } catch (DataIntegrityViolationException e) {
             response.put("message", "There was an error while registering the library");
+            response.put("details", List.of());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
         response.put("message", "The library was registered successfully");
+        response.put("details", null);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
-    /*
-    @ApiOperation(value = "Método de actualización de categorias", response = ResponseEntity.class)
-    @ApiResponses(value = {@ApiResponse(code = 200, message = " "),
-            @ApiResponse(code = 201, message = "Categoría actualizada"), @ApiResponse(code = 401, message = " "),
-            @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = "La categoría no existe"),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de actualizar la categoría. " +
-                    "Inténtelo mas tarde")})
-    */
+    @Operation(summary = "Modify library values")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Library updated successfully", content = {
+                    @Content(mediaType = APPLICATION_JSON_VALUE,
+                            schema = @Schema(ref = "#/components/schemas/responseEntityObjectSchema"))
+            }),
+            @ApiResponse(responseCode = "400", description = "Library already exists / " +
+                    "There was an error while registering the library",
+                    content = {
+                            @Content(mediaType = APPLICATION_JSON_VALUE,
+                                    schema = @Schema(ref = "#/components/schemas/responseEntityErrorSchema"))
+                    }),
+            // @ApiResponse(responseCode = "401", description = "", content = @Content),
+            // @ApiResponse(responseCode = "403", description = "", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Library not found", content = {
+                    @Content(mediaType = APPLICATION_JSON_VALUE,
+                            schema = @Schema(ref = "#/components/schemas/responseEntityErrorSchema"))
+            }),
+            @ApiResponse(responseCode = "500", description = "There was an error while updating the library",
+                    content = {
+                            @Content(mediaType = APPLICATION_JSON_VALUE,
+                                    schema = @Schema(ref = "#/components/schemas/responseEntityErrorSchema"))
+                    })
+    })
     // @PreAuthorize("hasAnyRole('ROLE_SYSADMIN')")
-
     @PutMapping(value = "/libraries/{id}", produces = "application/json")
     public ResponseEntity<?> update(@Valid @RequestBody LibraryDTO libraryDTO, BindingResult result,
                                     @PathVariable String id) {
         Map<String, Object> response = new HashMap<>();
         Library libraryFound;
         try {
-            if (!id.matches("^\\d+$")) {
+            if (!id.matches(ID_REGEXP)) {
                 response.put("message", "Invalid Library ID");
+                response.put("details", List.of());
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
             libraryFound = libraryService.findById(Long.parseLong(id)).orElseThrow();
@@ -153,13 +218,15 @@ public class LibraryController {
                 for (FieldError fieldError : result.getFieldErrors()) {
                     errors.add(fieldError.getDefaultMessage());
                 }
-                response.put("message", errors);
+                response.put("message", "There was an error while updating the library");
+                response.put("details", errors);
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
             /*
             else if (libraryService.findByTitle(categoriaDTO.getTitle()).isPresent() &&
                     !bookFound.getTitle().equals(categoriaDTO.getTitle())) {
                 response.put("message", "Library already exists");
+                response.put("details", List.of());
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
             */
@@ -169,32 +236,51 @@ public class LibraryController {
             libraryService.save(libraryFound);
         } catch (NoSuchElementException e) {
             response.put("message", "Library not found");
+            response.put("details", List.of());
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (DataIntegrityViolationException e) {
-            response.put("message", "There was an error while updating library values");
+            response.put("message", "There was an error while updating the library");
+            response.put("details", List.of());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
         response.put("message", "The library was updated successfully");
+        response.put("details", null);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    /*
-    @ApiOperation(value = "Método de deshabilitación de la categoría mediante el id", response = ResponseEntity.class)
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Categoría deshabilitada"),
-            @ApiResponse(code = 201, message = " "), @ApiResponse(code = 401, message = " "),
-            @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = "La categoría no existe"),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de deshabilitar la categoría. " +
-                    "Inténtelo mas tarde")})
-    */
+    @Operation(summary = "Modify library status")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Library status updated successfully", content = {
+                    @Content(mediaType = APPLICATION_JSON_VALUE,
+                            schema = @Schema(ref = "#/components/schemas/responseEntityObjectSchema"))
+            }),
+            @ApiResponse(responseCode = "400", description = "Invalid library ID / " +
+                    "There was an error while updating the library status",
+                    content = {
+                            @Content(mediaType = APPLICATION_JSON_VALUE,
+                                    schema = @Schema(ref = "#/components/schemas/responseEntityErrorSchema"))
+                    }),
+            // @ApiResponse(responseCode = "401", description = "", content = @Content),
+            // @ApiResponse(responseCode = "403", description = "", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Library not found", content = {
+                    @Content(mediaType = APPLICATION_JSON_VALUE,
+                            schema = @Schema(ref = "#/components/schemas/responseEntityErrorSchema"))
+            }),
+            @ApiResponse(responseCode = "500", description = "There was an error while updating the library status",
+                    content = {
+                            @Content(mediaType = APPLICATION_JSON_VALUE,
+                                    schema = @Schema(ref = "#/components/schemas/responseEntityErrorSchema"))
+                    })
+    })
     // @PreAuthorize("hasAnyRole('ROLE_SYSADMIN')")
-
     @PutMapping(value = "/libraries/{id}/status", produces = "application/json")
     public ResponseEntity<?> updateStatus(@Valid @RequestBody UpdateStatusDTO updateStatusDTO,
                                           BindingResult result, @PathVariable String id) {
         Map<String, Object> response = new HashMap<>();
         try {
-            if (!id.matches("^\\d+$")) {
+            if (!id.matches(ID_REGEXP)) {
                 response.put("message", "Invalid Library ID");
+                response.put("details", List.of());
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
             if (result.hasErrors()) {
@@ -202,18 +288,22 @@ public class LibraryController {
                 for (FieldError fieldError : result.getFieldErrors()) {
                     errors.add(fieldError.getDefaultMessage());
                 }
-                response.put("message", errors);
+                response.put("message", "There was an error while updating the library status");
+                response.put("details", errors);
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
             libraryService.updateStatus(Long.parseLong(id), updateStatusDTO);
         } catch (NoSuchElementException e) {
             response.put("message", "Library not found");
+            response.put("details", List.of());
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (DataIntegrityViolationException e) {
             response.put("message", "There was an error while updating library status");
+            response.put("details", List.of());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
         response.put("message", "The library status was updated successfully");
+        response.put("details", null);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }

@@ -17,23 +17,18 @@ public class Category {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    // @ApiModelProperty(notes = "Category ID")
     private Long id;
 
     @Column(length = 30, unique = true, nullable = false)
-    // @ApiModelProperty(notes = "Category name", required = true, example = "Fantasía")
     private String name;
 
     @Column(name = "creation_date", nullable = false)
-    // @ApiModelProperty(notes = "Category creation date", required = true, example = "2020-05-25")
     private LocalDateTime creationDate;
 
     @Column(name = "modification_date")
-    // @ApiModelProperty(notes = "Category modification date", example = "2020-06-01")
     private LocalDateTime modificationDate;
 
-    @Column(name = "status", nullable = false)
-    // @ApiModelProperty(notes = "Category status", required = true, example = "A")
+    @Column(name = "status", length = 1, nullable = false)
     private String status;
 
     @PrePersist

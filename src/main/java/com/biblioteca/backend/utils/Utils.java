@@ -1,6 +1,8 @@
 package com.biblioteca.backend.utils;
 
 public class Utils {
+    public static final String ID_REGEXP = "^\\d+$";
+
     public static String makeISBN() {
         String laendercode;
         String bandnr;

@@ -16,26 +16,19 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class BookCopy {
     @Id
-    // @GeneratedValue(strategy = GenerationType.IDENTITY)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_generator")
-    // @GeneratedValue(strategy = GenerationType.AUTO)
-    // @ApiModelProperty(notes = "Book copy ID")
     private Long id;
 
     @Column(name = "isbn", length = 20, nullable = false)
-    // @ApiModelProperty(notes = "Book ISBN", required = true, example = "9791234567896")
     private String ISBN;
 
-    @Column(nullable = false)
-    // @ApiModelProperty(notes = "Book copy status", required = true, example = "A")
+    @Column(length = 1, nullable = false)
     private String status;
 
     @Column(name = "creation_date", nullable = false)
-    // @ApiModelProperty(notes = "Book copy creation date", required = true, example = "2020-05-25")
     private LocalDateTime creationDate;
 
     @Column(name = "modification_date")
-    // @ApiModelProperty(notes = "Book copy modification date", example = "2020-06-01")
     private LocalDateTime modificationDate;
 
     // BOOK_COPY(M):BOOK(1)

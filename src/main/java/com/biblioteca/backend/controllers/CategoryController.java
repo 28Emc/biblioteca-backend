@@ -4,6 +4,12 @@ import com.biblioteca.backend.models.dtos.CategoryDTO;
 import com.biblioteca.backend.models.dtos.UpdateStatusDTO;
 import com.biblioteca.backend.models.entities.Category;
 import com.biblioteca.backend.services.ICategoryService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -14,87 +20,126 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
 
+import static com.biblioteca.backend.utils.Utils.ID_REGEXP;
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+
 @CrossOrigin(origins = {"*", "http://localhost:4200"})
 @RestController
-// @Api(value = "category", description = "Operaciones referentes a las categorías de libros")
+@Tag(name = "Category", description = "Category operations")
 public class CategoryController {
-    private final ICategoryService categoriaService;
+    private final ICategoryService categoryService;
 
-    public CategoryController(ICategoryService categoriaService) {
-        this.categoriaService = categoriaService;
+    public CategoryController(ICategoryService categoryService) {
+        this.categoryService = categoryService;
     }
 
-    /*
-    @ApiOperation(value = "Método de listado de categorias", response = ResponseEntity.class)
-    @ApiResponses(value = {@ApiResponse(code = 200, message = " "),
-            @ApiResponse(code = 302, message = "Categorias encontrados"), @ApiResponse(code = 401, message = " "),
-            @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = " "),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de buscar las categorias. " +
-                    "Inténtelo mas tarde")})
-     */
+    @Operation(summary = "Fetch category list")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Data found", content = {
+                    @Content(mediaType = APPLICATION_JSON_VALUE,
+                            schema = @Schema(ref = "#/components/schemas/responseEntityListSchema"))
+            }),
+            // @ApiResponse(responseCode = 401, description = ""),
+            // @ApiResponse(responseCode = "403", description = ""),
+            // @ApiResponse(responseCode = "404", description = ""),
+            @ApiResponse(responseCode = "500", description = "There was an error while retrieving the categories",
+                    content = {
+                            @Content(mediaType = APPLICATION_JSON_VALUE,
+                                    schema = @Schema(ref = "#/components/schemas/responseEntityErrorSchema"))
+                    })
+    })
     // @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
     @GetMapping(value = "/categories", produces = "application/json")
     public ResponseEntity<?> fetchAll() {
         Map<String, Object> response = new HashMap<>();
         List<Category> categories;
         try {
-            categories = categoriaService.findAll();
+            categories = categoryService.findAll();
         } catch (Exception e) {
             response.put("message", "There was an error while retrieving the categories");
-            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+            response.put("details", List.of());
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        response.put("data", categories);
         response.put("message", "Data found");
+        response.put("details", categories);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    /*
-    @ApiOperation(value = "Método de consulta de categoría por su id", response = ResponseEntity.class)
-    @ApiResponses(value = {@ApiResponse(code = 200, message = " "),
-            @ApiResponse(code = 302, message = "Categoría encontrada"), @ApiResponse(code = 401, message = " "),
-            @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = " "),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de buscar la categoría. " +
-                    "Inténtelo mas tarde")})
-    */
+    @Operation(summary = "Get category by ID")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Data found", content = {
+                    @Content(mediaType = APPLICATION_JSON_VALUE,
+                            schema = @Schema(ref = "#/components/schemas/responseEntityObjectSchema"))
+            }),
+            @ApiResponse(responseCode = "400", description = "Invalid category ID", content = {
+                    @Content(mediaType = APPLICATION_JSON_VALUE,
+                            schema = @Schema(ref = "#/components/schemas/responseEntityErrorSchema"))
+            }),
+            // @ApiResponse(responseCode = "401", description = "", content = @Content),
+            // @ApiResponse(responseCode = "403", description = "", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Category not found", content = {
+                    @Content(mediaType = APPLICATION_JSON_VALUE,
+                            schema = @Schema(ref = "#/components/schemas/responseEntityErrorSchema"))
+            }),
+            @ApiResponse(responseCode = "500", description = "There was an error while retrieving the category",
+                    content = {
+                            @Content(mediaType = APPLICATION_JSON_VALUE,
+                                    schema = @Schema(ref = "#/components/schemas/responseEntityErrorSchema"))
+                    })
+    })
     // @PreAuthorize("hasAnyRole('ROLE_SYSADMIN', 'ROLE_ADMIN', 'ROLE_EMPLEADO')")
     @GetMapping(value = "/categories/{id}", produces = "application/json")
     public ResponseEntity<?> getOne(@PathVariable String id) {
         Map<String, Object> response = new HashMap<>();
         Category category;
         try {
-            if (!id.matches("^\\d+$")) {
-                response.put("message", "Invalid Category ID");
+            if (!id.matches(ID_REGEXP)) {
+                response.put("message", "Invalid category ID");
+                response.put("details", List.of());
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
-            category = categoriaService.findById(Long.parseLong(id)).orElseThrow();
+            category = categoryService.findById(Long.parseLong(id)).orElseThrow();
         } catch (NoSuchElementException e) {
-            response.put("message", "Category no found");
+            response.put("message", "Category not found");
+            response.put("details", List.of());
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (Exception e) {
             response.put("message", "There was an error while retrieving the category");
+            response.put("details", List.of());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-
-        response.put("data", category);
         response.put("message", "Data found");
+        response.put("details", category);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    /*
-    @ApiOperation(value = "Método de registro de categorias", response = ResponseEntity.class)
-    @ApiResponses(value = {@ApiResponse(code = 200, message = " "),
-            @ApiResponse(code = 201, message = "Categoría registrada"),
-            @ApiResponse(code = 400, message = "La categoría ya existe"),
-            @ApiResponse(code = 401, message = " "), @ApiResponse(code = 403, message = "El nombre de la " +
-            "category es requerido"),
-            @ApiResponse(code = 404, message = " "),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de registrar la categoría. " +
-                    "Inténtelo mas tarde")})
-    */
+    @Operation(summary = "Register a category")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Category registered successfully", content = {
+                    @Content(mediaType = APPLICATION_JSON_VALUE,
+                            schema = @Schema(ref = "#/components/schemas/responseEntityObjectSchema"))
+            }),
+            @ApiResponse(responseCode = "400", description = "Category already exists / " +
+                    "There was an error while registering the category",
+                    content = {
+                            @Content(mediaType = APPLICATION_JSON_VALUE,
+                                    schema = @Schema(ref = "#/components/schemas/responseEntityErrorSchema"))
+                    }),
+            // @ApiResponse(responseCode = "401", description = "", content = @Content),
+            // @ApiResponse(responseCode = "403", description = "", content = @Content),
+            /* @ApiResponse(responseCode = "404", description = "Category not found", content = {
+                    @Content(mediaType = APPLICATION_JSON_VALUE,
+                            schema = @Schema(ref = "#/components/schemas/responseEntityErrorSchema"))
+            }), */
+            @ApiResponse(responseCode = "500", description = "There was an error while registering the category",
+                    content = {
+                            @Content(mediaType = APPLICATION_JSON_VALUE,
+                                    schema = @Schema(ref = "#/components/schemas/responseEntityErrorSchema"))
+                    })
+    })
     // @PreAuthorize("hasAnyRole('ROLE_SYSADMIN')")
-
     @PostMapping(value = "/categories", produces = "application/json")
-    public ResponseEntity<?> create(@Valid @RequestBody CategoryDTO categoriaDTO,
+    public ResponseEntity<?> create(@Valid @RequestBody CategoryDTO categoryDTO,
                                     BindingResult result) {
         Map<String, Object> response = new HashMap<>();
         Optional<Category> categoryFound;
@@ -104,88 +149,129 @@ public class CategoryController {
                 for (FieldError fieldError : result.getFieldErrors()) {
                     errors.add(fieldError.getDefaultMessage());
                 }
-                response.put("message", errors);
+                response.put("message", "There was an error while registering the category");
+                response.put("details", errors);
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
-            categoryFound = categoriaService.findByName(categoriaDTO.getName());
+            categoryFound = categoryService.findByName(categoryDTO.getName());
             if (categoryFound.isPresent()) {
                 response.put("message", "Category already exists");
+                response.put("details", List.of());
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
             Category category = new Category();
-            category.setName(categoriaDTO.getName());
-            categoriaService.save(category);
+            category.setName(categoryDTO.getName());
+            categoryService.save(category);
         } catch (DataIntegrityViolationException e) {
             response.put("message", "There was an error while registering the category");
+            response.put("details", List.of());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
         response.put("message", "The category was registered successfully");
+        response.put("details", null);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
-    /*
-    @ApiOperation(value = "Método de actualización de categorias", response = ResponseEntity.class)
-    @ApiResponses(value = {@ApiResponse(code = 200, message = " "),
-            @ApiResponse(code = 201, message = "Categoría actualizada"), @ApiResponse(code = 401, message = " "),
-            @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = "La categoría no existe"),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de actualizar la categoría. " +
-                    "Inténtelo mas tarde")})
-    */
+    @Operation(summary = "Modify category values")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Category updated successfully", content = {
+                    @Content(mediaType = APPLICATION_JSON_VALUE,
+                            schema = @Schema(ref = "#/components/schemas/responseEntityObjectSchema"))
+            }),
+            @ApiResponse(responseCode = "400", description = "Category already exists / " +
+                    "There was an error while registering the category",
+                    content = {
+                            @Content(mediaType = APPLICATION_JSON_VALUE,
+                                    schema = @Schema(ref = "#/components/schemas/responseEntityErrorSchema"))
+                    }),
+            // @ApiResponse(responseCode = "401", description = "", content = @Content),
+            // @ApiResponse(responseCode = "403", description = "", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Category not found", content = {
+                    @Content(mediaType = APPLICATION_JSON_VALUE,
+                            schema = @Schema(ref = "#/components/schemas/responseEntityErrorSchema"))
+            }),
+            @ApiResponse(responseCode = "500", description = "There was an error while updating the category",
+                    content = {
+                            @Content(mediaType = APPLICATION_JSON_VALUE,
+                                    schema = @Schema(ref = "#/components/schemas/responseEntityErrorSchema"))
+                    })
+    })
     // @PreAuthorize("hasAnyRole('ROLE_SYSADMIN')")
-
     @PutMapping(value = "/categories/{id}", produces = "application/json")
-    public ResponseEntity<?> update(@Valid @RequestBody CategoryDTO categoriaDTO, BindingResult result,
+    public ResponseEntity<?> update(@Valid @RequestBody CategoryDTO categoryDTO, BindingResult result,
                                     @PathVariable String id) {
         Map<String, Object> response = new HashMap<>();
         Category categoryFound;
         try {
-            if (!id.matches("^\\d+$")) {
+            if (!id.matches(ID_REGEXP)) {
                 response.put("message", "Invalid Category ID");
+                response.put("details", List.of());
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
-            categoryFound = categoriaService.findById(Long.parseLong(id)).orElseThrow();
+            categoryFound = categoryService.findById(Long.parseLong(id)).orElseThrow();
             if (result.hasErrors()) {
                 List<String> errors = new ArrayList<>();
                 for (FieldError fieldError : result.getFieldErrors()) {
                     errors.add(fieldError.getDefaultMessage());
                 }
-                response.put("message", errors);
+                response.put("message", "There was an error while updating category values");
+                response.put("details", errors);
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-            } else if (categoriaService.findByName(categoriaDTO.getName()).isPresent() &&
-                    !categoryFound.getName().equals(categoriaDTO.getName())) {
+            } else if (categoryService.findByName(categoryDTO.getName()).isPresent() &&
+                    !categoryFound.getName().equals(categoryDTO.getName())) {
                 response.put("message", "Category already exists");
+                response.put("details", List.of());
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
-            categoryFound.setName(categoriaDTO.getName());
-            categoriaService.save(categoryFound);
+            categoryFound.setName(categoryDTO.getName());
+            categoryService.save(categoryFound);
         } catch (NoSuchElementException e) {
             response.put("message", "Category not found");
+            response.put("details", List.of());
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (DataIntegrityViolationException e) {
             response.put("message", "There was an error while updating category values");
+            response.put("details", List.of());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
         response.put("message", "The category was updated successfully");
+        response.put("details", null);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    /*
-    @ApiOperation(value = "Método de deshabilitación de la categoría mediante el id", response = ResponseEntity.class)
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Categoría deshabilitada"),
-            @ApiResponse(code = 201, message = " "), @ApiResponse(code = 401, message = " "),
-            @ApiResponse(code = 403, message = " "), @ApiResponse(code = 404, message = "La categoría no existe"),
-            @ApiResponse(code = 500, message = "Lo sentimos, hubo un error a la hora de deshabilitar la categoría. " +
-                    "Inténtelo mas tarde")})
-    */
+    @Operation(summary = "Modify category status")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Category status updated successfully", content = {
+                    @Content(mediaType = APPLICATION_JSON_VALUE,
+                            schema = @Schema(ref = "#/components/schemas/responseEntityObjectSchema"))
+            }),
+            @ApiResponse(responseCode = "400", description = "Invalid category ID / " +
+                    "There was an error while updating the category status",
+                    content = {
+                            @Content(mediaType = APPLICATION_JSON_VALUE,
+                                    schema = @Schema(ref = "#/components/schemas/responseEntityErrorSchema"))
+                    }),
+            // @ApiResponse(responseCode = "401", description = "", content = @Content),
+            // @ApiResponse(responseCode = "403", description = "", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Category not found", content = {
+                    @Content(mediaType = APPLICATION_JSON_VALUE,
+                            schema = @Schema(ref = "#/components/schemas/responseEntityErrorSchema"))
+            }),
+            @ApiResponse(responseCode = "500", description = "There was an error while updating the category status",
+                    content = {
+                            @Content(mediaType = APPLICATION_JSON_VALUE,
+                                    schema = @Schema(ref = "#/components/schemas/responseEntityErrorSchema"))
+                    })
+    })
     // @PreAuthorize("hasAnyRole('ROLE_SYSADMIN')")
-
     @PutMapping(value = "/categories/{id}/status", produces = "application/json")
     public ResponseEntity<?> updateStatus(@Valid @RequestBody UpdateStatusDTO updateStatusDTO,
                                           BindingResult result, @PathVariable String id) {
         Map<String, Object> response = new HashMap<>();
         try {
-            if (!id.matches("^\\d+$")) {
+            if (!id.matches(ID_REGEXP)) {
                 response.put("message", "Invalid Category ID");
+                response.put("details", List.of());
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
             if (result.hasErrors()) {
@@ -193,18 +279,22 @@ public class CategoryController {
                 for (FieldError fieldError : result.getFieldErrors()) {
                     errors.add(fieldError.getDefaultMessage());
                 }
-                response.put("message", errors);
+                response.put("message", "There was an error while updating category status");
+                response.put("details", errors);
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
-            categoriaService.updateStatus(Long.parseLong(id), updateStatusDTO);
+            categoryService.updateStatus(Long.parseLong(id), updateStatusDTO);
         } catch (NoSuchElementException e) {
             response.put("message", "Category not found");
+            response.put("details", List.of());
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (DataIntegrityViolationException e) {
             response.put("message", "There was an error while updating category status");
+            response.put("details", List.of());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
         response.put("message", "The category status was updated successfully");
+        response.put("details", null);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }
